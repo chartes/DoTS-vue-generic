@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="26px" height="16px" viewBox="0 0 26 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
+    <title>bouton rond fleche</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <polygon id="path-1" points="0.0002 0.067 26.032 0.067 26.032 15.9998 0.0002 15.9998"></polygon>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="HOME---tableau-02" transform="translate(-1059.000000, -991.000000)">
+            <g id="bouton-rond-fleche" transform="translate(1059.000000, 990.000000)">
+                <g id="Group-6">
+                    <g id="Group-3" transform="translate(0.000000, 0.933100)">
+                        <mask id="mask-2" fill="white">
+                            <use xlink:href="#path-1"></use>
+                        </mask>
+                        <g id="Clip-2"></g>
+                        <path d="M2.5312,8.1738 C3.8972,9.7458 8.0032,13.9238 13.0852,13.9988 C13.1272,13.9998 13.1702,13.9998 13.2122,13.9998 C18.2402,13.9998 22.2132,9.6368 23.5162,8.0128 C22.1112,6.4158 17.8402,2.0668 12.9702,2.0668 C8.1022,2.0668 3.9112,6.5278 2.5312,8.1738 M13.2142,15.9998 C13.1612,15.9998 13.1092,15.9998 13.0552,15.9988 C5.8312,15.8928 0.6582,9.0718 0.4422,8.7808 L0.0002,8.1898 L0.4372,7.5928 C0.6622,7.2848 6.0282,0.0668 12.9702,0.0668 C19.8972,0.0668 25.3592,7.0748 25.5892,7.3728 L26.0322,7.9508 L25.6192,8.5508 C25.4072,8.8568 20.3942,15.9998 13.2142,15.9998" id="Fill-1" fill="#FFFFFF" mask="url(#mask-2)"></path>
+                    </g>
+                    <path d="M13.0195,4.7148 C15.3685,4.7148 17.2725,6.6168 17.2725,8.9648 C17.2725,11.3138 15.3685,13.2178 13.0195,13.2178 C10.6705,13.2178 8.7685,11.3138 8.7685,8.9648 C8.7685,6.6168 10.6705,4.7148 13.0195,4.7148" id="Fill-4" fill="#FFFFFF"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

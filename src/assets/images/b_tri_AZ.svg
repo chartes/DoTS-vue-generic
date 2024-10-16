@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
+    <title>Group 16</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="HOME---tableau-01" transform="translate(-331.000000, -815.000000)">
+            <g id="Group-16" transform="translate(331.000000, 815.000000)">
+                <rect id="Rectangle" fill="#4A4A4A" x="0" y="0" width="32" height="32" rx="4"></rect>
+                <polygon id="Fill-1-Copy-2" fill="#FFFFFF" transform="translate(10.666667, 16.000000) scale(-1, 1) rotate(90.000000) translate(-10.666667, -16.000000) " points="11.3178562 10.6666667 10.2673101 11.7409524 13.6797223 15.2380952 4.8 15.2380952 4.8 16.7619048 13.6797223 16.7619048 10.2598595 20.2590476 11.3178562 21.3333333 16.5333333 16"></polygon>
+                <text id="A" font-family="BarlowSemiCondensed-Bold, Barlow Semi Condensed" font-size="12" font-style="condensed" font-weight="bold" fill="#FFFFFF">
+                    <tspan x="18.938" y="13.5333333">A</tspan>
+                </text>
+                <text id="Z" font-family="BarlowSemiCondensed-Bold, Barlow Semi Condensed" font-size="12" font-style="condensed" font-weight="bold" fill="#FFFFFF">
+                    <tspan x="20.0233333" y="26.3333333">Z</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>

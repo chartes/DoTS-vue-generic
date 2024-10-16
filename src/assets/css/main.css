@@ -1,0 +1,49 @@
+.hidden-nav:hover {
+    cursor: pointer;
+    color: rgb(50, 115, 220);
+}
+
+.api-link {
+    border-bottom: none;
+}
+
+header.card-header {
+    clear: initial;
+    padding: initial;
+    border: initial;
+    -webkit-border-radius: initial;
+    -moz-border-radius: initial;
+    border-radius: initial;
+}
+
+.card-content {
+    overflow: auto;
+}
+
+cite.title {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+.container p {
+    text-indent: inherit !important;
+}
+.container li {
+    line-height: inherit;
+}
+
+.card-header {
+    background:  hsl(0, 0%, 96%)  !important;
+}
+.card-header-title {
+    align-items: initial;
+    padding: 0;
+    margin: 7px;
+}
+
+.hljs {
+    background: inherit !important;
+    white-space: pre-wrap !important;
+}
+
