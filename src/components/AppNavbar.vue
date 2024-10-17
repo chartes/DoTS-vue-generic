@@ -6,29 +6,23 @@
     >
       <div class="level-left">
         <a href="https://www.chartes.psl.eu/" target="_blank" class="logo-header"></a>
-        <!-- <span class="level-item" active-class="active">
-          <router-link :to="{ name: 'SearchPage' }" active-class="active"
-            >Chronique abrégée</router-link
-          >
-        </span> -->
         <span class="level-item">
-          <router-link :to="{ name: 'AboutPage' }" active-class="active"
-            >Normes de transcriptions</router-link
+          <router-link :to="{ name: 'home' }" active-class="active"
+            >Home</router-link
           >
         </span>
-        <span class="level-item">
-          <router-link :to="{ name: 'AboutPage' }" active-class="active"
-            >Témoins</router-link
-          >
-        </span>
-      </div>
-      <div class="level-right">
         <!-- <span class="level-item">
-          <router-link :to="{ name: 'DocumentationPage' }" active-class="active"
-            >Documentation</router-link
+          <router-link :to="{ name: 'AboutPage' }" active-class="active"
+            >About</router-link
           >
         </span> -->
       </div>
+       <!-- <div class="level-right">
+       <span class="level-item">
+          <router-link :to="{ name: 'DocumentationPage' }" active-class="active"
+            >Documentation</router-link>
+        </span>
+      </div> -->
     </nav>
     <div class="mobile-button">
       <!-- <router-link :to="{ name: 'SearchPage' }" class="home-button"></router-link> -->
