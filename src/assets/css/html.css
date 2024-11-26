@@ -447,7 +447,7 @@ figcaption.less:before { float: left; margin-left: -2em; content: '◿'; } /*  *
 @media screen {
   #center { }
   #contenu { position: relative; }
-  #article  { padding: 3em 4em 3em 4em; border-bottom: 1px dotted #FFFFFF; min-height: 100%; }
+  /*#article  { padding: 3em 4em 3em 4em; border-bottom: 1px dotted #FFFFFF; min-height: 100%; }*/
   #aside  { padding: 1em 1em 2em 1em; padding: 1rem 1rem 2rem 1rem; background-color: #FFFFFF; background-image: -webkit-gradient(linear, left top, right top,from(#FFFFFF),to(#FFFFFF)); background-image: -webkit-linear-gradient(right, #FFFFFF, #FFFFFF); background-image: -moz-linear-gradient(left, #FFFFFF, #FFFFFF); background-image: -ms-linear-gradient(right, #FFFFFF, #FFFFFF); background-image: -o-linear-gradient(left, #FFFFFF, #FFFFFF); background-image: linear-gradient(right, #FFFFFF, #FFFFFF); }
   body.article { box-shadow: 10px 0px 50px #E2DED0; }
   body.article { width: 100ex; margin: 3em auto 2em auto;  padding: 1em; }

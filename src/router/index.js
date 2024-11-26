@@ -1,23 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import AboutView from "@/views/AboutView.vue";
 
-console.log("import.meta.env.BASE_URL :", import.meta.env.BASE_URL)
+import HomePage from "@/views/HomePage.vue";
+import AboutPage from "@/views/AboutPage.vue";
+import DocumentPage from "@/views/DocumentPage.vue";
+
+console.log("import.meta.env.VITE_BASE_URL :", import.meta.env.VITE_APP_APP_ROOT_URL)
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.VITE_BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView
+      path: `/`,
+      name: 'Home',
+      component: HomePage
     },
     {
       path: '/about',
-      name: 'AboutPage',
-      component: AboutView
+      name: 'About',
+      component: AboutPage
+    },
+    {
+      path: '/document/:id',
+      name: 'Document',
+      component: DocumentPage,
+      props: true
     }
   ]
 })
-
+router.afterEach((to, from, next) => {
+    console.log(`Navigating to: ${to.name}, with params: ${to.params.id}, with query: ${to.params.query}`);
+});
 export default router

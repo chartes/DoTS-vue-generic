@@ -1,24 +1,19 @@
 <template>
   <div class="layout-grid-container">
-    <app-navbar class="layout-navbar" />
-      <router-view/>
+    <app-navbar class="layout-navbar"/>
+      <suspense>
+        <router-view class="layout-main"/>
+      </suspense>
     <back-to-top-button class="back-to-top-button"/>
     <app-footer class="layout-footer" />
   </div>
 </template>
 
 <script setup>
-  import {computed} from "vue";
-  import {useRoute} from "vue-router";
   import AppNavbar from "@/components/AppNavbar.vue";
   import AppFooter from "@/components/AppFooter.vue";
   import BackToTopButton from "@/components/BackToToButton.vue";
 
-  const route = useRoute();
-
-  const isHome = computed(() => {
-    return route.name === "home";
-});
 </script>
 
 <style scoped>
