@@ -8,9 +8,9 @@
         :textid="resourceId"
       />
       <document-metadata
-          v-if="metadata"
-          :metadata="metadata"
-          class="metadata-area app-width-margin"
+        v-if="metadata"
+        :metadata="metadata"
+        class="metadata-area app-width-margin"
       />
     </div>
     <div class="toc-area app-width-margin" :class="tocCssClass">
@@ -195,7 +195,7 @@ import {
   reactive,
   provide,
   ref,
-  inject,
+  inject
 } from "vue"
 import { onBeforeRouteUpdate, useRoute } from "vue-router"
 
@@ -253,7 +253,7 @@ export default {
     TOC,
     ToPreviousButton,
     ToNextButton
-  }, //DocumentMetadata, ListeTheseAnnee
+  },
 
   async setup() {
     console.log("PROJECT test : ", PROJECT)
@@ -281,7 +281,6 @@ export default {
       hal: null,
       downloadPDF: null,
       downloadXML: null,
-
       author: null,
       title: null,
       data_bnf: null,
@@ -318,7 +317,6 @@ export default {
         // if route param id is collection -> ?
         // if route param id is resource -> store the resourceId in Store
         // await getMetadataFromApi(route.params.id)
-        resourceId.value = route.params.id
         store.commit('setResourceId', route.params.id)
 
         let response = await getMetadataFromApi(resourceId.value);
@@ -629,7 +627,6 @@ export default {
             //console.log("node level < editorial level : ", node)
             node["link_type"] = "link"
             node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}/document/${node.identifier}`
-            console.log("higher levels node url: ", node)
           } else if (node.level < level && level > 0) {
             //console.log("node level < editorial level : ", node)
             node["link_type"] = "link"
@@ -822,20 +819,19 @@ export default {
     }*/
 
     const getNewRefId = function () {
-      console.log("getNewRefId check if refId.value", refId.value)
+      console.log("getNewRefId check if refId / refId.value", refId, refId.value)
       if (refId.value) {
         firstRef.value = false
         lastRef.value = false
         console.log("getNewRefId flatToc ", flatTOC)
         //filter TOC to get only editorial level items
-        let editorialFlatTOC = flatTOC.filter(item => item.level <= editorialLevel.value && item.level >0 )
+        let editorialFlatTOC = flatTOC.filter(item => item.level <= editorialLevel.value && item.level > 0 )
         console.log("function getNewRefId editorialFlatTOC", editorialFlatTOC)
         let currentItem = editorialFlatTOC.find(item => item.identifier === refId.value)
         console.log("function getNewRefId currentItem", currentItem)
         let currentItemIndex = currentItem ? editorialFlatTOC.findIndex(item => item.identifier === refId.value) : -1
         console.log("function getNewRefId currentItemIndex", currentItemIndex)
-        /*let lastItem = editorialFlatTOC.slice(-1)[0]
-        console.log("function getNewRefId lastItem", editorialFlatTOC.slice(-1)[0])*/
+
         if (currentItemIndex === 0) {
           //this is the first item in editorial levels
           console.log("function getNewRefId this is the first item")
