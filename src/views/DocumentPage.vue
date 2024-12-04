@@ -483,26 +483,22 @@ export default {
             }
           }
         }
-      } else {
+      /*} else {
         console.log("getMetadata this is a collection !!!!!!!!!")
-      }
+        //reset to null
+        Object.keys(metadata).forEach(key => {
+          Object.assign(metadata, { [key]: null })
+        });
+        console.log("getMetadata this is a collection updated metadata", metadata)
+      }*/
     }
-
-    const getParentCollection = async () => {
-      let parentCollection = await getParentCollectionFromApi(resourceId.value)
-      parentCollectionId.value = parentCollection["member"] ? parentCollection["member"][0]["@id"] : null
-      console.log("parentCollectionId", parentCollectionId)
-    }
-
 
     // Setting up the Tables Of Content Top and Left
-    const getTOC = async () => {
-      console.log("DocumentPage setup const getTOC resourceId.value", resourceId.value)
-      /*if (!flatTOC || !flatTOC.length > 0) {
-        let response = await getTOCFromApi(resourceId.value, documentType.value);
-        flatTOC = response.member
-        console.log("setup flatTOC : ", flatTOC)
-      }*/
+    const getTOC = async (reason) => {
+      console.log("DocumentPage getTOC reason", reason)
+      console.log("DocumentPage getTOC resourceId.value", resourceId.value)
+      console.log("DocumentPage getTOC refId.value", refId.value)
+
       let response = await getTOCFromApi(resourceId.value, documentType.value);
       console.log("initial response", response)
       if (response.member && documentType.value === 'Collection') {
@@ -511,7 +507,7 @@ export default {
         response.member.forEach((m) => m.identifier = m['@id'])
       }
       let parentNode = {}
-      if (documentType.value === "Resource") {
+      /*if (documentType.value === "Resource") {
         let parentResponse = await getParentFromApi(response.resource['@id'])
         parentNode = parentResponse
         parentNode.level = 0
@@ -519,41 +515,46 @@ export default {
         let parentResponse = await getParentFromApi(response['@id'])
         parentNode = parentResponse
         parentNode.level = -1
-      }
-
+      }*/
+      let parentId = store.state.currentItem.parent ? store.state.currentItem.parent : null
       console.log("initial parentNode", parentNode)
+      parentCollectionId.value = parentId
+      console.log("parentCollectionId", parentCollectionId)
+
       flatTOC = []
       console.log("initial flatTOC", flatTOC)
-      let initflatTOC = [response]
-      if (response.resource) {
-        response.resource.parent = parentNode.member ? parentNode.member[0]['@id'] : null
-        response.resource.level = 0
-      }
 
-      console.log("initial2 flatTOC", initflatTOC)
       flatTOC = [store.state.currentItem, ...response.member]
       flatTOC.filter(item => item.level === 1).forEach((i) => {i.parent = resourceId.value})
       console.log("initial3 flatTOC", flatTOC)
 
-
-      let loopParent = parentNode
-
-      while(loopParent.member) {
-        console.log("loopParent.member", loopParent.member)
-        let parentTOC = await getMetadataFromApi(loopParent["member"][0]['@id'])
-        console.log("initial parentTOC", parentTOC)
-        console.log("parentNode[\"member\"][0]['@id']", loopParent["member"][0]['@id'])
-        let parentResponse = await getParentFromApi(parentTOC['@id'])
-        parentResponse.level = loopParent.level - 1
-        console.log("parentResponse", parentResponse)
-        parentTOC.parent = parentResponse.member ? parentResponse.member[0]['@id'] : null
-        parentTOC.level = parentResponse.level
-        console.log("parentTOC", parentTOC)
-        console.log("parentTOC flatTOC", flatTOC)
-        flatTOC = [getSimpleObject(parentTOC), ...flatTOC]
-        console.log("flatTOC + parentTOC", flatTOC)
-        loopParent = parentResponse
+      async function parentLoop(node) {
+        if (node.parent && node.parent.length > 0) {
+          let appendParentInTOC = await getMetadataFromApi(node.parent)
+          console.log("appendParentInTOC", appendParentInTOC)
+          let parentResponse = await getParentFromApi(appendParentInTOC['@id'])
+          // Compute parent level from current node
+          parentResponse.level = node.level - 1
+          // Append this level to the parent instance to be added in the TOC
+          appendParentInTOC.level = parentResponse.level
+          // Check if the parent has itself a parent
+          if (parentResponse.member) {
+            // Add the parent id to the parent instance to be added in the TOC
+            appendParentInTOC.parent = parentResponse.member[0]['@id']
+          } else {
+            // Add a null parent id to the parent instance to be added in the TOC
+            appendParentInTOC.parent = null
+          }
+          // Add this parent object to the TOC
+          flatTOC = [getSimpleObject(appendParentInTOC), ...flatTOC]
+          // If the parent has itself a parent : loop
+          if (appendParentInTOC.parent) {
+            await parentLoop(appendParentInTOC)
+          }
+        }
       }
+
+      await parentLoop(store.state.currentItem)
       console.log("setup afterParents flatTOC : ", flatTOC)
 
 
@@ -644,6 +645,7 @@ export default {
             node.url = `#${node.identifier}`
           }
           if (node.parent && node.parent.length > 0) {
+            //console.log("check node.parent error : ", flatTOC, node)
             // TODO? if you have dangling branches check that map[node.parent] exists
             flat_toc[map[node.parent]].children.push(node);
           } else {
@@ -699,8 +701,6 @@ export default {
       }, [])
           .filter(item => item.level <= editorialLevel.value)
           .sort((a, b) => a.level - b.level)
-//.concat({identifier: resourceId, level: 0, link_type: "link", url: `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}`})
-
 
       console.log("getTOC ancestors : ", editorialLevel, refId.value, ancestors.value)
 
@@ -714,8 +714,8 @@ export default {
     const getAllPositionsYears = async () => {
       console.log("getAllPositionsYears start")
       // get parent's collection of current id
-      let parentCollection = await getParentCollection()
-      console.log("getAllPositionsYears parentCollection", parentCollection)
+      /*let parentCollection = await getParentCollection()
+      console.log("getAllPositionsYears parentCollection", parentCollection)*/
       if (parentCollectionId.value) {
         const data = await getMetadataFromApi(parentCollectionId.value);
         console.log("getAllPositionsYears parentCollectionId", parentCollectionId)
@@ -929,44 +929,52 @@ export default {
         async () => {
           setMirador();
         }
-    );
+    )
     watch(route, async () => {
       isLoading.value = false
       console.log("Document page watch route.params : ", route.params)
       console.log("Document page watch route.query : ", route.query)
       console.log("Document page watch route.hash : ", route.hash)
-      await getCurrentItem("watch", route)
+      await getCurrentItem("watch getCurrentItem : route : ", route)
 
 
       if (Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")) {
         console.log("watch route.query.refId : ", route.query.refId ? route.query.refId : false)
         resourceId.value = route.params.id
         refId.value = route.query.refId
+        console.log("watch query : refId", refId.value)
+        if (flatTOC.length === 0 ) {
+          await getTOC("watch query flatTOC not already defined")
+        }
+        console.log("watch query : route / refId / flatTOC", route, refId.value, flatTOC)
+        console.log("watch query : check flatTOC filter", flatTOC.filter(item => item.identifier === refId.value))
         currentLevel.value = flatTOC.filter(item => item.identifier === refId.value)[0].level
         console.log("Updating hash1", route.hash)
-        hash.value = route.hash && route.hash.length > 0 ? route.hash : false
-        await getTOC()
+        hash.value = route.hash && route.hash.length > 0 ? route.hash.replace("#", "") : false
+        await getTOC("watch query")
         await getMetadata();
-        await getParentCollection();
         await getAllPositionsYears();
         scrollTo(hash.value)
         getNewRefId()
+        isLoading.value = true
       } else {
         console.log("Document page watch route.query is now removed : ", route.query)
         resourceId.value = route.params.id;
         refId.value = false
         currentLevel.value = store.state.currentItem['@type'] === 'Resource' ? 0 : -1
         console.log("Updating hash2", route.hash)
-        hash.value = route.hash && route.hash.length > 0 ? route.hash : false
-        await getTOC()
+        hash.value = route.hash && route.hash.length > 0 ? route.hash.replace("#", "") : false
+        await getTOC("watch params")
         await getMetadata();
-        await getParentCollection();
+        console.log("DocumentPage metadata watch:", metadata.value)
         await getAllPositionsYears();
         scrollTo(hash.value)
         getNewRefId()
+        isLoading.value = true
       }
-    },
-        {deep: true, immediate: true}
+
+
+    }, {immediate: true}
     );
 
     /*onBeforeRouteUpdate(async (to, from) => {
@@ -1014,12 +1022,13 @@ export default {
 
 
     //const route = useRoute();
-    await getCurrentItem("setup", route)
+    /*await getCurrentItem("setup", route)
     console.log("main getMetadata")
     await getMetadata(route.params.id);
-    await getParentCollection(route.params.id);
     console.log("setup route.params.id", route.params.id)
-    await getTOC(route.params.id);
+    if (flatTOC.length === 0 ) {
+      await getTOC("regular setup");
+    }
     console.log("VITE_PROJECT await : ", PROJECT)
     if (route.params.project === 'ENCPOS') {
       await getAllPositionsYears('ENCPOS')
@@ -1032,7 +1041,7 @@ export default {
       getNewRefId()
     }
     getNewRefId()
-
+    */
 
     return {
       tocCssClass: layout.tocCssClass,
@@ -1058,6 +1067,7 @@ export default {
       asideTOC,
       ancestors,
       refId,
+      hash,
       getNewRefId,
       previousDocId,
       nextDocId,
