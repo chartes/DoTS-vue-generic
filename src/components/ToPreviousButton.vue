@@ -1,6 +1,6 @@
 <template>
   <a v-if="!refid || refid.length === 0" href="#" @click="goToPreviousDocument" :class="cssClass"></a>
-  <a v-else href="#" @click="goToPreviousFragment($event, previousrefid)" :class="cssClass"></a>
+  <a v-else href="#" @click="goToPreviousFragment($event, previousRefId)" :class="cssClass"></a>
 </template>
 
 <script>
