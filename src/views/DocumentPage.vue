@@ -70,7 +70,7 @@
       </ul>
       <ul class="is-flex">
         <li><a v-if="metadata.downloadPDF" target="_blank" v-bind:href="metadata.downloadPDF" class="pdf-btn" aria-label="Télécharger le PDF"></a></li>
-        <li><a target="_blank" v-bind:href="metadata.downloadXML" class="xml-btn" aria-label="Télécharger le XML"></a></li>
+        <li><a v-if="metadata.downloadXML" target="_blank" v-bind:href="metadata.downloadXML" class="xml-btn" aria-label="Télécharger le XML"></a></li>
         <li><a v-if="metadata.thenca" target="_blank" v-bind:href="metadata.thenca" class="access_link">Accès à la thèse</a></li>
       </ul>
     </nav>
