@@ -28,6 +28,6 @@ const router = createRouter({
   ]
 })
 router.afterEach((to, from, next) => {
-    console.log(`Navigating to: ${to.name}, with params: ${to.params.id}, with query: ${to.params.query}`);
+    console.log(`Navigating to: ${to.name}, with params: ${to.params.id}, with query: ${to.query}, with hash: ${to.hash}`);
 });
 export default router

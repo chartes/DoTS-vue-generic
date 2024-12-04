@@ -4,47 +4,23 @@
       <li :class="item.children && item.children.length > 0 ? 'more' : ''">
         <router-link
           :class="route.hash === item.url ? 'is-current' : !route.hash && item.identifier === currentRefId ? 'is-current' : ''"
-          v-if="item.level <= 0"
-          :to="{ name: 'Document', params: {id: item.identifier} }"
+          v-if="item.link_type === 'link'"
+          :to="item.level <= 0 ? { name: 'Document', params: {id: item.identifier} } : { name: 'Document', params: {id: route.params.id}, query: { refId: item.identifier }}"
         >
           Lvl {{ item.level }}
-          {{ item.dublincore && item.dublincore.title ? item.dublincore.title : item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" }}
+          {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" : "pas de titre"}}
           {{ item.identifier }}
         </router-link>
         <router-link
          :class="route.hash === item.url ? 'is-current' : !route.hash && item.identifier === currentRefId ? 'is-current' : ''"
           v-else
-          :to="{ name: 'Document', params: {id: route.params.id}, query: { refId: item.link_type === 'hash' ? item.ancestor_editorialLevel : item.identifier }, hash: item.link_type === 'hash' ? item.url : false}"
+          :to="currentRefId ? { name: 'Document', params: {id: route.params.id}, query: { refId: item.ancestor_editorialLevel }, hash: item.link_type === 'hash' ? item.url : false }
+                            : { name: 'Document', params: {id: route.params.id}, hash: item.link_type === 'hash' ? item.url : false }"
         >
-
-            Lvl {{ item.level }}
-            {{ item.dublincore && item.dublincore.title ? item.dublincore.title : item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" }}
-            {{ item.identifier }}
-        </router-link>
-        <!--<router-link
-          v-else
-          :to="{ name: 'Document', param: {id: route.params.id}, query: { refId: route.query.refId }, hash: item.url }"
-        >
-          {{ route.query.refId }}
-          Lvl {{ item.level }} tada
-          {{ item.dublincore && item.dublincore.title ? item.dublincore.title : "pas de titre" }}
+          Lvl {{ item.level }}
+          {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" : "pas de titre"}}
           {{ item.identifier }}
-        </router-link>-->
-        <!--<div v-else>
-          <div
-            :class="item.identifier === currentRefId ? 'is-current' : ''"
-          >
-            Lvl {{ item.level }}
-            {{ item.dublincore && item.dublincore.title ? item.dublincore.title : "pas de titre" }}
-            {{ item.identifier }}
-          </div>
-        </div>-->
-        <!--<a
-          :class="item.identifier === currentRefId ? 'is-current' : ''"
-          :href="item.url"
-        >--><!--  @click="toggleBurger($event, item.identifier)" -->
-          <!--{{ item.custom && item.custom.htmlTitle? item.custom.htmlTitle : item.identifier }}
-        </a>-->
+        </router-link>
         <TOC
           v-if="item.level < maxcitedepth && item.children && item.children.length > 0"
           :toc="item.children"
@@ -78,27 +54,18 @@ export default {
     const currentRefId = ref(props.refid);
     const route = useRoute()
 
-    console.log("TOC props.toc :", props.toc)
-    console.log("TOC props.maxcitedepth :", props.maxcitedepth)
-    console.log("TOC props.refid :", props.refid)
+    //console.log("TOC props.toc :", props.toc)
+    //console.log("TOC props.maxcitedepth :", props.maxcitedepth)
+    //console.log("TOC props.refid :", props.refid)
 
     //remove when proved unneeded
     const toggleBurger = function ($event, ref) {
       $event.preventDefault();
       //$event.stopPropagation();
       currentRefId.value = ref
-      console.log("TOC ref : ", $event, currentRefId.value)
+      //console.log("TOC ref : ", $event, currentRefId.value)
       router.push({path: route.path, query: {refId: ref} });
     };
-    /*watch(route, () => {
-      console.log("TOC watch route.query : ", route.query)
-      //if (Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")) {
-          console.log("watch route.query.ref : ", route.query.refId ? route.query.refId : false)
-          currentRefId.value = route.query.refId
-        //}
-
-    });*/
-
 
     return {
       route,
@@ -109,10 +76,10 @@ export default {
   methods: {
     getNewRefId() {
       if (Object.keys(this.route.query).length > 0 && Object.keys(this.route.query).includes("refId")) {
-          console.log("TOC getNewRefId /this.route.query.refId : ", this.route.query.refId ? this.route.query.refId : false)
+          //console.log("TOC getNewRefId /this.route.query.refId : ", this.route.query.refId ? this.route.query.refId : false)
           this.currentRefId.value = this.route.query.refId
         }
-      console.log("TOC getNewRefId / this.currentRefId", this.currentRefId)
+      //console.log("TOC getNewRefId / this.currentRefId", this.currentRefId)
     }
   }
 };

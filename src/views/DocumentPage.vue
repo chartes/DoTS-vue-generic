@@ -156,15 +156,18 @@
             :id="resourceId"
             :level="currentLevel"
             :editoriallevel="editorialLevel"
+            :documenttype="documentType"
             :asidetoc="asideTOC.value"
             :maxcitedepth="TOC_DEPTH"
-            :key="resourceId" />
+            :key="resourceId"
+          />
         </div>
         <div v-else class="text-view" id="text-view">
           <document
             :id="resourceId + '&ref=' + refId"
             :level="currentLevel"
             :editoriallevel="editorialLevel"
+            :documenttype="documentType"
             :asidetoc="asideTOC.value"
             :maxcitedepth="TOC_DEPTH"
             :key="refId + editorialLevel"
@@ -925,13 +928,6 @@ export default {
       }
     };
 
-    function scrollTo(h) {
-      if (h.length) {
-        console.log("scrollTo hash", h)
-        location.hash = h
-      }
-    }
-
     watch(
         () => metadata.iiifManifestUrl,
         async () => {
@@ -962,7 +958,6 @@ export default {
         await getTOC("watch query")
         await getMetadata();
         await getAllPositionsYears();
-        scrollTo(hash.value)
         getNewRefId()
         isLoading.value = true
       } else {
@@ -976,7 +971,6 @@ export default {
         await getMetadata();
         console.log("DocumentPage metadata watch:", metadata.value)
         await getAllPositionsYears();
-        scrollTo(hash.value)
         getNewRefId()
         isLoading.value = true
       }
@@ -1070,6 +1064,7 @@ export default {
       TOC_DEPTH,
       editorialLevel,
       currentLevel,
+      documentType,
       flatTOC,
       topTOC,
       asideTOC,
