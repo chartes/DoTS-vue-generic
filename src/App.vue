@@ -12,7 +12,7 @@
 <script setup>
   import AppNavbar from "@/components/AppNavbar.vue";
   import AppFooter from "@/components/AppFooter.vue";
-  import BackToTopButton from "@/components/BackToToButton.vue";
+  import BackToTopButton from "@/components/BackToTopButton.vue";
 
 </script>
 
