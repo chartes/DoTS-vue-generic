@@ -29,10 +29,10 @@ async function getTOCFromApi(id, type= "Resource", options={}) {
 
 }
 
-async function getParentCollectionFromApi(id, options={}) {
+async function getParentFromApi(id, options={}) {
     const response = await fetch(`${_baseApiURL}/collection?id=${id}&nav=parents`, {mode: 'cors', ...options})
     const document = await response.json()
-    console.log("document.js getParentCollectionFromApi response", document)
+    console.log("document.js getParentFromApi response", document)
     return document
 }
 
@@ -56,7 +56,7 @@ export {
     getDocumentFromApi,
     getMetadataFromApi,
     getTOCFromApi,
-    getParentCollectionFromApi,
+    getParentFromApi,
     getPositionAnneeFromApi,
     getMetadataENCPOSFromApi
 }

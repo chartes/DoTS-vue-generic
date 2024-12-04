@@ -185,7 +185,7 @@ import DocumentMetadata from "@/components/DocumentMetadata.vue"
 
 import { useStore } from 'vuex'
 import useMirador from "@/composables/use-mirador"
-import { getMetadataFromApi, getParentCollectionFromApi, getTOCFromApi } from "@/api/document"
+import { getMetadataFromApi, getParentFromApi, getTOCFromApi } from "@/api/document"
 
 import {
   computed,
@@ -322,7 +322,7 @@ export default {
         store.commit('setResourceId', route.params.id)
 
         let response = await getMetadataFromApi(resourceId.value);
-        let parentResponse = await getParentCollectionFromApi(response['@id'])
+        let parentResponse = await getParentFromApi(response['@id'])
         //console.log("parentResponse", parentResponse["member"][0])
 
         if (response["@type"] === "Resource") {
@@ -512,11 +512,11 @@ export default {
       }
       let parentNode = {}
       if (documentType.value === "Resource") {
-        let parentResponse = await getParentCollectionFromApi(response.resource['@id'])
+        let parentResponse = await getParentFromApi(response.resource['@id'])
         parentNode = parentResponse
         parentNode.level = 0
       } else {
-        let parentResponse = await getParentCollectionFromApi(response['@id'])
+        let parentResponse = await getParentFromApi(response['@id'])
         parentNode = parentResponse
         parentNode.level = -1
       }
@@ -543,7 +543,7 @@ export default {
         let parentTOC = await getMetadataFromApi(loopParent["member"][0]['@id'])
         console.log("initial parentTOC", parentTOC)
         console.log("parentNode[\"member\"][0]['@id']", loopParent["member"][0]['@id'])
-        let parentResponse = await getParentCollectionFromApi(parentTOC['@id'])
+        let parentResponse = await getParentFromApi(parentTOC['@id'])
         parentResponse.level = loopParent.level - 1
         console.log("parentResponse", parentResponse)
         parentTOC.parent = parentResponse.member ? parentResponse.member[0]['@id'] : null
