@@ -215,6 +215,7 @@ const sources = [
   { name: "thenca", ext: "thenca" },
   { name: "hal", ext: "hal" },
   { name: "benc", ext: "koha" },
+  { name: "sudoc", ext: "sudoc.fr"},
   {},
 ]
 
@@ -228,6 +229,7 @@ function findSource(id) {
   } while (i < sources.length && source === null);
 
   if (source) {
+    console.log("findSource source.name :", source.name)
     return source.name;
   }
 
@@ -276,7 +278,7 @@ export default {
       }
     }
 
-    const metadata = reactive({
+    const initial_metadata = {
       sudoc: null,
       benc: null,
       thenca: null,
@@ -293,11 +295,15 @@ export default {
       wikidata: null,
       wikipedia: null,
       rights: null,
-    })
+    }
+
+    const metadata = reactive(initial_metadata)
     const route = useRoute()
     const store = useStore()
 
     const resourceId = ref()
+    const refId = ref(false)
+    const hash = ref(false)
     const currentItem = ref({})
     const documentType = ref()
     let parentCollectionId = ref()
@@ -341,6 +347,12 @@ export default {
           store.commit('setCurrentItem', currentItem.value)
           console.log("init type : ", documentType.value)
         }
+        if (Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")) {
+          refId.value = route.query.refId
+        }
+        if (route.hash && route.hash.length > 0) {
+          hash.value = route.hash.replace("#", "")
+        }
         // if route param id is fragment -> get its parent resourceId and store in Store
       }
     }
@@ -351,14 +363,7 @@ export default {
     let flatTOC = reactive([])
     let topTOC = reactive([])
     let asideTOC = reactive([])
-    const refId = ref(false)
-    const hash = ref(false)
-    if (Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")) {
-      refId.value = route.query.ref
-    }
-    if (route.hash && route.hash.length > 0) {
-      hash.value = route.hash
-    }
+
     let ancestors = reactive([])
 
     let yearsWithAdditionalPositions = []
@@ -373,7 +378,10 @@ export default {
 
 
     const getMetadata = async () => {
-      console.log("getMetadata : ", resourceId.value)
+      console.log("getMetadata resourceId.value : ", resourceId.value)
+      // Reset metadata
+      Object.assign(metadata, initial_metadata)
+      console.log("getMetadata initial reset metadata : ", metadata)
       let listmetadata = {}
       if (documentType.value === "Resource") {
         listmetadata = await getMetadataFromApi(resourceId.value, "Resource");
@@ -392,7 +400,7 @@ export default {
       console.log("---------");
       console.log("dublincore:", dublincore)
 
-      if (documentType.value === "Resource") {
+      //if (documentType.value === "Resource") {
 
         if (dublincore) {
           metadata.author = dublincore.creator ? dublincore.creator : null
@@ -409,13 +417,13 @@ export default {
               }
             }
           } else {
-            metadata.downloadXML = listmetadata.extensions.download
-            metadata.downloadPDF = null
+            metadata.downloadXML = null //listmetadata.extensions.download
+            metadata.downloadPDF = listmetadata.extensions.download // null
           }
-          metadata.download = listmetadata["download"]
+
           metadata.page = extensions["dct:extend"] ? extensions["dct:extend"] : null
           metadata.coverage = extensions["dct:coverage"] ? extensions["dct:coverage"] : null
-          metadata.rights = extensions["dct:rights"] ? extensions["dct:rights"] : null
+          //metadata.rights = extensions["dct:rights"] ? extensions["dct:rights"] : null
           metadata.title = extensions[htmlnamespace + ":h1"] ? extensions[htmlnamespace + ":h1"] : null
         }
 
@@ -429,7 +437,7 @@ export default {
           metadata.iiifManifestUrl = extensions["dct:source"][0]["@id"];
           layout.imageIsAvailable.value = true;
         } catch {
-          metadata.iiifManifestUrl = "";
+          metadata.iiifManifestUrl = null;
           //TODO: resolve why layout undefined and uncomment
           //layout.imageIsAvailable.value = false;
         }
@@ -442,10 +450,11 @@ export default {
           for (let s of sources) {
             metadata[s.name] = null;
           }
+          console.log("metadata after reset", metadata)
 
           // wikidata test 26/11/2024
           metadata.wikidata = extensions.creator_wikidata_url ? extensions.creator_wikidata_url : null
-          metadata.rights = extensions["dct:license"] ? extensions["dct:license"] : null
+          metadata.rights = extensions["dct:rights"] ? extensions["dct:rights"] : extensions["dct:license"] ? extensions["dct:license"] : null
           metadata.title = metadata.title ? metadata.title : dublincore.title ? dublincore.title : null
 
           metadata['dublincore'] = {}
@@ -899,7 +908,7 @@ export default {
 
 
     const setMirador = function () {
-      if (metadata.iiifManifestUrl.length > 0) {
+      if (metadata.iiifManifestUrl && metadata.iiifManifestUrl.length > 0) {
         fetch(metadata.iiifManifestUrl, {
           method: "HEAD",
         })
