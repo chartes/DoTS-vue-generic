@@ -88,19 +88,22 @@
         :refid="refId"
         :previousrefid="previousRefId"
         @click="getNewRefId"
+        :key="resourceId + refId"
       />
       <div class="is-flex is-justify-content-center is-align-items-center app-width-margin">
-        <ul class="is-flex is-justify-content-center is-align-items-center crumbs">
+        <ul class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center crumbs">
           <li
             v-for="(item, index) in ancestors.value" :key="index"
           >
             <router-link
+              :class="refId ? item.identifier === refId ? 'is-current' : '' : item.identifier === resourceId ? 'is-current' : ''"
               v-if="item.level <= 0"
               :to="{ name: 'Document', params: {id: item.identifier} }"
               >
               {{ item.title }}
             </router-link>
             <router-link
+              :class="refId ? item.identifier === refId ? 'is-current' : '' : item.identifier === resourceId ? 'is-current' : ''"
               v-else
               :to="{ name: 'Document', params: {id: resourceId}, query: { refId: item.link_type === 'hash' ? item.ancestor_editorialLevel : item.identifier }, hash: item.link_type === 'hash' ? item.url : false}"
             >
@@ -1526,7 +1529,7 @@ div.remove-bottom-padding #article {
 }
 .crumbs li + li:before {
   padding: 20px !important;
-  content: "/";
+  //content: "/";
 }
 .crumbs li a:hover {
   color: red !important;
@@ -1534,5 +1537,8 @@ div.remove-bottom-padding #article {
 .navigation-row{
   vertical-align: center;
   margin-bottom: 20px;
+}
+.is-current {
+  font-weight: bold !important;
 }
 </style>
