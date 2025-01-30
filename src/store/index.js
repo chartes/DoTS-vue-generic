@@ -3,7 +3,8 @@ import {createStore} from 'vuex';
 export default createStore({
     state: {
         resourceId: undefined,
-        currentItem: {}
+        currentItem: {},
+        TOC: [],
     },
     mutations: {
         setResourceId(state, id) {
@@ -11,6 +12,9 @@ export default createStore({
         },
         setCurrentItem(state, item) {
             state.currentItem = item;
+        },
+        setTOC(state, toc) {
+            state.TOC = toc;
         }
     },
 });

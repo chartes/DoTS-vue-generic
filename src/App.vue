@@ -67,7 +67,7 @@ body {
 }
 .tile.page-header p.title {
   font-family: "Noto Serif", serif;
-  font-size: 35px;
+  font-size: 30px;
   font-style: normal;
   line-height: 47px;
   font-weight: 400;

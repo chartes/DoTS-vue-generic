@@ -2,27 +2,56 @@
   <section>
     <nav
       class="level app-width-padding"
-      :class="menuCsscClass"
+      :class="menuCssClass"
     >
       <div class="level-left">
-        <a href="https://www.chartes.psl.eu/" target="_blank" class="logo-header"></a>
+        <a target="_blank" href="https://www.chartes.psl.eu/" class="logo-header"></a>
         <span class="level-item">
-          <router-link :to="{ name: 'Home' }" active-class="active"
-            >Home</router-link
+          <!--<a
+            class="level-item-external"
+            target="_blank"
+            href="https://www.chartes.psl.eu/"
+          >
+            École des chartes
+          </a>-->
+          <a
+            class="level-item-external"
+            target="_blank"
+            href="http://elec.enc.sorbonne.fr/"
+          >
+            Élec
+          </a>
+          <router-link
+            v-if="route.path.includes(homePageLink)"
+            active-class="active"
+            :to="{ name: 'Home', params: {collId: homePageLink} }"
+            >{{ homePageLink }}</router-link
           >
         </span>
-        <!-- <span class="level-item">
-          <router-link :to="{ name: 'About' }" active-class="active"
-            >About</router-link
+        <span class="level-item">
+          <router-link :to="{ name: 'About', params: {collId: homePageLink} }" active-class="active"
+            >Le projet</router-link
           >
-        </span> -->
+        </span>
       </div>
-       <!-- <div class="level-right">
-       <span class="level-item">
-          <router-link :to="{ name: 'Documentation' }" active-class="active"
+       <div class="level-right">
+       <div class="level-item menu">
+          <router-link :to="{ name: 'Documentation', params: {collId: homePageLink} }" active-class="active"
             >Documentation</router-link>
-        </span>
-      </div> -->
+           <ul class="submenu">
+            <li>
+              <a target="_blank" href="https://chartes.github.io/dots_documentation/">
+                DoTS
+              </a>
+            </li>
+            <li>
+              <a  target="_blank" href="#">
+                DoTS-Vue
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
     </nav>
     <div class="mobile-button">
       <!-- <router-link :to="{ name: 'Search' }" class="home-button"></router-link> -->
@@ -31,36 +60,61 @@
   </section>
 </template>
 <script>
-  import Burger from "./Burger.vue";
-  export default {
-    name: "AppNavBar",
-    components: {Burger},
-    data() {
-      return {
-        isMenuOpened: false
-      }
-    },
-    computed: {
-      menuCsscClass () {
-        return this.isMenuOpened ? 'is-opened' : ''
-      }
-    },
-    methods: {
-      burgerChanged($event) {
-        this.isMenuOpened = $event.isOpened;
-      },
-      closeMenu() {
-        this.isMenuOpened = false;
-      },
-    },
-    mounted () {
-      document.body.addEventListener('click', this.closeMenu)
-    },
-    beforeUnmount () {
-      document.body.removeEventListener('click', this.closeMenu)
-    },
+import {ref, computed, onMounted, onBeforeUnmount, reactive} from 'vue'
+import Burger from './Burger.vue'
+import {useRoute} from "vue-router";
+
+export default {
+  name: "HomePage",
+  components: { Burger },
+
+  setup() {
+    // State
+    let state = reactive({
+      isMenuOpened: false
+    })
+    const route = useRoute()
+    const isMenuOpened = ref(false)
+    const rootURL = ref(import.meta.env.VITE_APP_APP_ROOT_URL .length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_URL.slice(1, import.meta.env.VITE_APP_APP_ROOT_URL.length)}` : '')
+    const homePageLink = ref(import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID.length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID}` : 'Home')
+
+    // Computed property
+    const menuCssClass = computed(() => {
+      return state.isMenuOpened ? 'is-opened' : ''
+    })
+
+    // Methods
+    const burgerChanged = (event) => {
+      isMenuOpened.value = event.isOpened
+    }
+
+    const closeMenu = () => {
+      isMenuOpened.value = false
+    }
+
+    // Lifecycle hooks
+    onMounted(() => {
+      document.body.addEventListener('click', closeMenu)
+    })
+
+    onBeforeUnmount(() => {
+      document.body.removeEventListener('click', closeMenu)
+    })
+
+    // Expose properties and methods to the template
+    return {
+      route,
+      isMenuOpened,
+      menuCssClass,
+      rootURL,
+      homePageLink,
+      burgerChanged,
+      closeMenu
+    }
   }
+}
 </script>
+
 <style scoped>
 nav {
   font-family: 'Barlow', sans-serif;
@@ -102,6 +156,13 @@ nav span.level-item:not(:last-child)::after {
 }
 .level-left {
   display: flex;
+  & > span > a {
+    text-transform: capitalize;
+    &.level-item-external:not(:last-child)::after {
+      content: " > ";
+      white-space: pre;
+    }
+  }
 }
 .mobile-button {
   display: none;
@@ -215,5 +276,33 @@ nav span.level-item:not(:last-child)::after {
     display: none;
   }
 }
+ul.submenu a:hover {
+  text-decoration: underline;
+}
+.level-item.menu {
+  display: flex;
+  flex-direction: column;
+
+  & > ul.submenu {
+    position: relative;
+    top: 5px;
+    margin: 0;
+    padding: 0;
+    border: none;
+
+    display: none;
+    opacity: 0;
+    transition: opacity ease-in-out 0.25s;
+  }
+
+  &:hover {
+    & > ul.submenu {
+      display: inline-block;
+      opacity: 1;
+    }
+  }
+}
+
+
 
 </style>

@@ -1,8 +1,19 @@
 const _baseApiURL = `${import.meta.env.VITE_APP_API_URL}`;
 
+async function getCoverDataFromApi(id, options={}) {
+    const response_coverData = await fetch(`${_baseApiURL}/cover?id=${id}`, {mode: 'cors', ...options})
+    const coverData = await response_coverData.text()
+    console.log("document.js getCoverDataFromApi response_coverData ", response_coverData)
+    return coverData
+}
 
 async function getMetadataFromApi(id, options={}) {
-    const response_metadata = await fetch(`${_baseApiURL}/collection?id=${id}`, {mode: 'cors', ...options})
+    let response_metadata = {}
+    if (id === 'elec') {
+      response_metadata = await fetch(`${_baseApiURL}/collection`, {mode: 'cors', ...options})
+    } else {
+      response_metadata = await fetch(`${_baseApiURL}/collection?id=${id}`, {mode: 'cors', ...options})
+    }
     const metadata = await response_metadata.json()
     return metadata
 }
@@ -53,6 +64,7 @@ async function getMetadataENCPOSFromApi(project, options={}) {
 }
 
 export {
+    getCoverDataFromApi,
     getDocumentFromApi,
     getMetadataFromApi,
     getTOCFromApi,

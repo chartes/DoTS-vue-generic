@@ -3,24 +3,32 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from "@/views/HomePage.vue";
 import AboutPage from "@/views/AboutPage.vue";
 import DocumentPage from "@/views/DocumentPage.vue";
+import DocumentationPage from "@/views/DocumentationPage.vue";
 
-console.log("import.meta.env.VITE_BASE_URL :", import.meta.env.VITE_APP_APP_ROOT_URL)
+const rootURL = `${import.meta.env.VITE_APP_APP_ROOT_URL}`
+console.log("const rootURL :", rootURL)
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.VITE_BASE_URL),
+  history: createWebHistory(rootURL),
   routes: [
     {
-      path: `/`,
+      path: `/:collId?`,
       name: 'Home',
-      component: HomePage
+      component: HomePage,
+      props: true
     },
     {
-      path: '/about',
+      path: '/:collId?/about',
       name: 'About',
       component: AboutPage
     },
     {
-      path: '/document/:id',
+      path: '/:collId?/documentation',
+      name: 'Documentation',
+      component: DocumentationPage,
+    },
+    {
+      path: '/:collId?/document/:id',
       name: 'Document',
       component: DocumentPage,
       props: true

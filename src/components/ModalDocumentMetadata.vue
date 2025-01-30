@@ -1,21 +1,15 @@
 <template>
-  <div class="document-metadata" :class="metaDataCssClass">
-    <!--<a href="#" v-on:click="toggleNew">
+  <div class="modal-container">
+
+  <div class="modal-document-metadata" :class="metaDataCssClass">
+    <a href="#" v-on:click="toggleNew">
         <span class="metadata-header-author">Switch</span>
-    </a>-->
+    </a>
     <div v-if="!isNew">
-      <div class="document-metadata-header">
+      <div class="modal-document-metadata-header">
         <a href="#" v-on:click="toggleContent">
-          <span
-            class="metadata-header-author"
-          >
-            {{ metadata.author }}
-          </span>
-          <span
-            class="metadata-header-title"
-          >
-            {{ metadata.title }}
-          </span>
+          <span class="metadata-header-author">{{ metadata.author }}</span>
+          <span v-html="metadata.title" class="metadata-header-title"></span>
         </a>
         <a href="#" class="toggle-btn" v-on:click="toggleContent"></a>
       </div>
@@ -196,55 +190,16 @@
       <!--  <theseAnnee v-if="state['date']" :id="state['date']" :textid="id" /> -->
     </div>
     <div v-else>
-      <div
-        v-if="!isPopUp"
-         class="document-metadata-header"
-      >
-        <div class="resource" v-on:click="toggleContent">
-
-          <span class="metadata-header-title resource">{{ metadata.title }}</span>
-          <template v-if="Array.isArray(metadata.author) && metadata.author.length > 0">
-            <span
-              v-for="aut in metadata.author"
-              class="metadata-header-author resource"
-            >
-              {{ aut }}
-            </span>
-          </template>
-          <span
-            v-else-if="metadata.author"
-            class="metadata-header-author resource"
-          >
-            {{ metadata.author }}
-          </span>
-          <span class="metadata-header-label resource">
-            Métadonnées
-          </span>
-        </div>
-        <a href="#" class="toggle-btn" v-on:click="toggleContent"></a>
-      </div>
-      <div
-        v-else
-         class="document-metadata-header"
-      >
-        <div class="collection" v-on:click="toggleContent">
-          <span class="metadata-header-label collection">
-            Métadonnées
-          </span>
-          <span class="metadata-header-title collection">{{ metadata.title }}</span>
-          <span
-            v-if="metadata.author"
-            class="metadata-header-author collection"
-          >
-            {{ metadata.author }}
-          </span>
-        </div>
+      <div class="modal-document-metadata-header">
+        <a href="#" v-on:click="toggleContent">
+          <span class="metadata-header-author">Métadonnées</span>
+        </a>
         <a href="#" class="toggle-btn" v-on:click="toggleContent"></a>
       </div>
       <aside class="menu">
         <Suspense>
-          <div class="is-flex is-justify-content-center">
-          <table class="table is-fullwidth"><!-- style="background-color: #e4e4e4;" -->
+          <div class="is-flex is-justify-content-center py-1">
+          <table class="table is-fullwidth is-striped"><!-- style="background-color: #e4e4e4;" -->
             <tbody>
               <!--<tr class="row">
                 <td><span class="title" style="font-variant: all-small-caps"><b>Identifiant</b></span></td>
@@ -278,48 +233,19 @@
                   <td></td>
                 </tr>
               </template>
-              <template v-for="(value, name, index) in metadata.extensions" :key="index">
-                <tr v-if="Array.isArray(value) && value.length > 1" v-for="v in value" :key="index" class="row is-align-items-center">
-                  <td v-if="v === value[0]" :rowspan="value.length"><span class="title" style="font-variant: all-small-caps"><b>{{ name }}</b></span></td>
-                  <td><span class="title" style="text-transform: uppercase; font-size: 12px">{{ v }}</span></td>
-                  <td>
-                    <figure v-if="getValue(v).includes('http')" class="image is-48x48 level-left">
-                      <a target="_blank" v-bind:href="getValue(v)">
-                        <img :src="ImgUrl(name)"/>
-                      </a>
-                    </figure>
-                  </td>
-                </tr>
-                <tr class="row" v-else>
-                  <td><span class="title" style="font-variant: all-small-caps"><b>{{ name }}</b></span></td>
-                  <td><span class="title" style="text-transform: uppercase; font-size: 12px">{{ value }}</span></td>
-                  <td></td>
-                </tr>
-              </template>
               <template v-for="(value, key, index) in metadata" :key="index">
                 <tr v-if="Array.isArray(value) && value.length >= 1" v-for="v in value" :key="index" class="row is-align-items-center">
-                  <td v-if="v === value[0]" :rowspan="value.length"><span class="title is-align-items-center" style="font-variant: all-small-caps"><b>{{ key }}</b></span></td>
+                  <td v-if="v === value[0]" :rowspan="value.length"><span class="title is-align-items-center" style="font-variant: all-small-caps; color: brown"><b>{{ key }}</b></span></td>
                   <td v-if="v.url"><span class="title" style="text-transform: uppercase; font-size: 12px">{{ v.url }}</span></td><!-- {{ Array.isArray(v) ? v[0] : typeof(v) === 'object' ? Object.values(v)[0] : v }} -->
                   <td v-else><span class="title" style="text-transform: uppercase; font-size: 12px">{{ v }}</span></td><!-- {{ Array.isArray(v) ? v[0] : typeof(v) === 'object' ? Object.values(v)[0] : v }} -->
                   <td v-if="v.url">
                     <figure class="image is-24x24 level-left">
-                      <a target="_blank" v-bind:href="v.url">
-                        <img :src="ImgUrl(v.source.name)"/>
-                      </a>
-                    </figure>
+                        <a target="_blank" v-bind:href="v.url">
+                          <img :src="ImgUrl(v.source)"/>
+                        </a>
+                      </figure>
                   </td>
                   <td v-else></td>
-                </tr>
-                <tr class="row" v-else-if="value && typeof(value) === 'object'">
-                  <td><span class="title" style="font-variant: all-small-caps"><b>{{ key }}</b></span></td>
-                  <td><span class="title" style="text-transform: uppercase; font-size: 12px">{{ value.url }}</span></td><!-- {{ Array.isArray(value) ? typeof(value[0]) === 'object' ? Object.values(value[0])[0] : value : typeof(value) === 'object' ? Object.values(value)[0] : value }}-->
-                  <td>
-                    <figure v-if="value.url && value.url.includes('http')" class="image is-24x24 level-left">
-                      <a target="_blank" v-bind:href="value.url">
-                        <img :src="ImgUrl(value.source.name)"/>
-                      </a>
-                    </figure>
-                  </td>
                 </tr>
                 <tr class="row" v-else-if="value">
                   <td><span class="title" style="font-variant: all-small-caps"><b>{{ key }}</b></span></td>
@@ -468,6 +394,8 @@
 
     </div>
   </div>
+
+  </div>
 </template>
 
 <script>
@@ -477,20 +405,30 @@ import * as $rdf from "rdflib";
 //import node from "rdflib/src/node.js";
 
 export default {
-  name: "DocumentMetadata",
+  name: "ModalDocumentMetadata",
 
   components: {},
 
   props: {
-    ispopup: { required: true, default: false, type: Boolean },
-    metadata: { required: true, default: () => {}, type: Object }
+    isOpen: {
+      type: Boolean,
+      required: true
+    },
+    metadata: {
+      required: true, default: () => {}, type: Object
+    }
   },
+  emits: [
+    'changeMetadata'
+  ],
 
-  setup(props) {
+  setup(props, context) {
     let state = reactive({
-      isOpened: false
-    })
-    const isPopUp = ref(props.ispopup)
+      isOpened: true
+    });
+
+    const isMetadataOpened = ref(props.isOpen)
+
     const isNew = ref(true)
     const metadata = reactive({})
     let authorThumbnailUrl = ref(null)
@@ -587,8 +525,11 @@ export default {
     });
 
     const toggleContent = function (event) {
-      event.preventDefault();
-      state.isOpened = !state.isOpened;
+      event.preventDefault()
+      event.stopPropagation()
+      isMetadataOpened.value = !isMetadataOpened.value
+      context.emit('changeMetadata', { isMetadataOpened : isMetadataOpened.value })
+      console.log("MetadataModal emit event : ", event)
     };
 
     const toggleNew = function (event) {
@@ -632,7 +573,7 @@ export default {
             {}
           )
 
-        let removedKeys = ['children', 'member', 'editorialLevelIndicator', 'renderToc', 'level', 'expanded', 'link_type', 'router', 'dublincore', 'extensions']/*gerer les 'url' à supp pour les collections seulement*/
+        let removedKeys = ['extensions', 'id', 'downloadXML', 'downloadPDF', 'iiifManifestUrl']
 
         let filteredMetadata = {}
         Object.assign(filteredMetadata, {})
@@ -644,12 +585,16 @@ export default {
         fetchRDF();
       },
       { deep: true, immediate: true}
-    );
+    )
+    watch(props, (newProps) => {
+      isMetadataOpened.value = newProps.isOpen;
+      console.log("CollectionModal watch isOpen props isMetadataOpened.value : ", isMetadataOpened.value)
+    });
 
     return {
       metaDataCssClass,
-      isPopUp,
       isNew,
+      isMetadataOpened,
       toggleContent,
       toggleNew,
       authorThumbnailUrl,
@@ -665,11 +610,27 @@ export default {
 .test {
   display: block !important;
 }
-.document-metadata {
-  width: 100%;
-  font-family: "Barlow", sans-serif !important;
+.modal-container {
+    max-width: 1100px !important;
+    margin: 150px auto;
+    padding: 20px 30px;
+    background-color: #fbf8f4;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+    max-height: 60vh;
+    overflow-y: auto;
+    color: #4a4a4a;
 }
-.document-metadata-header {
+.modal-document-metadata {
+  position: fixed;
+    z-index: 9998;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+.modal-document-metadata-header {
   display: flex;
   width: 100%;
   padding: 20px;
@@ -677,47 +638,19 @@ export default {
   border-radius: 6px;
   position: relative;
 
-  font-size: 16px;
-  font-weight: 400;
+  font-family: "Barlow Semi Condensed", sans-serif !important;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 22px;
-  text-decoration: none;
-  border: none;
-  & > div.resource {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    align-items: baseline;
-    width: 100%;
-  }
 }
-.is-opened .document-metadata-header {
+.is-opened .modal-document-metadata-header {
   border-radius: 6px 6px 0 0;
 }
-.document-metadata-header span.metadata-header-label.collection{
-  margin-right: 40px;
-  font-family: "Barlow Semi Condensed", sans-serif !important;
-  font-weight: 500;
-  color: #4a4a4a;
-}
-.document-metadata-header span.metadata-header-label.resource {
-  margin-right: 47px;
-  margin-left: auto;
-  text-align: left;
-  font-family: "Barlow Semi Condensed", sans-serif !important;
-  font-weight: 500;
-  color: #4a4a4a;
-}
-.document-metadata-header span.metadata-header-title.collection {
+.modal-document-metadata-header span.metadata-header-author {
   margin-right: 40px;
   color: #4a4a4a;
 }
-.document-metadata-header span.metadata-header-title.resource {
-  margin-right: 40px;
-  font-size: 20px;
-  font-weight: 500;
-  color: #971716;
-}
-.document-metadata-header span.metadata-header-author {
+.modal-document-metadata-header span.metadata-header-title {
   color: #929292;
 }
 /* toogle */
@@ -726,7 +659,7 @@ export default {
   right: 20px;
   width: 27px;
   height: 27px;
-  background: url(../assets/images/chevron_rouge.svg) center top -4px / cover no-repeat;
+  background: url(../assets/images/chevron_rouge.svg) center top -7px / cover no-repeat;
   border: none;
   text-decoration: none;
 }
@@ -734,15 +667,15 @@ export default {
   background: url(../assets/images/croix.svg) center / cover no-repeat;
 }
 
-.document-metadata-header > a {
+.modal-document-metadata-header > a {
   text-decoration: none;
   border: none;
   max-width: calc(100% - 40px);
 }
-.document-metadata .menu {
+.modal-document-metadata .menu {
   display: none;
 }
-.document-metadata.is-opened .menu {
+.modal-document-metadata.is-opened .menu {
   display: block;
 }
 ol,
@@ -834,11 +767,11 @@ figure {
   aside.menu > .columns > .column:nth-child(1) {
     width: 50% !important;
   }
-  .document-metadata-header > a {
+  .modal-document-metadata-header > a {
     max-width: calc(100% - 30px);
   }
-  .document-metadata-header span.metadata-header-title,
-  .document-metadata-header span.metadata-header-author {
+  .modal-document-metadata-header span.metadata-header-title,
+  .modal-document-metadata-header span.metadata-header-author {
     display: block;
   }
 }
@@ -847,10 +780,6 @@ figure {
     width: 20px;
     right: 15px;
   }
-}
-table {
-  background-color: #f1f1f1;
-  border-radius: 0 0 6px 6px;
 }
 td {
   vertical-align: middle !important;

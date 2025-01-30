@@ -3,6 +3,7 @@
     <div class="list-header is-flex">
       <p class="menu-label">
         <span @click="toggleContent">Documents de la collection</span> :
+        <span>{{ previousCollection }}</span>
         <input
           v-if="!isNaN(inputAnnee)"
           type="text"
@@ -96,29 +97,33 @@ import "vue-slider-component/theme/antd.css";
 export default {
   name: "ListeTheseAnnee",
 
-  props: ["id", "textid"],
+  props: ["id", "textid", "toc"],
   components: {
     VueSlider,
   },
   async setup(props) {
-    console.log("setup(props)", props.id, props.textid)
+    console.log("ListeTheseAnnee setup(props)", props.id, props.textid)
 
 
     let state = reactive({
       isOpened: false,
     });
-    const id = ref(props.id);
+    const id = ref(Array.isArray(props.id) ? props.id[0] : props.id);
     console.log("ListeTheseAnnee setup const id", id)
     const textid = ref(props.textid);
     console.log("ListeTheseAnnee setup const textid", textid)
 
+    const toc = reactive(props.toc);
+    console.log("ListeTheseAnnee setup const toc", props.toc)
 
-    const collection = ref(props.id);
+    const collection = ref(Array.isArray(props.id) ? props.id[0] : props.id);
     console.log("ListeTheseAnnee setup const collection", collection)
 
 
     const listProm = ref([]);
-    console.log("listeTheseAnnee id ", id)
+    const previousCollection = ref();
+    const nextCollection = ref();
+
     const getItemsForCurrentCollection = async () => {
       let metadata = {};
       console.log("listeTheseAnnee getItemsForCurrentCollection id.value ", id.value)
@@ -129,8 +134,11 @@ export default {
       );
       console.log("data && data[\"member\"]", data)
       if (data && data["member"]) {
-
-        for (const [i, item] of data["member"].entries())
+        let sortedDataMembers = data["member"].sort(function (a, b) {
+          return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+        });
+        console.log("sortedDataMembers", sortedDataMembers)
+        for (const [i, item] of sortedDataMembers.entries())
          {
           if (item["@id"].includes("PREV") || item["@id"].includes("NEXT")) {
             continue;
@@ -148,23 +156,28 @@ export default {
         }
       }
 
-      state.metadata = metadata;
+      state.metadata = metadata
       console.log("state.metadata ", state.metadata)
     };
 
     const getAllPositionsYears = async () => {
       const PROJECT = `${import.meta.env.VITE_APP_PROJECT}`
       console.log("ListeTheseAnnee PROJECT collection.value", PROJECT, props.id)
-      const data = await getMetadataFromApi(collection.value);
-      console.log("const data", data)
+      //const data = await getMetadataFromApi(collection.value);
+      const data = props.toc.filter(i => i.identifier === id.value)[0]
+      console.log("ListeTheseAnnee const data", data)
+      console.log("ListeTheseAnnee const data alternative from toc", props.toc.filter(i => i.identifier === id.value))
       let collections = [];
       for (var member of data.member) {
         let item = member["@id"];
         collections.push(item);
       }
-      collections.sort();
+      collections.sort(function (a, b) {
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+      });
       listProm.value = collections;
       console.log("ListeTheseAnnee listProm", listProm.value)
+      getPreviousCollection();
     };
 
     const listCssClass = computed(() => {
@@ -180,12 +193,23 @@ export default {
       return collection.value.toString() !== id.value.toString();
     });
 
+    const getPreviousCollection = function () {
+      console.log("getPreviousCollection listProm, collection.value", listProm.value, textid.value, listProm.value.indexOf(textid.value.toString()))
+
+      if (listProm.value.indexOf(textid.value.toString()) !== 0) {
+        previousCollection.value = listProm.value[
+          listProm.value.indexOf(textid.value.toString()) - 1
+        ].toString();
+      }
+    };
+
     const downOneCollection = function () {
-      if (listProm.value.indexOf(collection.value.toString()) != "0") {
+      if (listProm.value.indexOf(collection.value.toString()) !== 0) {
         collection.value = listProm.value[
           listProm.value.indexOf(collection.value.toString()) - 1
         ].toString();
       }
+      console.log("liste these année labelled collections, collection.value : ", collection.value)
       return collection;
     };
 
@@ -196,7 +220,7 @@ export default {
 
     const addOneCollection = function () {
       if (
-        listProm.value.indexOf(collection.value.toString()) !=
+        listProm.value.indexOf(collection.value.toString()) !==
         listProm.value.length.toString() - 1
       ) {
         collection.value = listProm.value[
@@ -248,10 +272,13 @@ export default {
       id.value = props.id
       collection.value = props.id
       getItemsForCurrentCollection();
+      getPreviousCollection();
+      console.log("liste these année watch previousCollection", previousCollection.value)
       }
     )
 
     await Promise.all([getItemsForCurrentCollection(), getAllPositionsYears()]);
+
 
     const gotoTop = function () {
       scroll(0, 0);
@@ -264,7 +291,10 @@ export default {
       isNotInitialCollection,
       addOneCollection,
       id,
+      toc,
+      previousCollection,
       reinitalise,
+      getPreviousCollection,
       downOneCollection,
       inputAnnee,
       input,

@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div class="row" :class="currentLevel < editorialLevel ? 'remove-bottom-padding' : ''">
+    <div class="row" :class="currentLevelIndicator === 'renderToc' ? 'remove-bottom-padding' : ''">
       <Suspense @resolve="scrollTo()">
         <component :is="customDocument"/>
       </Suspense>
@@ -8,7 +8,19 @@
     <!-- Display a TOC of the current item children in 2 scenarios : -->
     <!-- When the selected item is hierarchically above editorial level -->
     <div
-      v-if="currentLevel < editorialLevel"
+      v-if="currentLevelIndicator === 'renderToc'"
+      id="article"
+      class="row bottom-toc"
+    >
+      <TOC
+       :toc="asideTOC"
+       :maxcitedepth="maxcitedepth"
+       :refid="parentId.includes('&ref=') ? parentId.split('&ref=')[1] : parentId"
+       :key="parentId"
+      />
+    </div>
+    <div
+      v-else-if="!currentLevelIndicator && currentLevel < editorialLevel"
       id="article"
       class="row bottom-toc"
     >
@@ -22,7 +34,7 @@
     <!-- Or the specific case of Collections when editorial level & current level are 0 -->
     <!-- For example : to be able to have a TOC on Collection ENCPOS, edited at the full position level (0) -->
     <div
-      v-else-if="currentLevel === editorialLevel && editorialLevel === 0 && documentType === 'Collection'"
+      v-else-if="!currentLevelIndicator && currentLevel === editorialLevel && editorialLevel === 0 && documentType === 'Collection'"
       id="article"
       class="row bottom-toc"
     >
@@ -38,7 +50,7 @@
 
 <script>
 import { defineAsyncComponent, ref, reactive } from "vue";
-import { getDocumentFromApi } from "@/api/document";
+import {getCoverDataFromApi, getDocumentFromApi} from "@/api/document";
 import { useRoute } from "vue-router";
 import TOC from "@/components/TOC.vue";
 
@@ -50,7 +62,7 @@ export default {
     TOC
   },
 
-  props: ["id", "level", "editoriallevel", "asidetoc", "maxcitedepth", "documenttype"],
+  props: ["id", "level", "editoriallevel", "asidetoc", "maxcitedepth", "documenttype", "editorialLevelIndicator"],
 
   setup(props) {
     // Declare route to capture route hash (used in scrollTo()) to display selected Table Of Content items below the editorial level
@@ -59,7 +71,10 @@ export default {
     // TODO: rename to a more appropriate name : it is the id used for Dots API : dotsID ?
     const parentId = ref(props.id);
     console.log("Document.vue const props.id / parentId", props.id, parentId)
-    // Content fetched here will depend on the selected TOC item vs editotial level
+    // Content fetched here will depend on the selected TOC item vs editorial level
+    const currentLevelIndicator = ref(props.editorialLevelIndicator);
+    console.log("Document.vue const currentLevelIndicator", currentLevelIndicator)
+
     const currentLevel = ref(props.level);
     console.log("Document.vue const currentLevel", currentLevel)
 
@@ -85,8 +100,29 @@ export default {
         // fetch the initial template, depending on the selected level compared to the editorial level
         console.log("Document.vue check currentLevel vs editorialLevel", currentLevel.value, editorialLevel.value)
         let data = ""
+        console.log("loadDoc currentLevelIndicator", currentLevelIndicator.value)
+        if (currentLevelIndicator.value) {
+          console.log("loadDoc currentLevelIndicator / currentLevelIndicator.value / documentType.value", currentLevelIndicator.value, documentType.value)
+          if (currentLevelIndicator.value === "renderToc" && documentType.value === 'Resource') {
+            console.log("loadDoc currentLevelIndicator.value === \"renderToc\" && documentType.value === 'Resource'", currentLevelIndicator.value === "renderToc" && documentType.value === 'Resource')
+            if (currentLevel.value === 0) {
+              console.log("loadDoc currentLevel.value === 0 : get cover", currentLevel.value)
+              data = await getCoverDataFromApi(parentId.value)
+              console.log("loadDoc cover getCoverDataFromApi(parentId.value)", data)
+            } else {
+              console.log("loadDoc currentLevel.value !== 0 : do not get cover but exclude fragments", currentLevel.value)
+              data = await getDocumentFromApi(parentId.value, true)
+            }
+          } else if (currentLevelIndicator.value === "toEdit" && documentType.value === 'Resource') {
+            console.log("currentLevelIndicator.value === \"toEdit\" && documentType.value === 'Resource'", currentLevelIndicator.value === "toEdit" && documentType.value === 'Resource')
+            data = await getDocumentFromApi(parentId.value, false)
+          } else {
+            console.log("Document.vue else")
+            return
+          }
+        }
         // Selected level is a resource but hierarchically an ancestor of the editorial level : use the excludeFragment DoTS API response
-        if (currentLevel.value < editorialLevel.value && documentType.value === 'Resource') {
+        else if (currentLevel.value < editorialLevel.value && documentType.value === 'Resource') {
           console.log("Document.vue get excludeFragments=(true) currentLevel.value < editorialLevel.value", currentLevel.value < editorialLevel.value && documentType === 'Resource')
           data = await getDocumentFromApi(parentId.value, true)
         // Selected level is a resource at the editorial level : use the full DoTS API response (and not excludeFragment)
@@ -142,6 +178,7 @@ export default {
 
     return {
       parentId,
+      currentLevelIndicator,
       currentLevel,
       editorialLevel,
       documentType,
