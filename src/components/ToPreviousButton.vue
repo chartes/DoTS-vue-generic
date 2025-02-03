@@ -13,65 +13,64 @@
 </template>
 
 <script>
-import {ref, watch} from "vue"; //onMounted, onUnmounted,
-import router from "@/router";
-import {useRoute} from "vue-router";
+import { ref, watch } from 'vue' // onMounted, onUnmounted,
+import router from '@/router'
+import { useRoute } from 'vue-router'
 
 export default {
-  name: "ToPreviousButton",
-  props: ["docid", "previousdocid", "refid", "previousrefid", "previousreftitle"],
-  //emits: ["updateRefId"],
+  name: 'ToPreviousButton',
+  props: ['docid', 'previousdocid', 'refid', 'previousrefid', 'previousreftitle'],
+  // emits: ["updateRefId"],
 
-  setup(props) {
-
+  setup (props) {
     const previousRefId = ref(props.previousrefid)
     const previousRefTitle = ref(props.previousreftitle)
     const route = useRoute()
-    console.log("ToPreviousButton currentDocId : ", props.docid)
-    console.log("ToPreviousButton previousdocid : ", props.previousdocid)
-    console.log("ToPreviousButton refid : ", props.refid)
-    console.log("ToPreviousButton previousrefid : ", props.previousrefid)
-    console.log("ToPreviousButton previousreftitle : ", props.previousreftitle)
+    console.log('ToPreviousButton currentDocId : ', props.docid)
+    console.log('ToPreviousButton previousdocid : ', props.previousdocid)
+    console.log('ToPreviousButton refid : ', props.refid)
+    console.log('ToPreviousButton previousrefid : ', props.previousrefid)
+    console.log('ToPreviousButton previousreftitle : ', props.previousreftitle)
 
-    let cssClass = ref("to-previous")
+    const cssClass = ref('to-previous')
 
     // On click :
     const goToPreviousDocument = function (event) {
-      event.preventDefault();
+      event.preventDefault()
       if (props.previousdocid && props.previousdocid.length > 0) {
-        console.log("PreviousButton previousdocid : ", event, props.previousdocid.value)
-        router.push({path: `/document/${props.previousdocid}`})
+        console.log('PreviousButton previousdocid : ', event, props.previousdocid.value)
+        router.push({ path: `/document/${props.previousdocid}` })
       }
-    };
+    }
 
     const goToPreviousFragment = function ($event, prevId, prevTitle) {
-      $event.preventDefault();
-      console.log("goToPreviousFragment event/prevId", $event, prevId)
+      $event.preventDefault()
+      console.log('goToPreviousFragment event/prevId', $event, prevId)
       if (prevId.length > 0) {
         previousRefId.value = prevId
         previousRefTitle.value = prevTitle
-        console.log("PreviousButton previousRefId : ", $event, previousRefId.value)
-        console.log("PreviousButton previousRefTitle : ", $event, previousRefTitle.value)
-        console.log("let route", route, route.path)
+        console.log('PreviousButton previousRefId : ', $event, previousRefId.value)
+        console.log('PreviousButton previousRefTitle : ', $event, previousRefTitle.value)
+        console.log('let route', route, route.path)
         // Replace current querystring with the new one.
-        router.push({path: route.path, query: {refId: prevId} });
+        router.push({ path: route.path, query: { refId: prevId } })
       }
-    };
+    }
     watch(props, (newProps) => {
       previousRefId.value = newProps.previousrefid
       previousRefTitle.value = newProps.previousreftitle
-      cssClass.value = "to-previous"
-    }, {deep: true, immediate: true});
+      cssClass.value = 'to-previous'
+    }, { deep: true, immediate: true })
 
     return {
       goToPreviousDocument,
       goToPreviousFragment,
       previousRefId,
       previousRefTitle,
-      cssClass,
-    };
-  },
-};
+      cssClass
+    }
+  }
+}
 </script>
 
 <style>

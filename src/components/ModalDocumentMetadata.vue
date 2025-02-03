@@ -399,13 +399,13 @@
 </template>
 
 <script>
-import { computed, reactive, ref, watch } from "vue";
-import md5 from "md5";
-import * as $rdf from "rdflib";
-//import node from "rdflib/src/node.js";
+import { computed, reactive, ref, watch } from 'vue'
+import md5 from 'md5'
+import * as $rdf from 'rdflib'
+// import node from "rdflib/src/node.js";
 
 export default {
-  name: "ModalDocumentMetadata",
+  name: 'ModalDocumentMetadata',
 
   components: {},
 
@@ -422,129 +422,127 @@ export default {
     'changeMetadata'
   ],
 
-  setup(props, context) {
-    let state = reactive({
+  setup (props, context) {
+    const state = reactive({
       isOpened: true
-    });
+    })
 
     const isMetadataOpened = ref(props.isOpen)
 
     const isNew = ref(true)
     const metadata = reactive({})
-    let authorThumbnailUrl = ref(null)
+    const authorThumbnailUrl = ref(null)
 
     const getValue = (data) => {
-      function getLink(string) {
-        if (string.includes("http")) {
+      function getLink (string) {
+        if (string.includes('http')) {
           return `<a target="_blank" href="${string}">${string}</a>`
         } else {
           return string
         }
       }
-      console.log("data", data)
+      console.log('data', data)
       if (Array.isArray(data)) {
         return getLink(data[0])
-      } else if (typeof(data) === 'object') {
+      } else if (typeof (data) === 'object') {
         return getLink(Object.values(data)[0])
       } else {
         return getLink(data)
       }
     }
     const ImgUrl = (source) => {
-      console.log("ImgUrl / source", source)
-      const path = new URL('@/assets/images/', import.meta.url);
+      console.log('ImgUrl / source', source)
+      const path = new URL('@/assets/images/', import.meta.url)
       return `${path}/Logo_${source}.png`
     }
 
-    /*const ImgUrl = (source) => {
+    /* const ImgUrl = (source) => {
       var images = require.context('../assets/', false, /\.png$/)
       return images('./' + source + ".png")
-    }*/
+    } */
 
-    console.log("state.metadata", metadata)
+    console.log('state.metadata', metadata)
 
     const fetchAuthorThumbnailUrl = async (options = {}) => {
       if (metadata.wikidata) {
-        let wikidata_id = metadata.wikidata.split("/");
-        wikidata_id = wikidata_id[wikidata_id.length - 1];
+        let wikidata_id = metadata.wikidata.split('/')
+        wikidata_id = wikidata_id[wikidata_id.length - 1]
 
-        console.log("fetchAuthorThumbnailUrl");
+        console.log('fetchAuthorThumbnailUrl')
 
         const response = await fetch(
           `https://www.wikidata.org/w/api.php?action=wbgetclaims&property=P18&entity=${wikidata_id}&format=json&origin=*`,
-          { method: "GET", ...options }
-        );
-        const document = await response.json();
-        console.log("check AuthorThumbnailUrl response", document)
+          { method: 'GET', ...options }
+        )
+        const document = await response.json()
+        console.log('check AuthorThumbnailUrl response', document)
 
         if (document.claims.P18) {
-          let wikidata_link = document.claims.P18[0]["mainsnak"]["datavalue"][
-            "value"
-          ].replaceAll(" ", "_");
+          let wikidata_link = document.claims.P18[0].mainsnak.datavalue.value.replaceAll(' ', '_')
 
-          const _sum = md5(wikidata_link);
-          wikidata_link = `https://upload.wikimedia.org/wikipedia/commons/${_sum[0]}/${_sum[0]}${_sum[1]}/${encodeURI(wikidata_link)}`;
-          authorThumbnailUrl.value = wikidata_link;
+          const _sum = md5(wikidata_link)
+          wikidata_link = `https://upload.wikimedia.org/wikipedia/commons/${_sum[0]}/${_sum[0]}${_sum[1]}/${encodeURI(wikidata_link)}`
+          authorThumbnailUrl.value = wikidata_link
 
-          console.log("author url", authorThumbnailUrl.value);
+          console.log('author url', authorThumbnailUrl.value)
         } else {
-          authorThumbnailUrl.value = null;
+          authorThumbnailUrl.value = null
         }
       } else {
-        authorThumbnailUrl.value = null;
+        authorThumbnailUrl.value = null
       }
-    };
+    }
 
     const fetchBiblioData = async () => {
       if (metadata.data_bnf) {
-        const httpsUrl = metadata.data_bnf.replace("http:", "https:");
-        //console.log("extra metadata:", httpsUrl);
-        console.log(decodeURIComponent(`${httpsUrl}`));
+        const httpsUrl = metadata.data_bnf.replace('http:', 'https:')
+        // console.log("extra metadata:", httpsUrl);
+        console.log(decodeURIComponent(`${httpsUrl}`))
         const redirectUrl = await fetch(`${httpsUrl}`, {
-          method: "GET",
-          redirect: "follow",
-          mode: "cors"
-        });
-        console.log("redirectUrl.url after redirect : ", redirectUrl.url);
-        let httpsUrlJson = redirectUrl.url.replace("/fr", "") + ".json"; //.slice(0, -1)
-        console.log("biblio json URL", httpsUrlJson);
+          method: 'GET',
+          redirect: 'follow',
+          mode: 'cors'
+        })
+        console.log('redirectUrl.url after redirect : ', redirectUrl.url)
+        const httpsUrlJson = redirectUrl.url.replace('/fr', '') + '.json' // .slice(0, -1)
+        console.log('biblio json URL', httpsUrlJson)
         const biblioResponse = await fetch(`${httpsUrlJson}`, {
-          method: "GET",
-          mode: "cors",
+          method: 'GET',
+          mode: 'cors'
         }).then((response) => {
-              return response.json()
+          return response.json()
         }).catch(() => {
           console.error('Error while loading databnf data')
         })
-        console.log("fetch biblio data", biblioResponse);
+        console.log('fetch biblio data', biblioResponse)
       }
-    };
+    }
 
     const metaDataCssClass = computed(() => {
-      return state.isOpened ? "is-opened" : "";
-    });
+      return state.isOpened ? 'is-opened' : ''
+    })
 
     const toggleContent = function (event) {
       event.preventDefault()
       event.stopPropagation()
       isMetadataOpened.value = !isMetadataOpened.value
-      context.emit('changeMetadata', { isMetadataOpened : isMetadataOpened.value })
-      console.log("MetadataModal emit event : ", event)
-    };
+      context.emit('changeMetadata', { isMetadataOpened: isMetadataOpened.value })
+      console.log('MetadataModal emit event : ', event)
+    }
 
     const toggleNew = function (event) {
-      event.preventDefault();
-      isNew.value = !isNew.value;
-    };
+      event.preventDefault()
+      isNew.value = !isNew.value
+    }
 
-    //const $rdf = require('rdflib')
+    // const $rdf = require('rdflib')
     const fetchRDF = async () => {
-      console.log("metadata.value.idref : ", metadata.idref);
+      console.log('metadata.value.idref : ', metadata.idref)
       if (metadata.idref) {
-        console.log("metadata.value.idref : ", metadata.idref);
-        const store = $rdf.graph();
-        const me = store.sym(metadata.idref);
-        console.log("me : ", me);
+        console.log('metadata.value.idref : ', metadata.idref)
+        const store = $rdf.graph()
+        const me = store.sym(metadata.idref)
+        console.log('me : ', me)
       }
     }
 
@@ -553,43 +551,43 @@ export default {
     watch(
       () => props.metadata,
       () => {
-        console.log("metadata watch current, new : ", metadata, props.metadata)
-        /*let cleanMetadata = Object.keys(props.metadata)
+        console.log('metadata watch current, new : ', metadata, props.metadata)
+        /* let cleanMetadata = Object.keys(props.metadata)
           .filter(key => props.metadata[key] !== null)
           .reduce((acc, key) => {
             acc[key] = props.metadata[key];
             return acc;
           }, {});
-        Object.assign(metadata, cleanMetadata)*/
+        Object.assign(metadata, cleanMetadata) */
 
         const removeKeys = (obj, keys) => obj !== Object(obj)
-      ? obj
-      : Array.isArray(obj)
-      ? obj.map((item) => removeKeys(item, keys))
-      : Object.keys(obj)
-          .filter((k) => !keys.includes(k))
-          .reduce(
-            (acc, x) => Object.assign(acc, { [x]: removeKeys(obj[x], keys) }),
-            {}
-          )
+          ? obj
+          : Array.isArray(obj)
+            ? obj.map((item) => removeKeys(item, keys))
+            : Object.keys(obj)
+              .filter((k) => !keys.includes(k))
+              .reduce(
+                (acc, x) => Object.assign(acc, { [x]: removeKeys(obj[x], keys) }),
+                {}
+              )
 
-        let removedKeys = ['extensions', 'id', 'downloadXML', 'downloadPDF', 'iiifManifestUrl']
+        const removedKeys = ['extensions', 'id', 'downloadXML', 'downloadPDF', 'iiifManifestUrl']
 
         let filteredMetadata = {}
         Object.assign(filteredMetadata, {})
         filteredMetadata = removeKeys(props.metadata, removedKeys)
-        console.log("filteredMetadata", filteredMetadata)
+        console.log('filteredMetadata', filteredMetadata)
         Object.assign(metadata, filteredMetadata)
-        fetchAuthorThumbnailUrl();
-        fetchBiblioData();
-        fetchRDF();
+        fetchAuthorThumbnailUrl()
+        fetchBiblioData()
+        fetchRDF()
       },
-      { deep: true, immediate: true}
+      { deep: true, immediate: true }
     )
     watch(props, (newProps) => {
-      isMetadataOpened.value = newProps.isOpen;
-      console.log("CollectionModal watch isOpen props isMetadataOpened.value : ", isMetadataOpened.value)
-    });
+      isMetadataOpened.value = newProps.isOpen
+      console.log('CollectionModal watch isOpen props isMetadataOpened.value : ', isMetadataOpened.value)
+    })
 
     return {
       metaDataCssClass,
@@ -601,9 +599,9 @@ export default {
       metadata,
       getValue,
       ImgUrl
-    };
-  },
-};
+    }
+  }
+}
 </script>
 
 <style scoped>

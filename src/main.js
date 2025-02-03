@@ -1,17 +1,25 @@
-import './assets/css/main.css'
+import '@/assets/css/main.css'
 
-import { createApp } from 'vue'
+import { createApp, defineAsyncComponent } from 'vue'
 import App from './App.vue'
-import router from './router'
-import store from './store';
+import router from '@/router'
+import store from '@/store'
 
-import useLayout from './composables/use-layout';
+import useLayout from '@/composables/use-layout'
 
-const app = createApp(App).provide("variable-layout", useLayout())
-// .provide("variable-layout", useLayout())
+window.global = window
 
+createApp(App).provide('variable-layout', useLayout())
+  .component('PageBreak', defineAsyncComponent(() =>
+    import('@/components/PageBreak.vue')
+  ))
+  .use(router)
+  .use(store)
+  .mount('#app')
+
+/* const app = createApp(App).provide("variable-layout", useLayout())
 
 app.use(router)
 app.use(store)
 
-app.mount('#app')
+app.mount('#app') */

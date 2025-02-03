@@ -130,17 +130,17 @@
 </template>
 
 <script>
-import {computed, inject, reactive, ref, watch} from "vue"
-import { useRoute } from "vue-router"
-import router from "@/router/index.js"
+import { computed, inject, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import router from '@/router/index.js'
 
-import DocumentMetadata from "@/components/DocumentMetadata.vue"
-import { getMetadataFromApi } from "@/api/document.js"
-import CollectionTOC from "@/components/CollectionTOC.vue"
-import fetchMetadata from "@/composables/get-metadata.js";
+import DocumentMetadata from '@/components/DocumentMetadata.vue'
+import { getMetadataFromApi } from '@/api/document.js'
+import CollectionTOC from '@/components/CollectionTOC.vue'
+import fetchMetadata from '@/composables/get-metadata.js'
 
-function getSimpleObject(obj) {
-  //console.log("getSimpleObject / obj", obj)
+function getSimpleObject (obj) {
+  // console.log("getSimpleObject / obj", obj)
   let simpleObject = {}
   simpleObject = {
     identifier: obj.identifier ? obj.identifier : obj['@id'],
@@ -155,54 +155,54 @@ function getSimpleObject(obj) {
     dublincore: obj.dublincore,
     extensions: obj.extensions
   }
-  //console.log("getSimpleObject / simpleObject", simpleObject)
+  // console.log("getSimpleObject / simpleObject", simpleObject)
   return simpleObject
 }
-function findById(array, id) {
+/* function findById (array, id) {
   for (const item of array) {
-    if (item.identifier === id) return item;
+    if (item.identifier === id) return item
     if (item.children?.length) {
-      const innerResult = findById(item.children, id);
-      if (innerResult) return innerResult;
+      const innerResult = findById(item.children, id)
+      if (innerResult) return innerResult
     }
   }
 }
-function findDeep(array, id) {
-  return array.some(function(item) {
-    if(item.id === id) return item;
-    else if(item.children?.length) return findDeep(item.children, id)
+function findDeep (array, id) {
+  return array.some(function (item) {
+    if (item.id === id) return item
+    else if (item.children?.length) return findDeep(item.children, id)
   })
-}
+} */
 
 export default {
-  components: {CollectionTOC, DocumentMetadata},
+  components: { CollectionTOC, DocumentMetadata },
   props: {
-    collectionId: {
+    collectionIdentifier: {
       type: String,
       required: true
     }
   },
-  async setup(props) {
-    let state = reactive({
+  async setup (props) {
+    const state = reactive({
       isTreeOpened: false
-    });
+    })
 
-    const layout = inject("variable-layout")
+    const layout = inject('variable-layout')
 
     const route = useRoute()
 
     const isLoading = ref(false)
 
-    const collectionId = ref(props.collectionId)
+    const collectionId = ref(props.collectionIdentifier)
 
-    console.log("HelloWorld setup collectionId", collectionId.value)
+    console.log('HelloWorld setup collectionId', collectionId.value)
 
-    let collectionTOC = reactive([])
+    const collectionTOC = reactive([])
 
-    let currentCollection = reactive({})
+    const currentCollection = reactive({})
 
     const getCurrentItem = async (route) => {
-      console.log("HelloWorld getCurrentItem origin route", origin, route)
+      console.log('HelloWorld getCurrentItem origin route', origin, route)
       /*
       let response = await getMetadataFromApi(collectionId.value)
       let formatedResponse = getSimpleObject(response)
@@ -212,74 +212,67 @@ export default {
       formatedResponse = {...formatedResponse, member: formatedResponse.member.map(m => {return getSimpleObject(m)})}
       Object.assign(currentCollection, formatedResponse)
       */
-      let metadataResponse = await fetchMetadata(props.collectionId, "Collection", route)
-      console.log("HelloWorld metadataResponse", metadataResponse)
+      const metadataResponse = await fetchMetadata(props.collectionIdentifier, 'Collection', route)
+      console.log('HelloWorld metadataResponse', metadataResponse)
       let formatedResponse = getSimpleObject(metadataResponse)
-      console.log("HelloWorld formatedResponse", formatedResponse)
-      formatedResponse.member.forEach((m) => m.identifier = m['@id'])
-      formatedResponse.member.forEach((m) => m.parent = collectionId.value)
-      console.log("HelloWorld formatedResponse", formatedResponse)
-      formatedResponse = {...formatedResponse, member: formatedResponse.member?.map(m => {return getSimpleObject(m)})}
+      console.log('HelloWorld formatedResponse', formatedResponse)
+      formatedResponse.member.forEach(m => { m.identifier = m['@id'] })
+      formatedResponse.member.forEach(m => { m.parent = collectionId.value })
+      console.log('HelloWorld formatedResponse', formatedResponse)
+      formatedResponse = { ...formatedResponse, member: formatedResponse.member?.map(m => { return getSimpleObject(m) }) }
       Object.assign(currentCollection, formatedResponse)
-
-
     }
 
-    //collectionTOC.value = [currentCollection.value]
-    //console.log("HelloWorld currentCollection.value / collectionTOC.value : ", currentCollection.value / collectionTOC.value)
+    // collectionTOC.value = [currentCollection.value]
+    // console.log("HelloWorld currentCollection.value / collectionTOC.value : ", currentCollection.value / collectionTOC.value)
 
-    console.log("HelloWorld collectionTOC / collectionId : ", Object.fromEntries(collectionTOC.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false])), collectionTOC, collectionId, currentCollection)
-    const target = ref(null);
+    console.log('HelloWorld collectionTOC / collectionId : ', Object.fromEntries(collectionTOC.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false])), collectionTOC, collectionId, currentCollection)
+    const target = ref(null)
 
-    const expandedById = ref(false);
-
-
+    const expandedById = ref(false)
 
     const toggleExpanded = async (event, collId) => {
-      event.preventDefault();
+      event.preventDefault()
       console.log('HelloWorld Modal toggleExpanded', collectionTOC.filter(item => item.identifier === collId)[0].member)
       if (collectionTOC.filter(item => item.identifier === collId)[0].member.length === 0) {
-        let response = await getMetadataFromApi(collId)
-        response.member.forEach((m) => m.identifier = m['@id'])
-        response.member.forEach((m) => m.parent = collId)
-        console.log('HelloWorld response', response, response.member.forEach((i) => {i.identifier = i['@id']}))
+        const response = await getMetadataFromApi(collId)
+        response.member.forEach(m => { m.identifier = m['@id'] })
+        response.member.forEach(m => { m.parent = collId })
+        console.log('HelloWorld response', response, response.member.forEach((i) => { i.identifier = i['@id'] }))
         collectionTOC.filter(item => item.identifier === collId)[0].member = response.member
         console.log('HelloWorld HelloWorld collectionTOC', collectionTOC)
       }
       expandedById.value[collId] = !expandedById.value[collId]
-      state.isTreeOpened = !state.isTreeOpened;
-      console.log("HelloWorld toggleExpanded after expandedById[collectionId] : ", collId, expandedById.value)
+      state.isTreeOpened = !state.isTreeOpened
+      console.log('HelloWorld toggleExpanded after expandedById[collectionId] : ', collId, expandedById.value)
     }
 
     const homeCssClass = computed(() => {
-      return state.isTreeOpened ? "is-tree-opened" : "";
-    });
+      return state.isTreeOpened ? 'is-tree-opened' : ''
+    })
 
     watch(
-        router.currentRoute, async (newRoute, oldRoute) => {
-          if (newRoute === oldRoute) {
-            console.log("HelloWorld watch no change in route")
-          } else {
-            isLoading.value = false
-            console.log("HelloWorld watch route.params : ", newRoute.params)
-            collectionId.value = props.collectionId
-            console.log("HelloWorld watch collectionId.value : ", collectionId.value)
-            await getCurrentItem(newRoute)
-            collectionTOC.push(currentCollection)
-            currentCollection.member.forEach(m => {
-                collectionTOC.push(getSimpleObject(m))
-              }
-            )
-            console.log("HelloWorld watch collectionTOC.value : ", collectionTOC, collectionId)
-            console.log("HelloWorld watch collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ", collectionTOC.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
-            expandedById.value = Object.fromEntries(collectionTOC.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
-            isLoading.value = true
+      router.currentRoute, async (newRoute, oldRoute) => {
+        if (newRoute === oldRoute) {
+          console.log('HelloWorld watch no change in route')
+        } else {
+          isLoading.value = false
+          console.log('HelloWorld watch route.params : ', newRoute.params)
+          collectionId.value = props.collectionIdentifier
+          console.log('HelloWorld watch collectionId.value : ', collectionId.value)
+          await getCurrentItem(newRoute)
+          collectionTOC.push(currentCollection)
+          currentCollection.member.forEach(m => {
+            collectionTOC.push(getSimpleObject(m))
           }
-
-
-        }, {deep: true, immediate: true}
-    );
-
+          )
+          console.log('HelloWorld watch collectionTOC.value : ', collectionTOC, collectionId)
+          console.log('HelloWorld watch collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', collectionTOC.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
+          expandedById.value = Object.fromEntries(collectionTOC.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
+          isLoading.value = true
+        }
+      }, { deep: true, immediate: true }
+    )
 
     return {
       isLoading,
@@ -293,11 +286,10 @@ export default {
       collectionTOC,
       toggleExpanded,
       expandedById
-    };
+    }
   }
-};
+}
 </script>
-
 
 <style scoped>
   .modal-mask {

@@ -1,25 +1,22 @@
 <template>
   <main>
-    <HelloWorld :collection-id="collectionId"/>
+    <HelloWorld :collection-identifier="collectionId"/>
   </main>
 </template>
 
 <script>
-import {useRoute} from "vue-router"
-import { ref } from "vue"
+import { useRoute } from 'vue-router'
+import { ref } from 'vue'
 
-import HelloWorld from "@/components/HelloWorld.vue"
-
-
+import HelloWorld from '@/components/HelloWorld.vue'
 
 export default {
-  name: "HomePage",
+  name: 'HomePage',
   components: { HelloWorld },
 
-  setup() {
+  setup () {
     const route = useRoute()
-    const collectionId = ref("")
-
+    const collectionId = ref('')
 
     if (route.params.collId) {
       collectionId.value = route.params.collId
@@ -27,7 +24,7 @@ export default {
       collectionId.value = 'elec'
     }
 
-    console.log("HomePage setup route : ", route)
+    console.log('HomePage setup route : ', route)
 
     return {
       route,

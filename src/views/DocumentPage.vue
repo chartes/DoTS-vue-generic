@@ -4,7 +4,7 @@
       class="modal-area"
       v-if="isLoading && isModalOpened"
       :isOpen="isModalOpened ? isModalOpened : false"
-      :collectionId="selectedCollectionId"
+      :collectionIdentifier="selectedCollectionId"
       :currentItem="selectedCollection"
       :toc="flatTOC"
       @change="closeModal"
@@ -55,13 +55,13 @@
       <!--<liste-these-annee
         v-if="parentCollectionId"
         class="liste-theses-area app-width-padding"
-        :id="parentCollectionId"
+        :identifier="parentCollectionId"
         :textid="resourceId"
-        :toc="flatTOC"
+        :tocprops="flatTOC"
       />-->
       <document-metadata
         :ispopup="false"
-        :metadata="metadata"
+        :metadataprop="metadata"
         class="metadata-area app-width-margin"
       />
     </div>
@@ -75,6 +75,7 @@
           <nav>
             <nav>
               <TOC
+               :margin="0"
                :toc="topTOC"
                :maxcitedepth="TOC_DEPTH"
                @update-ref-id="getNewRefId"
@@ -157,7 +158,7 @@
             v-for="(item, index) in arianeCollection.value" :key="index"
             :class="item.length > 1 ? 'several-parent' : refId ? item[0].identifier === refId ? 'is-current' : '' : item[0].identifier === resourceId ? 'is-current' : ''"
           >
-            <template v-for="ancestor in item">
+            <template v-for="(ancestor, index) in item" v-bind:key="index">
               <router-link
                 v-if="ancestor.level === arianeCollection.value[0][0].level"
                 :to="{ name: 'Home', params: {collId: ancestor.identifier} }"
@@ -221,6 +222,7 @@
           <nav>
             <nav>
               <TOC
+               :margin="0"
                :toc="asideTOC.value"
                :maxcitedepth="TOC_DEPTH"
                @update-ref-id="getNewRefId"
@@ -264,18 +266,18 @@
 </template>
 
 <script>
-import Document from "@/components/Document.vue"
-import TOC from "@/components/TOC.vue"
-import ToPreviousButton from "@/components/ToPreviousButton.vue"
-import ToNextButton from "@/components/ToNextButton.vue"
-import ListeTheseAnnee from "@/components/ListeTheseAnnee.vue"
-import DocumentMetadata from "@/components/DocumentMetadata.vue"
-import ModalDocumentMetadata from "@/components/ModalDocumentMetadata.vue"
-import CollectionModal from "@/components/CollectionModal.vue"
+import Document from '@/components/Document.vue'
+import TOC from '@/components/TOC.vue'
+import ToPreviousButton from '@/components/ToPreviousButton.vue'
+import ToNextButton from '@/components/ToNextButton.vue'
+/* import ListeTheseAnnee from '@/components/ListeTheseAnnee.vue'
+import ModalDocumentMetadata from '@/components/ModalDocumentMetadata.vue' */
+import DocumentMetadata from '@/components/DocumentMetadata.vue'
+import CollectionModal from '@/components/CollectionModal.vue'
 
 import { useStore } from 'vuex'
-import useMirador from "@/composables/use-mirador"
-import { getMetadataFromApi, getParentFromApi, getTOCFromApi } from "@/api/document"
+import useMirador from '@/composables/use-mirador'
+import { getMetadataFromApi, getParentFromApi, getTOCFromApi } from '@/api/document'
 
 import {
   computed,
@@ -286,50 +288,49 @@ import {
   provide,
   ref,
   inject, nextTick
-} from "vue"
+} from 'vue'
 
-import { onBeforeRouteUpdate, useRoute } from "vue-router"
-import router from "@/router/index.js";
-import fetchMetadata from "@/composables/get-metadata.js";
-
+import { useRoute } from 'vue-router'
+import router from '@/router/index.js'
+import fetchMetadata from '@/composables/get-metadata.js'
 
 const PROJECT = `${import.meta.env.VITE_APP_PROJECT}`
 
-const sources = [
-  { name: "databnf", ext: "data.bnf.fr", type: "author_link" },
-  { name: "dbpedia", ext: "dbpedia.org", type: "author_link" },
-  { name: "idref", ext: "idref.fr", type: "author_link" },
-  { name: "cataloguebnf", ext: "catalogue.bnf.fr", type: "author_link" },
-  { name: "wikidata", ext: "wikidata", type: "author_link" },
-  { name: "wikipedia", ext: "wikipedia", type: "author_link" },
-  { name: "thenca", ext: "thenca", type: "document_link" },
-  { name: "hal", ext: "hal", type: "document_link" },
-  { name: "benc", ext: "koha", type: "document_link" },
-  { name: "sudoc", ext: "sudoc.fr", type: "document_link" },
-  { name: "biblissima", ext: "biblissima.fr", type: "document_link" },
-  { name: "creativecommons", ext: "creativecommons.org", type: "document_link" },
-  { name: "enc", ext: "manifest", type: "other_link" },
-]
+/* const sources = [
+  { name: 'databnf', ext: 'data.bnf.fr', type: 'author_link' },
+  { name: 'dbpedia', ext: 'dbpedia.org', type: 'author_link' },
+  { name: 'idref', ext: 'idref.fr', type: 'author_link' },
+  { name: 'cataloguebnf', ext: 'catalogue.bnf.fr', type: 'author_link' },
+  { name: 'wikidata', ext: 'wikidata', type: 'author_link' },
+  { name: 'wikipedia', ext: 'wikipedia', type: 'author_link' },
+  { name: 'thenca', ext: 'thenca', type: 'document_link' },
+  { name: 'hal', ext: 'hal', type: 'document_link' },
+  { name: 'benc', ext: 'koha', type: 'document_link' },
+  { name: 'sudoc', ext: 'sudoc.fr', type: 'document_link' },
+  { name: 'biblissima', ext: 'biblissima.fr', type: 'document_link' },
+  { name: 'creativecommons', ext: 'creativecommons.org', type: 'document_link' },
+  { name: 'enc', ext: 'manifest', type: 'other_link' }
+] */
 
-function findSource(id) {
-  let i = 0;
-  let source = null;
+/* function findSource (id) {
+  let i = 0
+  let source = null
 
   do {
-    source = id.toLowerCase().includes(sources[i].ext) ? sources[i] : null;
-    i++;
-  } while (i < sources.length && source === null);
+    source = id.toLowerCase().includes(sources[i].ext) ? sources[i] : null
+    i++
+  } while (i < sources.length && source === null)
 
   if (source) {
-    console.log("findSource source.name :", source.name)
-    console.log("findSource source :", source)
-    return {"name": source.name, "type": source.type}
+    console.log('findSource source.name :', source.name)
+    console.log('findSource source :', source)
+    return { name: source.name, type: source.type }
   }
 
-  return null;
-}
-function getSimpleObject(obj) {
-  //console.log("getSimpleObject / obj", obj)
+  return null
+} */
+function getSimpleObject (obj) {
+  // console.log("getSimpleObject / obj", obj)
   let simpleObject = {}
   simpleObject = {
     identifier: obj.identifier ? obj.identifier : obj['@id'],
@@ -346,70 +347,64 @@ function getSimpleObject(obj) {
     dublincore: obj.dublincore,
     extensions: obj.extensions
   }
-  //console.log("getSimpleObject / simpleObject", simpleObject)
+  // console.log("getSimpleObject / simpleObject", simpleObject)
   return simpleObject
 }
-function findById(array, id) {
+function findById (array, id) {
   for (const item of array) {
-    if (item.identifier === id) return item;
+    if (item.identifier === id) return item
     if (item.children?.length) {
-      const innerResult = findById(item.children, id);
-      if (innerResult) return innerResult;
+      const innerResult = findById(item.children, id)
+      if (innerResult) return innerResult
     }
   }
 }
-function findDeep(array, id) {
-  return array.some(function(item) {
-    if(item.id === id) return item;
-    else if(item.children?.length) return findDeep(item.children, id)
+/* function findDeep (array, id) {
+  return array.some(function (item) {
+    if (item.id === id) return item
+    else if (item.children?.length) return findDeep(item.children, id)
   })
-}
+} */
 
 export default {
-  name: "DocumentPage",
+  name: 'DocumentPage',
   components: {
-    ListeTheseAnnee,
     DocumentMetadata,
     Document,
     TOC,
     ToPreviousButton,
     ToNextButton,
-    CollectionModal,
-    ModalDocumentMetadata
-  },
+    CollectionModal
+  }, // ListeTheseAnnee, ModalDocumentMetadata
 
-  async setup() {
-    console.log("PROJECT test : ", PROJECT)
+  async setup () {
+    console.log('PROJECT test : ', PROJECT)
     const manifestIsAvailable = ref(false)
 
     // Mirador view sticky behavior
-    let miradorViewBoundingTop = ref(0);
+    const miradorViewBoundingTop = ref(0)
     const miradorViewCssStyle = computed(() => {
-      return {marginTop: miradorViewBoundingTop.value + "px"};
+      return { marginTop: miradorViewBoundingTop.value + 'px' }
     })
 
     const updateMiradorTopPosition = function () {
-      const textView = document.getElementById("text-view");
+      const textView = document.getElementById('text-view')
       if (textView) {
-        const top = textView.getBoundingClientRect().top;
-        miradorViewBoundingTop.value = top < 0 ? -Math.floor(top) : 0;
+        const top = textView.getBoundingClientRect().top
+        miradorViewBoundingTop.value = top < 0 ? -Math.floor(top) : 0
       }
     }
 
-
-
-
     const setText = (text) => {
-
       // We're going to split the string towards the end. This is just a judgment call.
       // Since we can't dynamically change the split as the container changes size (at
       // least, not with a lot more work), we have to pick a location that scales the
       // ellipsis well.
-      let splitIndex = Math.round( text.length * 0.5 )
+      const splitIndex = Math.round(text.length * 0.5)
 
       return {
-        'left': text.slice( 0, splitIndex ),
-        'right': text.slice( splitIndex )
+        left: text.slice(0, splitIndex),
+        right: text.slice(splitIndex)
       }
     }
 
@@ -431,9 +426,9 @@ export default {
       iiifManifestUrl: null,
       downloadPDF: null,
       downloadXML: null
-    }/*document_links: [],
+    }/* document_links: [],
       author_links: [],
-      other_links: [],*/
+      other_links: [], */
 
     const metadata = reactive(initial_metadata)
     const route = useRoute()
@@ -444,8 +439,8 @@ export default {
     const hash = ref(false)
     const currentItem = ref({})
     const documentType = ref()
-    let parentCollectionId = ref()
-    let collection = ref()
+    const parentCollectionId = ref()
+    const collection = ref()
 
     const isLoading = ref(false)
     const TOC_DEPTH = ref(parseInt(`${import.meta.env.VITE_APP_TOC_DEPTH}`))
@@ -453,14 +448,14 @@ export default {
     const currentLevelIndicator = ref(false)
     const currentLevel = ref(1)
     const editorialLevel = ref(parseInt(`${import.meta.env.VITE_APP_EDITORIAL_LEVEL}`))
-    let flatTOC = ref([])
-    let topTOC = ref([])
-    let asideTOC = reactive([])
+    const flatTOC = ref([])
+    const topTOC = ref([])
+    const asideTOC = reactive([])
 
-    let arianeCollection = reactive([])
-    let arianeDocument = reactive([])
+    const arianeCollection = reactive([])
+    const arianeDocument = reactive([])
 
-    let yearsWithAdditionalPositions = []
+    /* let yearsWithAdditionalPositions = [] */
     let allItemsIds = []
     const previousDocId = ref('')
     const nextDocId = ref('')
@@ -471,25 +466,23 @@ export default {
     const firstRef = ref(false)
     const lastRef = ref(false)
 
-
     const selectedCollectionId = ref('')
     const selectedCollection = reactive({})
     const isModalOpened = ref(false)
     const isMetadataOpened = ref(false)
 
-
-    const miradorInstance = useMirador("vue-mirador-container", null, 0)
+    const miradorInstance = useMirador('vue-mirador-container', null, 0)
     // provide an uninitialized instance of Mirador
-    provide("mirador", miradorInstance)
+    provide('mirador', miradorInstance)
 
-    const layout = inject("variable-layout")
+    const layout = inject('variable-layout')
 
     const getCurrentItem = async (origin, route) => {
-      console.log("getCurrentItem origin route", origin, route)
+      console.log('getCurrentItem origin route', origin, route)
       if (route.params.id) {
         resourceId.value = route.params.id
-        //let currentIdResponse = getMetadata(resourceId.value)
-        console.log("Setting resourceId : ", resourceId.value)
+        // let currentIdResponse = getMetadata(resourceId.value)
+        console.log('Setting resourceId : ', resourceId.value)
         // Check if route id param is a DoTS resourceId or a fragmentId in order to store current resourceId
         // get DotS route to identify type of Id (collection / resource / fragment)
         // if route param id is collection -> ?
@@ -497,103 +490,97 @@ export default {
         // await getMetadataFromApi(route.params.id)
         store.commit('setResourceId', route.params.id)
 
-        let response = await getMetadataFromApi(resourceId.value);
-        let parentResponse = await getParentFromApi(response['@id'])
-        //console.log("parentResponse", parentResponse["member"][0])
+        const response = await getMetadataFromApi(resourceId.value)
+        const parentResponse = await getParentFromApi(response['@id'])
+        // console.log("parentResponse", parentResponse["member"][0])
 
-        if (response["@type"] === "Resource") {
-
-          documentType.value = "Resource"
+        if (response['@type'] === 'Resource') {
+          documentType.value = 'Resource'
           currentItem.value = getSimpleObject(response)
-          currentItem.value.parent = parentResponse["member"].length > 1 ? parentResponse["member"].map(p => p['@id']): parentResponse["member"][0]['@id']
+          currentItem.value.parent = parentResponse.member.length > 1 ? parentResponse.member.map(p => p['@id']) : parentResponse.member[0]['@id']
           currentItem.value.level = 0
 
           // Fetch editorial level document parts if any (based on citeType)
           let editorialTypes = []
           if (import.meta.env.VITE_APP_EDITORIAL_TYPE && import.meta.env.VITE_APP_EDITORIAL_TYPE.length > 0) {
-            editorialTypes = import.meta.env.VITE_APP_EDITORIAL_TYPE.replace(/\s/g, '').split(",")
+            editorialTypes = import.meta.env.VITE_APP_EDITORIAL_TYPE.replace(/\s/g, '').split(',')
           }
-          currentItem.value.editorialLevelIndicator = editorialTypes.includes(currentItem.citeType) ? "toEdit" : "renderToc"
+          currentItem.value.editorialLevelIndicator = editorialTypes.includes(currentItem.value.citeType) ? 'toEdit' : 'renderToc'
           store.commit('setCurrentItem', currentItem.value)
-          console.log("init type : ", documentType.value)
+          console.log('init type : ', documentType.value)
           isModalOpened.value = false
         } else {
-          documentType.value = "Collection"
+          documentType.value = 'Collection'
 
           currentItem.value = getSimpleObject(response)
-          currentItem.value.parent = parentResponse["member"] ? parentResponse["member"][0]['@id'] : null
+          currentItem.value.parent = parentResponse.member ? parentResponse.member[0]['@id'] : null
           currentItem.value.level = -1
-          currentItem.value.editorialLevelIndicator = "renderToc"
+          currentItem.value.editorialLevelIndicator = 'renderToc'
           store.commit('setCurrentItem', currentItem.value)
-          console.log("init type : ", documentType.value)
+          console.log('init type : ', documentType.value)
           isModalOpened.value = true
         }
         currentLevelIndicator.value = currentItem.value.editorialLevelIndicator
-        refId.value = Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")
-                    ? refId.value = route.query.refId
-                    : false
+        refId.value = Object.keys(route.query).length > 0 && Object.keys(route.query).includes('refId')
+          ? refId.value = route.query.refId
+          : false
 
         hash.value = route.hash && route.hash.length > 0
-                    ? hash.value = route.hash.replace("#", "")
-                    : false
+          ? hash.value = route.hash.replace('#', '')
+          : false
       }
     }
 
-
-
     const getMetadata = async () => {
-      let metadataResponse = await fetchMetadata(resourceId.value, "Resource", route)
-      console.log("DocumentPage getMetadata metadataResponse", metadataResponse)
+      const metadataResponse = await fetchMetadata(resourceId.value, 'Resource', route)
+      console.log('DocumentPage getMetadata metadataResponse', metadataResponse)
       Object.assign(metadata, metadataResponse)
     }
 
     // Setting up the Tables Of Content Top and Left
     const getTOC = async (reason) => {
-      console.log("DocumentPage getTOC reason", reason)
-      console.log("DocumentPage getTOC resourceId.value", resourceId.value)
-      console.log("DocumentPage getTOC refId.value", refId.value)
+      console.log('DocumentPage getTOC reason', reason)
+      console.log('DocumentPage getTOC resourceId.value', resourceId.value)
+      console.log('DocumentPage getTOC refId.value', refId.value)
 
-      let response = await getTOCFromApi(resourceId.value, documentType.value);
-      console.log("initial response", response)
+      const response = await getTOCFromApi(resourceId.value, documentType.value)
+      console.log('initial response', response)
       if (response.member && documentType.value === 'Collection') {
-        response.member.forEach((m) => m.parent = response['@id'])
-        response.member.forEach((m) => m.level = store.state.currentItem.level + 1)
-        response.member.forEach((m) => m.identifier = m['@id'])
+        response.member.forEach(m => { m.parent = response['@id'] })
+        response.member.forEach(m => { m.level = store.state.currentItem.level + 1 })
+        response.member.forEach(m => { m.identifier = m['@id'] })
       }
-      let parentNode = {}
+      const parentNode = {}
 
-      let parentId = store.state.currentItem.parent ? store.state.currentItem.parent : null /*Array.isArray(store.state.currentItem.parent) ? store.state.currentItem.parent[0] : */
-      console.log("initial parentNode", parentNode)
+      const parentId = store.state.currentItem.parent ? store.state.currentItem.parent : null /* Array.isArray(store.state.currentItem.parent) ? store.state.currentItem.parent[0] : */
+      console.log('initial parentNode', parentNode)
       parentCollectionId.value = parentId
-      console.log("parentCollectionId", parentCollectionId)
+      console.log('parentCollectionId', parentCollectionId)
 
       let processFlatTOC = []
       processFlatTOC = [store.state.currentItem, ...response.member]
-      processFlatTOC.filter(item => item.level === 1).forEach((i) => {i.parent = resourceId.value})
+      processFlatTOC.filter(item => item.level === 1).forEach(i => { i.parent = resourceId.value })
 
       // Fetch editorial level document parts if any (based on citeType)
       let editorialTypes = []
       if (import.meta.env.VITE_APP_EDITORIAL_TYPE && import.meta.env.VITE_APP_EDITORIAL_TYPE.length > 0) {
-        editorialTypes = import.meta.env.VITE_APP_EDITORIAL_TYPE.replace(/\s/g, '').split(",")
+        editorialTypes = import.meta.env.VITE_APP_EDITORIAL_TYPE.replace(/\s/g, '').split(',')
       }
       // Validate that there are actually in the data
-      let editorialTypesIsValid = processFlatTOC.some(item => editorialTypes.some(l => l === item.citeType))
-      console.log("editorialTypes editorialTypesIsValid", editorialTypes, editorialTypesIsValid)
+      editorialTypesIsValid.value = processFlatTOC.some(item => editorialTypes.some(l => l === item.citeType))
+      console.log('editorialTypes editorialTypesIsValid.value', editorialTypes, editorialTypesIsValid.value)
 
+      console.log('initial3 processFlatTOC', processFlatTOC)
 
-
-      console.log("initial3 processFlatTOC", processFlatTOC)
-
-
-      async function parentLoop(node) {
+      async function parentLoop (node) {
         if (node.parent && node.parent.length > 0) {
           if (Array.isArray(node.parent)) {
-            /*multiple parents */
+            /* multiple parents */
             for (let i = 0; i < node.parent.length; i += 1) {
-              console.log("appendParentInTOC / node.parent / p", node.parent, node.parent[i])
-              let appendParentInTOC = await getMetadataFromApi(node.parent[i])
-              console.log("appendParentInTOC", appendParentInTOC)
-              let parentResponse = await getParentFromApi(appendParentInTOC['@id'])
+              console.log('appendParentInTOC / node.parent / p', node.parent, node.parent[i])
+              const appendParentInTOC = await getMetadataFromApi(node.parent[i])
+              console.log('appendParentInTOC', appendParentInTOC)
+              const parentResponse = await getParentFromApi(appendParentInTOC['@id'])
               // Compute parent level from current node
               parentResponse.level = node.level - 1
               // Append this level to the parent instance to be added in the TOC
@@ -601,7 +588,7 @@ export default {
               appendParentInTOC.editorialLevelIndicator = 'renderToc'
               // Complete the list of children of the parent
               appendParentInTOC.member = appendParentInTOC.member.map(obj => {
-                let updatedMember = {
+                const updatedMember = {
                   identifier: obj.identifier ? obj.identifier : obj['@id'],
                   ...obj
                 }
@@ -610,7 +597,7 @@ export default {
               appendParentInTOC.children = []
 
               appendParentInTOC.children = appendParentInTOC.member.filter(item => item.identifier !== node.identifier).map(obj => {
-                let updatedMember = {
+                const updatedMember = {
                   identifier: obj.identifier ? obj.identifier : obj['@id'],
                   citeType: obj['@type'] ? obj['@type'] : obj.citeType,
                   expanded: obj.identifier === node.id ? node.expanded : undefined,
@@ -620,15 +607,15 @@ export default {
                   editorialLevelIndicator: node.editorialLevelIndicator,
                   totalChildren: obj.totalChildren,
                   children: obj.children ? obj.children : [],
-                  member: obj.member? obj.member : [],
+                  member: obj.member ? obj.member : [],
                   parent: node.parent,
                   dublincore: obj.dublincore,
                   extensions: obj.extensions
                 }
                 return updatedMember
               })
-              //appendParentInTOC.member = appendParentInTOC.member.map(m => { return getSimpleObject(m)})
-              //appendParentInTOC.children = appendParentInTOC.member
+              // appendParentInTOC.member = appendParentInTOC.member.map(m => { return getSimpleObject(m)})
+              // appendParentInTOC.children = appendParentInTOC.member
               appendParentInTOC.expanded = true
               // Check if the parent has itself a parent
               if (parentResponse.member) {
@@ -645,7 +632,7 @@ export default {
                 await parentLoop(appendParentInTOC)
               }
             }
-              /*let appendParentInTOC = await getMetadataFromApi(node.parent[0])
+            /* let appendParentInTOC = await getMetadataFromApi(node.parent[0])
               console.log("appendParentInTOC", appendParentInTOC)
               let parentResponse = await getParentFromApi(appendParentInTOC['@id'])
               // Compute parent level from current node
@@ -670,152 +657,146 @@ export default {
               // If the parent has itself a parent : loop
               if (appendParentInTOC.parent) {
                 await parentLoop(appendParentInTOC)
-              }*/
+              } */
           } else {
-              let appendParentInTOC = await getMetadataFromApi(node.parent)
-              console.log("appendParentInTOC", appendParentInTOC)
+            const appendParentInTOC = await getMetadataFromApi(node.parent)
+            console.log('appendParentInTOC', appendParentInTOC)
 
-              let parentResponse = await getParentFromApi(appendParentInTOC['@id'])
-              // Compute parent level from current node
-              parentResponse.level = node.level - 1
-              // Append this level to the parent instance to be added in the TOC
-              appendParentInTOC.level = parentResponse.level
-              appendParentInTOC.editorialLevelIndicator = 'renderToc'
-              // Complete the list of children of the parent
+            const parentResponse = await getParentFromApi(appendParentInTOC['@id'])
+            // Compute parent level from current node
+            parentResponse.level = node.level - 1
+            // Append this level to the parent instance to be added in the TOC
+            appendParentInTOC.level = parentResponse.level
+            appendParentInTOC.editorialLevelIndicator = 'renderToc'
+            // Complete the list of children of the parent
             appendParentInTOC.member = appendParentInTOC.member.map(obj => {
-                let updatedMember = {
-                  identifier: obj.identifier ? obj.identifier : obj['@id'],
-                  ...obj
-                }
-                return updatedMember
-              })
-              appendParentInTOC.children = []
-
-              appendParentInTOC.children = appendParentInTOC.member.filter(item => item.identifier !== node.identifier).map(obj => {
-                let updatedMember = {
-                  identifier: obj.identifier ? obj.identifier : obj['@id'],
-                  citeType: obj['@type'] ? obj['@type'] : obj.citeType,
-                  expanded: obj.identifier === node.id ? node.expanded : undefined,
-                  title: obj.title,
-                  level: node.level,
-                  link_type: node.link_type,
-                  editorialLevelIndicator: node.editorialLevelIndicator,
-                  totalChildren: obj.totalChildren,
-                  children: obj.children ? obj.children : [],
-                  member: obj.member? obj.member : [],
-                  parent: node.parent,
-                  dublincore: obj.dublincore,
-                  extensions: obj.extensions
-                }
-                return updatedMember
-              })
-              //appendParentInTOC.member = appendParentInTOC.member.map(m => { return getSimpleObject(m)})
-              //appendParentInTOC.children = appendParentInTOC.member
-              appendParentInTOC.expanded = true
-
-              // Check if the parent has itself a parent
-              if (parentResponse.member) {
-                // Then add the parent id to the parent instance to be added in the TOC
-                appendParentInTOC.parent = parentResponse.member[0]['@id']
-              } else {
-                // Otherwise add a null parent id to the parent instance to be added in the TOC
-                appendParentInTOC.parent = null
+              const updatedMember = {
+                identifier: obj.identifier ? obj.identifier : obj['@id'],
+                ...obj
               }
-              // Add this parent object to the TOC
-              processFlatTOC = [getSimpleObject(appendParentInTOC), ...processFlatTOC]
-              // If the parent has itself a parent : loop
-              if (appendParentInTOC.parent && !flatTOC.value.some(item => item.identifier === appendParentInTOC.parent)) {
-                await parentLoop(getSimpleObject(appendParentInTOC))
+              return updatedMember
+            })
+            appendParentInTOC.children = []
+
+            appendParentInTOC.children = appendParentInTOC.member.filter(item => item.identifier !== node.identifier).map(obj => {
+              const updatedMember = {
+                identifier: obj.identifier ? obj.identifier : obj['@id'],
+                citeType: obj['@type'] ? obj['@type'] : obj.citeType,
+                expanded: obj.identifier === node.id ? node.expanded : undefined,
+                title: obj.title,
+                level: node.level,
+                link_type: node.link_type,
+                editorialLevelIndicator: node.editorialLevelIndicator,
+                totalChildren: obj.totalChildren,
+                children: obj.children ? obj.children : [],
+                member: obj.member ? obj.member : [],
+                parent: node.parent,
+                dublincore: obj.dublincore,
+                extensions: obj.extensions
               }
+              return updatedMember
+            })
+            // appendParentInTOC.member = appendParentInTOC.member.map(m => { return getSimpleObject(m)})
+            // appendParentInTOC.children = appendParentInTOC.member
+            appendParentInTOC.expanded = true
+
+            // Check if the parent has itself a parent
+            if (parentResponse.member) {
+              // Then add the parent id to the parent instance to be added in the TOC
+              appendParentInTOC.parent = parentResponse.member[0]['@id']
+            } else {
+              // Otherwise add a null parent id to the parent instance to be added in the TOC
+              appendParentInTOC.parent = null
+            }
+            // Add this parent object to the TOC
+            processFlatTOC = [getSimpleObject(appendParentInTOC), ...processFlatTOC]
+            // If the parent has itself a parent : loop
+            if (appendParentInTOC.parent && !flatTOC.value.some(item => item.identifier === appendParentInTOC.parent)) {
+              await parentLoop(getSimpleObject(appendParentInTOC))
+            }
           }
-
         }
       }
 
-
       await parentLoop(store.state.currentItem)
 
+      console.log('setup afterParents processFlatTOC : ', processFlatTOC)
 
-      console.log("setup afterParents processFlatTOC : ", processFlatTOC)
+      // Move ultimate ancestor to first position
 
-      //Move ultimate ancestor to first position
-
-
-      let ultimateAncestor = processFlatTOC.filter(item => item.parent === null)[0]
-      let ultimateAncestorIndex = processFlatTOC.findIndex(item => item.parent === null)
-      console.log("setup afterParents find ultimate ancestor : ", processFlatTOC, ultimateAncestor, ultimateAncestorIndex)
+      const ultimateAncestor = processFlatTOC.filter(item => item.parent === null)[0]
+      const ultimateAncestorIndex = processFlatTOC.findIndex(item => item.parent === null)
+      console.log('setup afterParents find ultimate ancestor : ', processFlatTOC, ultimateAncestor, ultimateAncestorIndex)
 
       processFlatTOC.splice(ultimateAncestorIndex, 1)
       processFlatTOC.unshift(ultimateAncestor)
-      console.log("setup afterParents find ultimate ancestor after: ", processFlatTOC, ultimateAncestor, ultimateAncestorIndex)
+      console.log('setup afterParents find ultimate ancestor after: ', processFlatTOC, ultimateAncestor, ultimateAncestorIndex)
 
-
-      let maxTocDepth = Math.max(...processFlatTOC.map(item => item.level))
-      console.log("document DoTS maxTocDepth : ", maxTocDepth)
+      const maxTocDepth = Math.max(...processFlatTOC.map(item => item.level))
+      console.log('document DoTS maxTocDepth : ', maxTocDepth)
 
       editorialLevel.value = parseInt(`${import.meta.env.VITE_APP_EDITORIAL_LEVEL}`)
-      console.log("USER editorialLevel.value / typeof : ", editorialLevel.value, typeof(editorialLevel.value))
+      console.log('USER editorialLevel.value / typeof : ', editorialLevel.value, typeof (editorialLevel.value))
       editorialLevel.value = editorialLevel.value > maxTocDepth ? 0 : editorialLevel.value
-      console.log("VALIDATED editorialLevel.value / typeof : ", editorialLevel.value, typeof(editorialLevel.value))
+      console.log('VALIDATED editorialLevel.value / typeof : ', editorialLevel.value, typeof (editorialLevel.value))
 
-      console.log("currentLevel / typeof : ", currentLevel, typeof(currentLevel))
+      console.log('currentLevel / typeof : ', currentLevel, typeof (currentLevel.value))
 
-      console.log("TOC_DEPTH.value / typeof : ", TOC_DEPTH.value, typeof(TOC_DEPTH.value))
+      console.log('TOC_DEPTH.value / typeof : ', TOC_DEPTH.value, typeof (TOC_DEPTH.value))
 
       if (refId.value) {
-        console.log("there is a refId , update currentLevel", processFlatTOC.filter(item => item.identifier === refId.value)[0].level)
+        console.log('there is a refId , update currentLevel', processFlatTOC.filter(item => item.identifier === refId.value)[0].level)
         currentLevel.value = processFlatTOC.filter(item => item.identifier === refId.value)[0].level
-        console.log("there is a refId , updated currentLevel", currentLevel.value)
+        console.log('there is a refId , updated currentLevel', currentLevel.value)
       } else {
-        console.log("there is NO refId , update currentLevel to 0", 0)
+        console.log('there is NO refId , update currentLevel to 0', 0)
         currentLevel.value = 0
-        console.log("there is NO refId , updated currentLevel", currentLevel.value)
+        console.log('there is NO refId , updated currentLevel', currentLevel.value)
       }
 
-      let startTimeBuildTOC = new Date();
-      if (editorialTypesIsValid) {
+      const startTimeBuildTOC = new Date()
+      if (editorialTypesIsValid.value) {
+        const editorialTypeTOC = list_to_tree_types(processFlatTOC)
+        console.log('flatTOC editorialTypeTOC', editorialTypeTOC)
 
-        let editorialTypeTOC = list_to_tree_types(processFlatTOC)
-        console.log("flatTOC editorialTypeTOC", editorialTypeTOC)
-
-        function list_to_tree_types(flat_toc) {
-          var map = {}, node, roots = [], i;
+        function list_to_tree_types (flat_toc) {
+          const map = {}; let node; const roots = []; let i
 
           for (i = 0; i < flat_toc.length; i += 1) {
-            map[flat_toc[i].identifier] = i; // initialize the map
-            flat_toc[i].children = flat_toc[i].children ? flat_toc[i].children : [] ; // initialize the children
+            map[flat_toc[i].identifier] = i // initialize the map
+            flat_toc[i].children = flat_toc[i].children ? flat_toc[i].children : [] // initialize the children
           }
           for (i = 0; i < flat_toc.length; i += 1) {
             node = flat_toc[i]
             node.identifier = node.identifier ? node.identifier : node['@id']
 
-            //console.log("flatTOC level debug node.children node.member", node)
+            // console.log("flatTOC level debug node.children node.member", node)
             if (node.parent && node.parent.length > 0 && i > 0) {
-              //console.log("check node.parent error : ", flatTOC, node, i)
+              // console.log("check node.parent error : ", flatTOC, node, i)
               // TODO? if you have dangling branches check that map[node.parent] exists
               if (Array.isArray(node.parent)) {
-                /*multiple parents*/
+                /* multiple parents */
                 for (let i = 0; i < node.parent.length; i += 1) {
-                  //console.log("check if child already in children ", node, flat_toc[map[node.parent[i]]].children.some(item => item.identifier === node.identifier))
-                  let index = flat_toc[map[node.parent[i]]].children.findIndex(o => o.identifier === node.identifier);
+                  // console.log("check if child already in children ", node, flat_toc[map[node.parent[i]]].children.some(item => item.identifier === node.identifier))
+                  const index = flat_toc[map[node.parent[i]]].children.findIndex(o => o.identifier === node.identifier)
                   if (index > -1) {
-                      flat_toc[map[node.parent[i]]].children[index] = node
+                    flat_toc[map[node.parent[i]]].children[index] = node
                   } else {
                     flat_toc[map[node.parent[i]]].children.push(node)
                   }
-                  //console.log("check if child node after addition of childs ", node, flat_toc[map[node.parent[i]]])
+                  // console.log("check if child node after addition of childs ", node, flat_toc[map[node.parent[i]]])
                 }/*
-                flat_toc[map[node.parent[0]]].children.push(node)*/
+                flat_toc[map[node.parent[0]]].children.push(node) */
               } else {
-                //console.log("check if child 2 already in children ", node, flat_toc[map[node.parent]].children.some(item => item.identifier === node.identifier))
-                let index = flat_toc[map[node.parent]].children.findIndex(o => o.identifier === node.identifier);
-                  if (index > -1) {
-                    flat_toc[map[node.parent]].children[index] = node
-                  } else {
-                    flat_toc[map[node.parent]].children.push(node)
-                  }
-                //flat_toc[map[node.parent]].children.push(node)
-                //console.log("check if child 2 node after addition of childs ", node, flat_toc[map[node.parent]])
+                // console.log("check if child 2 already in children ", node, flat_toc[map[node.parent]].children.some(item => item.identifier === node.identifier))
+                const index = flat_toc[map[node.parent]].children.findIndex(o => o.identifier === node.identifier)
+                if (index > -1) {
+                  flat_toc[map[node.parent]].children[index] = node
+                } else {
+                  flat_toc[map[node.parent]].children.push(node)
+                }
+                // flat_toc[map[node.parent]].children.push(node)
+                // console.log("check if child 2 node after addition of childs ", node, flat_toc[map[node.parent]])
               }
               if (processFlatTOC.filter(item => item.identifier === node.identifier)[0]) {
                 Object.assign(processFlatTOC.filter(item => item.identifier === node.identifier)[0], node)
@@ -830,41 +811,37 @@ export default {
           return roots
         }
 
-        let testTOC = editorialTypeTOC
+        const testTOC = editorialTypeTOC
 
-        editorialTypeTOC.forEach((item) => item.identifier = item.identifier ? item.identifier : item['@id'])
+        editorialTypeTOC.forEach(item => { item.identifier = item.identifier ? item.identifier : item['@id'] })
 
-        console.log("testTOC without addFlag function", testTOC)
+        console.log('testTOC without addFlag function', testTOC)
 
-
-        function addFlag(data, level = 0, indicator = false, ancestorId) {
-
+        function addFlag (data, level = 0, indicator = false, ancestorId) {
           return data.map(({ citeType, children = [], ...rest }) => {
-
             const node = { ...rest, citeType }
-            //console.log("addFlag node", node.citeType, editorialTypes, !editorialTypes.includes(node.citeType), indicator)
+            // console.log("addFlag node", node.citeType, editorialTypes, !editorialTypes.includes(node.citeType), indicator)
             if (!editorialTypes.includes(node.citeType) && !indicator) {
               node.editorialLevelIndicator = 'renderToc'
-              node["link_type"] = "link"
-              if (node.level <=0) {
-
+              node.link_type = 'link'
+              if (node.level <= 0) {
                 node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${node.identifier}`
                 node.router = node.identifier
                 node.router_params = node.identifier
-                //console.log("addFlag on node.level <=0 :", node)
+                // console.log("addFlag on node.level <=0 :", node)
               } else {
                 node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}?refId=${node.identifier}`
                 node.router = `${route.params.id}?refId=${node.identifier}`
                 node.router_params = route.params.id
                 node.router_refid = node.identifier
               }
-              //console.log("addFlag not in types and no indicator", node, node.citeType, indicator, node.identifier)
+              // console.log("addFlag not in types and no indicator", node, node.citeType, indicator, node.identifier)
             } else if (editorialTypes.includes(node.citeType)) {
               ancestorId = node.identifier
               indicator = true
               node.editorialLevelIndicator = 'toEdit'
-              node["link_type"] = "link"
-              if (node.level <=0) {
+              node.link_type = 'link'
+              if (node.level <= 0) {
                 node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}/document/${node.identifier}test`
                 node.router = node.identifier
               } else {
@@ -873,12 +850,12 @@ export default {
                 node.router_params = route.params.id
                 node.router_refid = node.identifier
               }
-              //console.log("addFlag in types", node, node.citeType, indicator)
-            } else if (node.level > level && indicator ) {
+              // console.log("addFlag in types", node, node.citeType, indicator)
+            } else if (node.level > level && indicator) {
               node.editorialLevelIndicator = 'hash'
-              node["link_type"] = "hash"
-              node["ancestor_editorialLevel"] = ancestorId
-              //if (Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")) {
+              node.link_type = 'hash'
+              node.ancestor_editorialLevel = ancestorId
+              // if (Object.keys(route.query).length > 0 && Object.keys(route.query).includes("refId")) {
               if (node.ancestor_editorialLevel !== route.params.id) {
                 node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}?refId=${node.ancestor_editorialLevel}#${node.identifier}`
                 node.router = `${route.params.id}?refId=${node.ancestor_editorialLevel}#${node.identifier}`
@@ -893,18 +870,18 @@ export default {
                 node.router_params = route.params.id
                 node.router_hash = `#${node.identifier}`
               }
-              /*} else {
+              /* } else {
                 node.url = `TEST!!!!!!!${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}#${node.identifier}`
                 node.router = `${route.params.id}#${node.identifier}`
                 node.hash = `#${node.identifier}`
-              }*/
-              //console.log("addFlag in types below ", node, node.citeType, indicator)
+              } */
+              // console.log("addFlag in types below ", node, node.citeType, indicator)
             } else {
               indicator = false
-              //console.log("addFlag resetting level ? node node.level", node, node.citeType, node.level, level)
+              // console.log("addFlag resetting level ? node node.level", node, node.citeType, node.level, level)
             }
             if (children.length) {
-              //console.log("flatTOC debug children.length children", children.length, children)
+              // console.log("flatTOC debug children.length children", children.length, children)
               node.children = addFlag(children, node.level, indicator, ancestorId)
             }
             if (processFlatTOC.filter(item => item.identifier === node.identifier)[0]) {
@@ -917,13 +894,10 @@ export default {
         }
 
         topTOC.value = addFlag(editorialTypeTOC)
-        console.log("addFlag debug topTOC.value", addFlag(editorialTypeTOC), processFlatTOC)
+        console.log('addFlag debug topTOC.value', addFlag(editorialTypeTOC), processFlatTOC)
 
-
-
-
-        let startTimefindById = new Date();
-        /*flatTOC.value.forEach((i) => {
+        const startTimefindById = new Date()
+        /* flatTOC.value.forEach((i) => {
           if (i.identifier === 'Paris') {
             console.log("updating flatToc from topTOC Paris ex :", flatTOC.value, i, topTOC.value.filter(item => item.identifier === i.identifier))
           }
@@ -936,80 +910,79 @@ export default {
           i.editorialLevelIndicator = itemToUpdate.editorialLevelIndicator
           i.link_type = itemToUpdate.link_type
           i.hash = itemToUpdate.hash ? itemToUpdate.hash : undefined
-        })*/
-        let endTimefindById = new Date();
-        console.log("Timing findById : ", endTimefindById - startTimefindById)
-        //console.log("flatTOC.value updated after editorialType : ", flatTOC.value)
-        console.log("processFlatTOC updated after editorialType : ", processFlatTOC)
-        console.log("topTOC.value based on editorialType : ", topTOC.value)
-        //console.log("deepEqual(topTOC.value, testTOC)", deepEqual(flatTOC.value, processFlatTOC))
+        }) */
+        const endTimefindById = new Date()
+        console.log('Timing findById : ', endTimefindById - startTimefindById)
+        // console.log("flatTOC.value updated after editorialType : ", flatTOC.value)
+        console.log('processFlatTOC updated after editorialType : ', processFlatTOC)
+        console.log('topTOC.value based on editorialType : ', topTOC.value)
+        // console.log("deepEqual(topTOC.value, testTOC)", deepEqual(flatTOC.value, processFlatTOC))
 
         flatTOC.value = processFlatTOC
 
         if (refId.value) {
-          console.log("there is a refId , update currentLevelIndicator", currentLevelIndicator.value)
+          console.log('there is a refId , update currentLevelIndicator.value', currentLevelIndicator.value)
           currentLevelIndicator.value = flatTOC.value.find(i => i.identifier === refId.value).editorialLevelIndicator
-          console.log("there is a refId , updated currentLevelIndicator", currentLevelIndicator.value)
+          console.log('there is a refId , updated currentLevelIndicator.value', currentLevelIndicator.value)
         } else {
-          console.log("there is NO refId , update currentLevelIndicator", currentLevelIndicator.value)
+          console.log('there is NO refId , update currentLevelIndicator.value', currentLevelIndicator.value)
           currentLevelIndicator.value = flatTOC.value.find(i => i.identifier === resourceId.value).editorialLevelIndicator
-          console.log("there is NO refId , updated currentLevelIndicator", currentLevelIndicator.value)
+          console.log('there is NO refId , updated currentLevelIndicator.value', currentLevelIndicator.value)
         }
       }
-      let endTimeBuildTOC = new Date();
-      console.log("TimeBuildTOC : ", endTimeBuildTOC - startTimeBuildTOC)
+      const endTimeBuildTOC = new Date()
+      console.log('TimeBuildTOC : ', endTimeBuildTOC - startTimeBuildTOC)
 
-      if (!editorialTypesIsValid) {
+      if (!editorialTypesIsValid.value) {
         topTOC.value = list_to_tree(flatTOC.value, editorialLevel.value)
-        console.log("topTOC.value based on levels : ", topTOC.value)
+        console.log('topTOC.value based on levels : ', topTOC.value)
       }
-      console.log("topTOC.value based on editorialLevel before: ", topTOC.value, findById(topTOC.value, resourceId.value))
+      console.log('topTOC.value based on editorialLevel before: ', topTOC.value, findById(topTOC.value, resourceId.value))
       topTOC.value = findById(topTOC.value, resourceId.value).children
-      //topTOC.value = topTOC.value.filter(item => item.identifier === resourceId.value)[0].children
-      console.log("topTOC.value based on editorialLevel : ", topTOC.value)
+      // topTOC.value = topTOC.value.filter(item => item.identifier === resourceId.value)[0].children
+      console.log('topTOC.value based on editorialLevel : ', topTOC.value)
 
-
-      function list_to_tree(flat_toc, level, editorialTypes) {
-        var map = {}, node, roots = [], i;
+      function list_to_tree (flat_toc, level, editorialTypes) {
+        const map = {}; let node; const roots = []; let i
 
         for (i = 0; i < flat_toc.length; i += 1) {
           map[flat_toc[i].identifier] = i // initialize the map
           flat_toc[i].children = flat_toc[i].children ? flat_toc[i].children : [] // initialize the children
         }
-        let ancestor_editorialLevel = ""
+        let ancestor_editorialLevel = ''
         for (i = 0; i < flat_toc.length; i += 1) {
           node = flat_toc[i]
           node.identifier = node.identifier ? node.identifier : node['@id']
 
           if (node.level <= 0) {
-            //console.log("node level < editorial level : ", node)
+            // console.log("node level < editorial level : ", node)
             node.editorialLevelIndicator = 'renderToc'
-            node["link_type"] = "link"
+            node.link_type = 'link'
             node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}/document/${node.identifier}`
             node.router = node.identifier
             node.router_params = node.identifier
           } else if (node.level < level && level > 0) {
-            //console.log("node level < editorial level : ", node)
+            // console.log("node level < editorial level : ", node)
             node.editorialLevelIndicator = 'renderToc'
-            node["link_type"] = "link"
+            node.link_type = 'link'
             node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}?refId=${node.identifier}`
             node.router = `${route.params.id}?refId=${node.identifier}`
             node.router_params = route.params.id
             node.router_refid = node.identifier
           } else if (node.level === level) {
-            //console.log("node level === editorial level : ", node)
+            // console.log("node level === editorial level : ", node)
             ancestor_editorialLevel = node.identifier
             node.editorialLevelIndicator = 'toEdit'
-            node["link_type"] = "link"
+            node.link_type = 'link'
             node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}?refId=${node.identifier}`
             node.router = `${route.params.id}?refId=${node.identifier}`
             node.router_params = route.params.id
             node.router_refid = node.identifier
           } else {
-            //console.log("node level > editorial level : ", node)
-            node["ancestor_editorialLevel"] = ancestor_editorialLevel
+            // console.log("node level > editorial level : ", node)
+            node.ancestor_editorialLevel = ancestor_editorialLevel
             node.editorialLevelIndicator = 'hash'
-            node["link_type"] = "hash"
+            node.link_type = 'hash'
             if (node.ancestor_editorialLevel !== route.params.id) {
               node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}${route.path}?refId=${node.ancestor_editorialLevel}#${node.identifier}`
               node.router = `${route.params.id}?refId=${node.ancestor_editorialLevel}#${node.identifier}`
@@ -1017,7 +990,6 @@ export default {
               node.router_params = route.params.id
               node.router_refid = node.ancestor_editorialLevel
               node.router_hash = `#${node.identifier}`
-
             } else {
               node.url = `${window.location.origin}${import.meta.env.VITE_APP_APP_ROOT_URL}/document/${node.identifier}#${node.identifier}`
               node.router = `${route.params.id}#${node.identifier}`
@@ -1027,180 +999,178 @@ export default {
             }
           }
           if (node.parent && node.parent.length > 0 && i > 0) {
-            //console.log("check node.parent error : ", flatTOC, node)
+            // console.log("check node.parent error : ", flatTOC, node)
             // TODO? if you have dangling branches check that map[node.parent] exists
-                          if (Array.isArray(node.parent)) {
-                /*multiple parents*/
-                for (let i = 0; i < node.parent.length; i += 1) {
-                  //console.log("check if child already in children ", node, flat_toc[map[node.parent[i]]].children.some(item => item.identifier === node.identifier))
-                  let index = flat_toc[map[node.parent[i]]].children.findIndex(o => o.identifier === node.identifier);
-                  if (index > -1) {
-                      flat_toc[map[node.parent[i]]].children[index] = node
-                  } else {
-                    flat_toc[map[node.parent[i]]].children.push(node)
-                  }
-                  //console.log("check if child node after addition of childs ", node, flat_toc[map[node.parent[i]]])
-                }/*
-                flat_toc[map[node.parent[0]]].children.push(node)*/
+            if (Array.isArray(node.parent)) {
+              /* multiple parents */
+              for (let i = 0; i < node.parent.length; i += 1) {
+                // console.log("check if child already in children ", node, flat_toc[map[node.parent[i]]].children.some(item => item.identifier === node.identifier))
+                const index = flat_toc[map[node.parent[i]]].children.findIndex(o => o.identifier === node.identifier)
+                if (index > -1) {
+                  flat_toc[map[node.parent[i]]].children[index] = node
+                } else {
+                  flat_toc[map[node.parent[i]]].children.push(node)
+                }
+                // console.log("check if child node after addition of childs ", node, flat_toc[map[node.parent[i]]])
+              }/*
+                flat_toc[map[node.parent[0]]].children.push(node) */
+            } else {
+              // console.log("check if child 2 already in children ", node, flat_toc[map[node.parent]].children.some(item => item.identifier === node.identifier))
+              const index = flat_toc[map[node.parent]].children.findIndex(o => o.identifier === node.identifier)
+              if (index > -1) {
+                flat_toc[map[node.parent]].children[index] = node
               } else {
-                //console.log("check if child 2 already in children ", node, flat_toc[map[node.parent]].children.some(item => item.identifier === node.identifier))
-                let index = flat_toc[map[node.parent]].children.findIndex(o => o.identifier === node.identifier);
-                  if (index > -1) {
-                    flat_toc[map[node.parent]].children[index] = node
-                  } else {
-                    flat_toc[map[node.parent]].children.push(node)
-                  }
-                //flat_toc[map[node.parent]].children.push(node)
-                //console.log("check if child 2 node after addition of childs ", node, flat_toc[map[node.parent]])
+                flat_toc[map[node.parent]].children.push(node)
               }
+              // flat_toc[map[node.parent]].children.push(node)
+              // console.log("check if child 2 node after addition of childs ", node, flat_toc[map[node.parent]])
+            }
           } else {
-            roots.push(node);
+            roots.push(node)
           }
         }
-        return roots;
+        return roots
       }
 
       if (refId.value) {
-        console.log("there is a refId , update currentLevelIndicator", currentLevelIndicator.value)
+        console.log('there is a refId , update currentLevelIndicator.value', currentLevelIndicator.value)
         currentLevelIndicator.value = flatTOC.value.find(i => i.identifier === refId.value).editorialLevelIndicator
-        console.log("there is a refId , updated currentLevelIndicator", currentLevelIndicator.value)
+        console.log('there is a refId , updated currentLevelIndicator.value', currentLevelIndicator.value)
 
-
-        console.log("search RefId item in TOC and return children : ", findById(topTOC.value, refId.value).children)
+        console.log('search RefId item in TOC and return children : ', findById(topTOC.value, refId.value).children)
         asideTOC.value = findById(topTOC.value, refId.value).children
-        /*if (topTOC.value.filter(item => item.identifier === refId.value)[0] && topTOC.value.filter(item => item.identifier === refId.value)[0].children) {
+        /* if (topTOC.value.filter(item => item.identifier === refId.value)[0] && topTOC.value.filter(item => item.identifier === refId.value)[0].children) {
           asideTOC.value = topTOC.value.filter(item => item.identifier === refId.value)[0].children
           console.log("asideToc cas 1 :", asideTOC.value, topTOC.value)
         } else {
           asideTOC.value = topTOC.value.find(node => node.items.some(item => item.identifier === refId.value));
               //topTOC.value.filter(item => item.identifier === refId.value)
           console.log("asideToc cas 2 :", refId.value, asideTOC.value, topTOC.value)
-        }*/
+        } */
       } else {
-        console.log("there is NO refId , update currentLevelIndicator", currentLevelIndicator.value)
+        console.log('there is NO refId , update currentLevelIndicator.value', currentLevelIndicator.value)
         currentLevelIndicator.value = flatTOC.value.find(i => i.identifier === resourceId.value).editorialLevelIndicator
-        console.log("there is NO refId , updated currentLevelIndicator", currentLevelIndicator.value)
+        console.log('there is NO refId , updated currentLevelIndicator.value', currentLevelIndicator.value)
         asideTOC.value = topTOC.value
-        console.log("asideToc cas 3 :", asideTOC.value, topTOC.value)
+        console.log('asideToc cas 3 :', asideTOC.value, topTOC.value)
       }
       await getAncestors()
-      console.log("getTOC result topTOC : ", topTOC.value)
-      console.log("getTOC result asideTOC : ", asideTOC.value)
+      console.log('getTOC result topTOC : ', topTOC.value)
+      console.log('getTOC result asideTOC : ', asideTOC.value)
       store.commit('setTOC', flatTOC.value)
       isLoading.value = true
     }
 
     const getAncestors = async () => {
-      console.log("getAncestors start")
-      let currentItemId = hash.value ? hash.value.replace('#', '') : refId.value ? refId.value : resourceId.value
-      console.log("ancestors currentItemId : ", flatTOC.value, hash.value, refId.value, resourceId.value, currentItemId)
+      console.log('getAncestors start')
+      const currentItemId = hash.value ? hash.value.replace('#', '') : refId.value ? refId.value : resourceId.value
+      console.log('ancestors currentItemId : ', flatTOC.value, hash.value, refId.value, resourceId.value, currentItemId)
 
-      function findAncestors(item, directory) {
-        if (item.parent === null) return [item];
-        let parent = []
+      function findAncestors (item, directory) {
+        if (item.parent === null) return [item]
+        const parent = []
         if (Array.isArray(item.parent)) {
-          /*multiple parents*/
+          /* multiple parents */
           for (let i = 0; i < item.parent.length; i += 1) {
-            let parentId = item.parent[i]
-            //console.log("findAncestors item.parent", item.parent, i, item.parent[i])
+            const parentId = item.parent[i]
+            // console.log("findAncestors item.parent", item.parent, i, item.parent[i])
             parent.push(directory.find(i => i.identifier === parentId))
-            //console.log("findAncestors parent list", directory.find(i => i.identifier === parentId))
+            // console.log("findAncestors parent list", directory.find(i => i.identifier === parentId))
           }/*
-        parent.push(directory.find(i => i.identifier === item.parent[0]))*/
+        parent.push(directory.find(i => i.identifier === item.parent[0])) */
         } else {
           parent.push(directory.find(i => i.identifier === item.parent))
         }
-        //console.log("findAncestors item, parent", item, parent)
+        // console.log("findAncestors item, parent", item, parent)
 
         return [
           item,
           parent,
-          ...findAncestors(parent[0], directory),
-        ].flat();
+          ...findAncestors(parent[0], directory)
+        ].flat()
       }
 
-      console.log("ancestors flatTOC.value", flatTOC.value)
+      console.log('ancestors flatTOC.value', flatTOC.value)
 
-      let startTimeBuildAncestors = new Date();
+      const startTimeBuildAncestors = new Date()
 
-      if (editorialTypesIsValid) {
-        console.log("ancestors editorialTypesIsValid", editorialTypesIsValid, currentItemId)
-        console.log("flatTOC.value debug", flatTOC.value.filter(item => item.identifier === currentItemId))
-          // Filter the TOC down to the item we care about based on currentItemId
-
+      if (editorialTypesIsValid.value) {
+        console.log('ancestors editorialTypesIsValid.value', editorialTypesIsValid.value, currentItemId)
+        console.log('flatTOC.value debug', flatTOC.value.filter(item => item.identifier === currentItemId))
+        // Filter the TOC down to the item we care about based on currentItemId
       } else {
-        console.log("ancestors based on levels ")
+        console.log('ancestors based on levels ')
       }
 
-      //Build the collections breadcrumb
+      // Build the collections breadcrumb
       arianeCollection.value = flatTOC.value
-          // Filter the TOC down to the item we care about based on currentItemId
-          .filter(item => item.identifier === currentItemId)
-          // Map each item to an array of its ancestors
-          .map(item => findAncestors(item, flatTOC.value))
-          // Flatten the array of arrays into an array of items
-          .flat()
-          // De-duplicate the result
-          .reduce((output, item) => {
-            return !output.includes(item)
-                ? [...output, item]
-                : output;
-          }, [])
-          // From these ancestors, we only need Collection items
-          .filter(item => item.citeType === "Collection")
-          // Sorting by increasing level
-          .sort((a, b) => a.level - b.level)
+      // Filter the TOC down to the item we care about based on currentItemId
+        .filter(item => item.identifier === currentItemId)
+      // Map each item to an array of its ancestors
+        .map(item => findAncestors(item, flatTOC.value))
+      // Flatten the array of arrays into an array of items
+        .flat()
+      // De-duplicate the result
+        .reduce((output, item) => {
+          return !output.includes(item)
+            ? [...output, item]
+            : output
+        }, [])
+      // From these ancestors, we only need Collection items
+        .filter(item => item.citeType === 'Collection')
+      // Sorting by increasing level
+        .sort((a, b) => a.level - b.level)
 
-      console.log("arianeCollection.value", arianeCollection.value)
+      console.log('arianeCollection.value', arianeCollection.value)
 
-      //Group the ancestors (type collection) by level (when there are several parent collections at any level)
-      const arianeColGroupedByLevel = new Map();
+      // Group the ancestors (type collection) by level (when there are several parent collections at any level)
+      const arianeColGroupedByLevel = new Map()
 
       for (let i = 0; i < arianeCollection.value.length; i += 1) {
-        console.log("arianeCollection test order increasing", arianeCollection.value[i])
-        const level = arianeCollection.value[i].level;
-        console.log("arianeCollection arianeColGroupedByLevel i / item / level : ", i, arianeCollection.value[i], level)
-        console.log("arianeCollection arianeColGroupedByLevel / i ", i, arianeColGroupedByLevel)
+        console.log('arianeCollection test order increasing', arianeCollection.value[i])
+        const level = arianeCollection.value[i].level
+        console.log('arianeCollection arianeColGroupedByLevel i / item / level : ', i, arianeCollection.value[i], level)
+        console.log('arianeCollection arianeColGroupedByLevel / i ', i, arianeColGroupedByLevel)
         if (!arianeColGroupedByLevel.has(level)) {
-          arianeColGroupedByLevel.set(level, [arianeCollection.value[i]]);
+          arianeColGroupedByLevel.set(level, [arianeCollection.value[i]])
         } else {
-          arianeColGroupedByLevel.get(level).push(arianeCollection.value[i]);
+          arianeColGroupedByLevel.get(level).push(arianeCollection.value[i])
         }
       }
       arianeCollection.value = Array.from(arianeColGroupedByLevel.values())
 
-      //Build the breadcrumb within the resource
+      // Build the breadcrumb within the resource
       arianeDocument.value = flatTOC.value
-          // Filter the TOC down to the item we care about based on currentItemId
-          .filter(item => item.identifier === currentItemId)
-          // Map each item to an array of its ancestors
-          .map(item => findAncestors(item, flatTOC.value))
-          // Flatten the array of arrays into an array of items
-          .flat()
-          // De-duplicate the result
-          .reduce((output, item) => {
-            return !output.includes(item)
-                ? [...output, item]
-                : output;
-          }, [])
-          // From these ancestors, we only need non-collection items
-          .filter(item => item.citeType !== "Collection")
-          // From these ancestors, we don't display the current ressource
-          //.filter(item => item.identifier !== currentItemId)
-          // Sorting by increasing level
-          .sort((a, b) => a.level - b.level)
+      // Filter the TOC down to the item we care about based on currentItemId
+        .filter(item => item.identifier === currentItemId)
+      // Map each item to an array of its ancestors
+        .map(item => findAncestors(item, flatTOC.value))
+      // Flatten the array of arrays into an array of items
+        .flat()
+      // De-duplicate the result
+        .reduce((output, item) => {
+          return !output.includes(item)
+            ? [...output, item]
+            : output
+        }, [])
+      // From these ancestors, we only need non-collection items
+        .filter(item => item.citeType !== 'Collection')
+      // From these ancestors, we don't display the current ressource
+      // .filter(item => item.identifier !== currentItemId)
+      // Sorting by increasing level
+        .sort((a, b) => a.level - b.level)
 
-      console.log("arianeDocument.value", arianeDocument.value)
+      console.log('arianeDocument.value', arianeDocument.value)
 
-      let endTimeBuildAncestors = new Date();
-      console.log("TimeBuildAncestor : ", endTimeBuildAncestors - startTimeBuildAncestors)
+      const endTimeBuildAncestors = new Date()
+      console.log('TimeBuildAncestor : ', endTimeBuildAncestors - startTimeBuildAncestors)
     }
 
     const getAllPositionsYears = async () => {
-      console.log("getAllPositionsYears start")
+      console.log('getAllPositionsYears start')
       // get parent's collection of current id
-      /*let parentCollection = await getParentCollection()
-      console.log("getAllPositionsYears parentCollection", parentCollection)*/
+      /* let parentCollection = await getParentCollection()
+      console.log("getAllPositionsYears parentCollection", parentCollection) */
       if (parentCollectionId.value) {
         let data = {}
         if (Array.isArray(parentCollectionId.value)) {
@@ -1208,22 +1178,22 @@ export default {
         } else {
           data = await getMetadataFromApi(parentCollectionId.value)
         }
-        //const data = await getMetadataFromApi(parentCollectionId.value)
-        console.log("getAllPositionsYears parentCollectionId", parentCollectionId)
-        console.log("getAllPositionsYears const data", data)
-        let collectionCurrentItem = [];
-        allItemsIds = [];
-        for (var member of data.member) {
-          let item = member["@id"]
-          collectionCurrentItem.push(item);
-          let itemID = {id: member["@id"], totalChildren: member.totalChildren}
-          allItemsIds.push(itemID);
+        // const data = await getMetadataFromApi(parentCollectionId.value)
+        console.log('getAllPositionsYears parentCollectionId', parentCollectionId)
+        console.log('getAllPositionsYears const data', data)
+        const collectionCurrentItem = []
+        allItemsIds = []
+        for (const member of data.member) {
+          const item = member['@id']
+          collectionCurrentItem.push(item)
+          const itemID = { id: member['@id'], totalChildren: member.totalChildren }
+          allItemsIds.push(itemID)
         }
-        collectionCurrentItem.sort();
-        let listProm = collectionCurrentItem;
-        console.log("getAllPositionsYears check error listProm", listProm)
-        //updatePreviousDocId(listProm, resourceId.value)
-        //updateNextDocId(flatTOC, refId.value ? refId.value : resourceId.value)
+        collectionCurrentItem.sort()
+        const listProm = collectionCurrentItem
+        console.log('getAllPositionsYears check error listProm', listProm)
+        // updatePreviousDocId(listProm, resourceId.value)
+        // updateNextDocId(flatTOC, refId.value ? refId.value : resourceId.value)
       }
     }
 
@@ -1231,79 +1201,79 @@ export default {
       isModalOpened.value = false
       selectedCollectionId.value = ''
       Object.assign(selectedCollection, {})
-      console.log(" Collection modal was closed : ", selectedCollectionId.value, selectedCollection)
+      console.log(' Collection modal was closed : ', selectedCollectionId.value, selectedCollection)
     }
     const closeMetadata = () => {
       isMetadataOpened.value = false
-      console.log(" Metadata modal was closed")
+      console.log(' Metadata modal was closed')
     }
 
-    const toggleMetadata = (event => {
+    const toggleMetadata = event => {
       event.preventDefault()
       isMetadataOpened.value = !isMetadataOpened.value
-    })
+    }
 
-    const toggleCollection = ((event, collectionId) => {
-      console.log("toggleCollection collectionId : ", collectionId)
+    const toggleCollection = (event, collectionId) => {
+      console.log('toggleCollection collectionId : ', collectionId)
       event.preventDefault()
       isModalOpened.value = true
       selectedCollectionId.value = collectionId
       Object.assign(selectedCollection, flatTOC.value.filter(item => item.identifier === selectedCollectionId.value)[0])
-      console.log("toggleCollection selectedCollectionId / selectedCollection : ", selectedCollectionId.value, flatTOC.value.filter(item => item.identifier === selectedCollectionId.value)[0])
-    })
+      console.log('toggleCollection selectedCollectionId / selectedCollection : ', selectedCollectionId.value, flatTOC.value.filter(item => item.identifier === selectedCollectionId.value)[0])
+    }
 
-    function updatePreviousDocId(listProm, docId) {
-      let yearsIdwithSupplementalIndicator = listProm.filter(a => a.includes('b'))
-      console.log("yearsIdwithSupplementalIndicator : ", yearsIdwithSupplementalIndicator)
-      yearsWithAdditionalPositions = yearsIdwithSupplementalIndicator.map(string => string.replace('b', ''));
-      console.log("yearsWithAdditionalPositions : ", yearsWithAdditionalPositions)
-      let currentItem = docId
-      console.log("function updatePreviousDocId currentItem", currentItem)
-      let currentItemIndex = listProm.findIndex(id => id === docId)
-      console.log("function updatePreviousDocId currentDocIndex", currentItemIndex)
-      let firstItem = allItemsIds[0].id
-      console.log("function updatePreviousDocId firstItem", firstItem)
-      console.log("function updatePreviousDocId allItemsIds", allItemsIds)
-      if (currentItem === firstItem && currentItemIndex === allItemsIds.filter(({id}) => currentItem === id)[0].totalChildren) {
-        console.log("it is the first item in collection : ", currentItem, currentItemIndex)
-        previousDocId.value = ""
-        console.log("first item previousDocId : ", previousDocId.value)
+    /* function updatePreviousDocId (listProm, docId) {
+      const yearsIdwithSupplementalIndicator = listProm.filter(a => a.includes('b'))
+      console.log('yearsIdwithSupplementalIndicator : ', yearsIdwithSupplementalIndicator)
+      yearsWithAdditionalPositions = yearsIdwithSupplementalIndicator.map(string => string.replace('b', ''))
+      console.log('yearsWithAdditionalPositions : ', yearsWithAdditionalPositions)
+      const currentItem = docId
+      console.log('function updatePreviousDocId currentItem', currentItem)
+      const currentItemIndex = listProm.findIndex(id => id === docId)
+      console.log('function updatePreviousDocId currentDocIndex', currentItemIndex)
+      const firstItem = allItemsIds[0].id
+      console.log('function updatePreviousDocId firstItem', firstItem)
+      console.log('function updatePreviousDocId allItemsIds', allItemsIds)
+      if (currentItem === firstItem && currentItemIndex === allItemsIds.filter(({ id }) => currentItem === id)[0].totalChildren) {
+        console.log('it is the first item in collection : ', currentItem, currentItemIndex)
+        previousDocId.value = ''
+        console.log('first item previousDocId : ', previousDocId.value)
       } else {
         let previousItemIndex = null
         let previousItem = {}
         const zeroPad = (num, places) => String(num).padStart(places, '0')
-        if (currentItemIndex < allItemsIds.filter(({id}) => currentItem === id)[0].totalChildren) {
+        if (currentItemIndex < allItemsIds.filter(({ id }) => currentItem === id)[0].totalChildren) {
           // current doc is not the first one within its collection : get following doc for the same collection
-          previousDocId.value = currentItem + "_" + zeroPad(currentItemIndex - 1, 2)
+          previousDocId.value = currentItem + '_' + zeroPad(currentItemIndex - 1, 2)
         } else {
-          previousItemIndex = allItemsIds.findIndex(({id}) => id === currentItem) - 1;
+          previousItemIndex = allItemsIds.findIndex(({ id }) => id === currentItem) - 1
           previousItem = allItemsIds[previousItemIndex]
-          console.log("previousItemIndex , previousItem : ", previousItemIndex, previousItem)
+          console.log('previousItemIndex , previousItem : ', previousItemIndex, previousItem)
           previousDocId.value = previousItem.id
         }
       }
-    }
-    function updateNextDocId(flatTOC, id) {
-      console.log("function updateNextDocId flatTOC, id", flatTOC, id)
-      let editorialFlatTOC = flatTOC.value.filter(item => item.level <= editorialLevel.value)
-      let currentItem = editorialFlatTOC.find(item => item.identifier === id)
-      console.log("function updateNextDocId currentItem", currentItem)
-      let currentItemIndex = currentItem ? editorialFlatTOC.findIndex(id => id === id) : -1
-      console.log("function updateNextDocId currentItemIndex", currentItemIndex)
-      let lastItem = editorialFlatTOC.slice(-1).id
-      console.log("function updateNextDocId lastItem", editorialFlatTOC.slice(-1)[0])
+    } */
+    /* function updateNextDocId (flatTOC, id) {
+      console.log('function updateNextDocId flatTOC, id', flatTOC, id)
+      const editorialFlatTOC = flatTOC.value.filter(item => item.level <= editorialLevel.value)
+      const currentItem = editorialFlatTOC.find(item => item.identifier === id)
+      console.log('function updateNextDocId currentItem', currentItem)
+      const currentItemIndex = currentItem ? editorialFlatTOC.findIndex(id => id === id) : -1
+      console.log('function updateNextDocId currentItemIndex', currentItemIndex)
+      const lastItem = editorialFlatTOC.slice(-1).id
+      console.log('function updateNextDocId lastItem', editorialFlatTOC.slice(-1)[0])
       if (currentItemIndex === editorialFlatTOC.length) {
-        //this is the last item in editorial levels
-        console.log("function updateNextDocId this is the last item")
-        nextRefId.value = ""
+        // this is the last item in editorial levels
+        console.log('function updateNextDocId this is the last item')
+        nextRefId.value = ''
       } else {
-        //this is not the last item in editorial levels : find next
-        console.log("function updateNextDocId this is NOT the last item")
+        // this is not the last item in editorial levels : find next
+        console.log('function updateNextDocId this is NOT the last item')
         nextDocId.value = editorialFlatTOC[currentItemIndex + 1].identifier
-        console.log("function updateNextDocId nextDocId.value : ", nextDocId.value)
+        console.log('function updateNextDocId nextDocId.value : ', nextDocId.value)
       }
-    }
-    /*function updateNextDocId(listProm, docId) {
+    } */
+    /* function updateNextDocId(listProm, docId) {
       console.log("function updateNextDocId listProm, docId", listProm, docId)
       let yearsIdwithSupplementalIndicator = listProm.filter(a => a.includes('b'))
       console.log("yearsIdwithSupplementalIndicator : ", yearsIdwithSupplementalIndicator)
@@ -1335,210 +1305,210 @@ export default {
           nextDocId.value = nextItem ? nextItem.id : ""
         }
       }
-    }*/
+    } */
 
     const getNewRefId = function () {
-      console.log("getNewRefId check if refId / refId.value", refId, refId.value)
+      console.log('getNewRefId check if refId / refId.value', refId, refId.value)
+      firstRef.value = false
+      lastRef.value = false
       if (refId.value) {
         firstRef.value = false
         lastRef.value = false
-        console.log("getNewRefId flatTOC.value ", flatTOC.value)
-        //filter TOC to get only editorial level items
-        if (editorialTypesIsValid) {
-          let editorialFlatTOC = flatTOC.value.filter(item => item.editorialLevelIndicator === "toEdit" || item.editorialLevelIndicator === "renderToc" && item.level > 0)
-          console.log("function getNewRefId editorialFlatTOC", editorialFlatTOC)
-          let currentItem = editorialFlatTOC.find(item => item.identifier === refId.value)
-          console.log("function getNewRefId currentItem", currentItem)
-          let currentItemIndex = currentItem ? editorialFlatTOC.findIndex(item => item.identifier === refId.value) : -1
-          console.log("function getNewRefId currentItemIndex", currentItemIndex)
+        console.log('getNewRefId flatTOC.value / editorialTypesIsValid.value', flatTOC.value, editorialTypesIsValid.value)
+        // filter TOC to get only editorial level items
+        if (editorialTypesIsValid.value) {
+          const refIdTOC = flatTOC.value.filter(item => { return ((item.editorialLevelIndicator === 'renderToc' && item.level > 0) || item.editorialLevelIndicator === 'toEdit') })
+          console.log('function getNewRefId editorialFlatTOC test', refIdTOC)
+          const currentItem = refIdTOC.find(item => item.identifier === refId.value)
+          console.log('function getNewRefId currentItem', currentItem)
+          const currentItemIndex = currentItem && (typeof currentItem !== 'undefined') ? refIdTOC.findIndex(item => item.identifier === refId.value) : -1
+          console.log('function getNewRefId currentItemIndex', currentItemIndex)
 
-          //if (currentItem) {
-            if (currentItemIndex === 0) {
-              //this is the first item in editorial levels
-              //console.log("function getNewRefId this is the first item")
-              previousRefId.value = ""
-              previousRefTitle.value = "Table des matières"
-              firstRef.value = true
-            } else {
-              //this is not the first item in editorial levels : find previous
-              //console.log("function getNewRefId this is NOT the first item : ", editorialFlatTOC[currentItemIndex - 1])
-              previousRefId.value = editorialFlatTOC[currentItemIndex - 1].identifier
-              previousRefTitle.value = editorialFlatTOC[currentItemIndex - 1].title ?
-                                       editorialFlatTOC[currentItemIndex - 1].title :
-                                       editorialFlatTOC[currentItemIndex - 1].dublincore?.title
-              //console.log("function getNewRefId previousRefId.value : ", previousRefId.value)
-            }
-            if (currentItemIndex === editorialFlatTOC.length - 1) {
-              //this is the last item in editorial levels
-              //console.log("function getNewRefId this is the last item")
-              nextRefId.value = ""
-              nextRefTitle.value = ""
-              lastRef.value = true
-            } else {
-              //this is not the last item in editorial levels : find next
-              //console.log("function getNewRefId this is NOT the last item : ", editorialFlatTOC[currentItemIndex + 1])
-              nextRefId.value = editorialFlatTOC[currentItemIndex + 1].identifier
-              nextRefTitle.value = editorialFlatTOC[currentItemIndex + 1].title ?
-                                   editorialFlatTOC[currentItemIndex + 1].title :
-                                   editorialFlatTOC[currentItemIndex + 1].dublincore?.title
-              //console.log("function getNewRefId nextRefId.value : ", nextRefId.value)
-            }
-
-        } else {
-
-          let editorialFlatTOC = flatTOC.value.filter(item => item.level <= editorialLevel.value && item.level > 0)
-          console.log("function getNewRefId editorialFlatTOC", editorialFlatTOC)
-          let currentItem = editorialFlatTOC.find(item => item.identifier === refId.value)
-          console.log("function getNewRefId currentItem", currentItem)
-          let currentItemIndex = currentItem ? editorialFlatTOC.findIndex(item => item.identifier === refId.value) : -1
-          console.log("function getNewRefId currentItemIndex", currentItemIndex)
-
+          // if (currentItem) {
           if (currentItemIndex === 0) {
-            //this is the first item in editorial levels
-            console.log("function getNewRefId this is the first item")
-            previousRefId.value = ""
-            previousRefTitle.value = "Table des matières"
+            // this is the first item in editorial levels
+            // console.log("function getNewRefId this is the first item")
+            previousRefId.value = ''
+            previousRefTitle.value = 'Table des matières'
             firstRef.value = true
-          } else {
-            //this is not the first item in editorial levels : find previous
-            console.log("function getNewRefId this is NOT the first item : ", editorialFlatTOC[currentItemIndex - 1])
-            previousRefId.value = editorialFlatTOC[currentItemIndex - 1].identifier
-            previousRefTitle.value = editorialFlatTOC[currentItemIndex - 1].title
-            console.log("function getNewRefId previousRefId.value : ", previousRefId.value)
+          } else if (currentItemIndex > 0) {
+            // this is not the first item in editorial levels : find previous
+            // console.log("function getNewRefId this is NOT the first item : ", editorialFlatTOC[currentItemIndex - 1])
+            previousRefId.value = refIdTOC[currentItemIndex - 1].identifier
+            previousRefTitle.value = refIdTOC[currentItemIndex - 1].title
+              ? refIdTOC[currentItemIndex - 1].title
+              : refIdTOC[currentItemIndex - 1].dublincore?.title
+              // console.log("function getNewRefId previousRefId.value : ", previousRefId.value)
           }
-          if (currentItemIndex === editorialFlatTOC.length - 1) {
-            //this is the last item in editorial levels
-            console.log("function getNewRefId this is the last item")
-            nextRefId.value = ""
-            nextRefTitle.value = ""
+          if (currentItemIndex === refIdTOC.length - 1) {
+            // this is the last item in editorial levels
+            // console.log("function getNewRefId this is the last item")
+            nextRefId.value = ''
+            nextRefTitle.value = ''
             lastRef.value = true
           } else {
-            //this is not the last item in editorial levels : find next
-            console.log("function getNewRefId this is NOT the last item : ", editorialFlatTOC[currentItemIndex + 1])
+            // this is not the last item in editorial levels : find next
+            // console.log("function getNewRefId this is NOT the last item : ", editorialFlatTOC[currentItemIndex + 1])
+            nextRefId.value = refIdTOC[currentItemIndex + 1].identifier
+            nextRefTitle.value = refIdTOC[currentItemIndex + 1].title
+              ? refIdTOC[currentItemIndex + 1].title
+              : refIdTOC[currentItemIndex + 1].dublincore?.title
+              // console.log("function getNewRefId nextRefId.value : ", nextRefId.value)
+          }
+        } else {
+          const editorialFlatTOC = flatTOC.value.filter(item => item.level <= editorialLevel.value && item.level > 0)
+          console.log('function getNewRefId editorialFlatTOC', editorialFlatTOC)
+          const currentItem = editorialFlatTOC.find(item => item.identifier === refId.value)
+          console.log('function getNewRefId currentItem', currentItem)
+          const currentItemIndex = currentItem && (typeof currentItem !== 'undefined') ? editorialFlatTOC.findIndex(item => item.identifier === refId.value) : -1
+          console.log('function getNewRefId currentItemIndex', currentItemIndex)
+
+          if (currentItemIndex === 0) {
+            // this is the first item in editorial levels
+            console.log('function getNewRefId this is the first item')
+            previousRefId.value = ''
+            previousRefTitle.value = 'Table des matières'
+            firstRef.value = true
+          } else if (currentItemIndex > 0) {
+            // this is not the first item in editorial levels : find previous
+            console.log('function getNewRefId this is NOT the first item : ', editorialFlatTOC[currentItemIndex - 1])
+            previousRefId.value = editorialFlatTOC[currentItemIndex - 1].identifier
+            previousRefTitle.value = editorialFlatTOC[currentItemIndex - 1].title
+            console.log('function getNewRefId previousRefId.value : ', previousRefId.value)
+          }
+          if (currentItemIndex === editorialFlatTOC.length - 1) {
+            // this is the last item in editorial levels
+            console.log('function getNewRefId this is the last item')
+            nextRefId.value = ''
+            nextRefTitle.value = ''
+            lastRef.value = true
+          } else {
+            // this is not the last item in editorial levels : find next
+            console.log('function getNewRefId this is NOT the last item : ', editorialFlatTOC[currentItemIndex + 1])
             nextRefId.value = editorialFlatTOC[currentItemIndex + 1].identifier
-            nextRefTitle.value = editorialFlatTOC[currentItemIndex + 1].title ?
-                                   editorialFlatTOC[currentItemIndex + 1].title :
-                                   editorialFlatTOC[currentItemIndex + 1].dublincore?.title
-            console.log("function getNewRefId nextRefId.value : ", nextRefId.value)
+            nextRefTitle.value = editorialFlatTOC[currentItemIndex + 1].title
+              ? editorialFlatTOC[currentItemIndex + 1].title
+              : editorialFlatTOC[currentItemIndex + 1].dublincore?.title
+            console.log('function getNewRefId nextRefId.value : ', nextRefId.value)
           }
         }
       } else {
-        previousRefId.value = ""
-        previousRefTitle.value = ""
-        nextRefId.value = ""
-        nextRefTitle.value = ""
+        previousRefId.value = ''
+        previousRefTitle.value = ''
+        nextRefId.value = ''
+        nextRefTitle.value = ''
       }
     }
 
     const setMirador = function () {
       if (metadata.iiifManifestUrl && metadata.iiifManifestUrl.length > 0) {
         fetch(metadata.iiifManifestUrl, {
-          method: "HEAD",
+          method: 'HEAD'
         })
-            .then((r) => {
-              manifestIsAvailable.value = r.ok;
-              miradorInstance.setManifestUrl(metadata.iiifManifestUrl);
-              miradorInstance.initialize();
-            })
-            .catch(() => {
-              manifestIsAvailable.value = false;
-            })
+          .then((r) => {
+            manifestIsAvailable.value = r.ok
+            miradorInstance.setManifestUrl(metadata.iiifManifestUrl)
+            miradorInstance.initialize()
+          })
+          .catch(() => {
+            manifestIsAvailable.value = false
+          })
       } else {
-        manifestIsAvailable.value = false;
+        manifestIsAvailable.value = false
       }
-    };
+    }
 
     watch(
-        () => metadata.iiifManifestUrl,
-        async () => {
-          setMirador();
-        }
+      () => metadata.iiifManifestUrl,
+      async () => {
+        setMirador()
+      }
     )
 
     watch(
-        router.currentRoute, async (newRoute, oldRoute) => {
-          isLoading.value = false
-          //console.log("Document page watch route.params : ", route.params)
-          //console.log("Document page watch route.query : ", route.query)
-          //console.log("Document page watch route.hash : ", route.hash)
-          //console.log("Document page watch route oldRoute, newRoute : ", oldRoute, newRoute)
+      router.currentRoute, async (newRoute, oldRoute) => {
+        isLoading.value = false
+        // console.log("Document page watch route.params : ", route.params)
+        // console.log("Document page watch route.query : ", route.query)
+        // console.log("Document page watch route.hash : ", route.hash)
+        // console.log("Document page watch route oldRoute, newRoute : ", oldRoute, newRoute)
 
-          if (newRoute && oldRoute && newRoute.params.id !== oldRoute.params.id) {
-            await getCurrentItem("watch getCurrentItem : route : ", newRoute)
-            console.log("Document page watch route change, resource DID change :", refId.value)
-            await getTOC("watch query")
-            await getMetadata()
-            await getAllPositionsYears();
+        if (newRoute && oldRoute && newRoute.params.id !== oldRoute.params.id) {
+          await getCurrentItem('watch getCurrentItem : route : ', newRoute)
+          console.log('Document page watch route change, resource DID change :', refId.value)
+          await getTOC('watch query')
+          await getMetadata()
+          await getAllPositionsYears()
+          getNewRefId()
+          isLoading.value = true
+        } else if (newRoute && oldRoute && newRoute.params.id === oldRoute.params.id) {
+          console.log('Document page watch route change but resource DID NOT change ', oldRoute, newRoute)
+          // await getCurrentItem("watch getCurrentItem : route : ", newRoute)
+          // await getTOC("watch query")
+          if (newRoute.query.refId === oldRoute.query.refId) {
+            console.log('Document page watch route change but resource/refId DID NOT change ', oldRoute, newRoute)
+            hash.value = route.hash && route.hash.length > 0 ? route.hash.replace('#', '') : false
+            isLoading.value = true
+            if (route.hash && route.hash.length > 0) {
+              console.log('watch scrollTo')
+              scrollTo()
+            }
+          } else {
+            refId.value = newRoute.query.refId
+            await getCurrentItem('watch getCurrentItem : route : ', newRoute)
+            // await getTOC("watch query")
+            currentLevel.value = refId.value
+              ? flatTOC.value.find(i => i.identifier === refId.value).level
+              : flatTOC.value.find(i => i.identifier === resourceId.value).level
+            await getAncestors()
+            if (editorialTypesIsValid.value) {
+              currentLevelIndicator.value = refId.value
+                ? flatTOC.value.find(i => i.identifier === refId.value).editorialLevelIndicator
+                : flatTOC.value.find(i => i.identifier === resourceId.value).editorialLevelIndicator
+            } else {
+              currentLevelIndicator.value = false
+            }
+            console.log('watch query : currentLevelIndicator.value debug', currentLevelIndicator.value)
+            console.log('watch query : refId', refId.value)
+
+            asideTOC.value = refId.value ? findById(topTOC.value, refId.value).children : topTOC.value
+            console.log('watch query : asideTOC', asideTOC.value)
             getNewRefId()
             isLoading.value = true
-          } else if (newRoute && oldRoute && newRoute.params.id === oldRoute.params.id) {
-            console.log("Document page watch route change but resource DID NOT change ", oldRoute, newRoute)
-            //await getCurrentItem("watch getCurrentItem : route : ", newRoute)
-            //await getTOC("watch query")
-            if (newRoute.query.refId === oldRoute.query.refId) {
-              console.log("Document page watch route change but resource/refId DID NOT change ", oldRoute, newRoute)
-              hash.value = route.hash && route.hash.length > 0 ? route.hash.replace("#", "") : false
-              isLoading.value = true
-              if (route.hash && route.hash.length > 0) {
-                console.log("watch scrollTo")
-                scrollTo()
-              }
-            } else {
-              refId.value = newRoute.query.refId
-              await getCurrentItem("watch getCurrentItem : route : ", newRoute)
-              //await getTOC("watch query")
-              currentLevel.value = refId.value
-                  ? flatTOC.value.find(i => i.identifier === refId.value).level
-                  : flatTOC.value.find(i => i.identifier === resourceId.value).level
-              await getAncestors()
-              if (editorialTypesIsValid) {
-              currentLevelIndicator.value = refId.value
-                  ? flatTOC.value.find(i => i.identifier === refId.value).editorialLevelIndicator
-                  : flatTOC.value.find(i => i.identifier === resourceId.value).editorialLevelIndicator
-              } else {
-                currentLevelIndicator.value = false
-              }
-              console.log("watch query : currentLevelIndicator.value debug", currentLevelIndicator.value)
-              console.log("watch query : refId", refId.value)
-
-              asideTOC.value = refId.value ? findById(topTOC.value, refId.value).children : topTOC.value
-              console.log("watch query : asideTOC", asideTOC.value)
-              getNewRefId()
-              isLoading.value = true
-            }
-          } else if (!oldRoute) {
-            await getCurrentItem("watch getCurrentItem : route : ", newRoute)
-            console.log("Document page watch NO newRoute : oldRoute, newRoute ", oldRoute, newRoute)
-            await getTOC("watch query")
-            await getMetadata()
-            getNewRefId()
-          } else {
-            console.log("Document page watch TEST : oldRoute, newRoute ", oldRoute, newRoute)
           }
-        }, {deep: true, immediate: true}
-    );
+        } else if (!oldRoute) {
+          await getCurrentItem('watch getCurrentItem : route : ', newRoute)
+          console.log('Document page watch NO newRoute : oldRoute, newRoute ', oldRoute, newRoute)
+          await getTOC('watch query')
+          await getMetadata()
+          getNewRefId()
+        } else {
+          console.log('Document page watch TEST : oldRoute, newRoute ', oldRoute, newRoute)
+        }
+      }, { deep: true, immediate: true }
+    )
 
-    function scrollTo() {
+    function scrollTo () {
       nextTick(() => {
         // If the selected item is an anchor, capture and scroll to that anchor
-        let hash = route.hash ? route.hash.replace("#", "") : ''
-        //console.log("DocumentPage.vue scrollTo on resolve hash : ", hash)
+        const hash = route.hash ? route.hash.replace('#', '') : ''
+        // console.log("DocumentPage.vue scrollTo on resolve hash : ", hash)
         if (hash.length) {
           location.hash = hash
         }
       })
     }
     onMounted(() => {
-      const appView = document.getElementById("app");
-      appView.addEventListener("scroll", updateMiradorTopPosition);
-      window.addEventListener('scroll', updateMiradorTopPosition);
-    });
+      const appView = document.getElementById('app')
+      appView.addEventListener('scroll', updateMiradorTopPosition)
+      window.addEventListener('scroll', updateMiradorTopPosition)
+    })
 
     onUnmounted(() => {
-      const appView = document.getElementById("app");
-      appView.removeEventListener("scroll", updateMiradorTopPosition);
-      window.removeEventListener('scroll', updateMiradorTopPosition);
-    });
+      const appView = document.getElementById('app')
+      appView.removeEventListener('scroll', updateMiradorTopPosition)
+      window.removeEventListener('scroll', updateMiradorTopPosition)
+    })
 
     return {
       tocCssClass: layout.tocCssClass,
@@ -1587,7 +1557,7 @@ export default {
       selectedCollectionId,
       selectedCollection,
       currentItem,
-      setText,
+      setText
     }
   }
 }
@@ -2201,9 +2171,9 @@ div.remove-bottom-padding #article {
   align-items: center;
   width: 100%;
 }
-/*.is-current {
+/* .is-current {
   font-weight: bold;
-}*/
+} */
 .several-parent {
   display: flex;
   flex-direction: row;
@@ -2226,25 +2196,24 @@ div.remove-bottom-padding #article {
     }
   }
 }
-.left {
-	/* The left side CANNOT GROW, it can ONLY SHRINK (and add an ellipsis at the end). */
+.left { /* The left side CANNOT GROW, it can ONLY SHRINK (and add an ellipsis at the end). */
   text-align: right;
   width: 50%;
-	flex: 0 1 auto;
-	overflow: hidden;
-	text-overflow: ' [...] ';
-	white-space: pre;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ' [...] ';
+  white-space: pre;
 }
 
 .right {
-	/* The right side can grow, but NOT SHRINK. */
+/* The right side can grow, but NOT SHRINK. */
   text-align: left;
   width: 50%;
-	flex: 1 0 auto;
-	overflow-x: hidden;
-	white-space: pre;
+  flex: 1 0 auto;
+  overflow-x: hidden;
+  white-space: pre;
 }
-/*.hideAsideToc {
+/* .hideAsideToc {
   visibility: hidden;
-}*/
+} */
 </style>

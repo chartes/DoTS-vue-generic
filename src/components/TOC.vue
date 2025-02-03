@@ -69,12 +69,12 @@
 
 <script>
 
-import {ref, watch} from "vue";
-import {useRoute} from "vue-router";
-import router from "@/router";
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+import router from '@/router'
 
 export default {
-  name: "TOC",
+  name: 'TOC',
 
   components: {},
 
@@ -82,52 +82,50 @@ export default {
     margin: { required: true, default: 0, type: Number },
     toc: { required: true, default: () => [], type: Array },
     maxcitedepth: { required: false, default: 0, type: Number },
-    refid: { required: false, default: ''}
+    refid: { required: false, default: '' }
   },
-  emits: ["updateRefId"],
-  setup(props) {
-    const currentRefId = ref(props.refid);
+  emits: ['updateRefId'],
+  setup (props) {
+    const currentRefId = ref(props.refid)
     const route = useRoute()
     const expandedById = ref({})
 
-    //console.log("TOC props.toc :", props.toc)
-    //console.log("TOC props.maxcitedepth :", props.maxcitedepth)
-    //console.log("TOC props.refid :", props.refid)
+    // console.log("TOC props.toc :", props.toc)
+    // console.log("TOC props.maxcitedepth :", props.maxcitedepth)
+    // console.log("TOC props.refid :", props.refid)
 
-    //remove when proved unneeded
+    // remove when proved unneeded
     const toggleBurger = function ($event, ref) {
-      $event.preventDefault();
-      //$event.stopPropagation();
+      $event.preventDefault()
+      // $event.stopPropagation();
       currentRefId.value = ref
-      //console.log("TOC ref : ", $event, currentRefId.value)
-      router.push({path: route.path, query: {refId: ref} });
+      // console.log("TOC ref : ", $event, currentRefId.value)
+      router.push({ path: route.path, query: { refId: ref } })
     }
 
     const toggleExpanded = async (id) => {
-      console.log("TOC toggleExpanded id : ", id, expandedById.value)
+      console.log('TOC toggleExpanded id : ', id, expandedById.value)
       expandedById.value[id] = !expandedById.value[id]
-      console.log("TOC after expandedById[id] : ", id, expandedById.value)
-
+      console.log('TOC after expandedById[id] : ', id, expandedById.value)
     }
 
-
     const goTo = function ($event, item) {
-      $event.preventDefault();
-      //$event.stopPropagation();
-      //currentRefId.value = ref
-      //console.log("TOC ref : ", $event, currentRefId.value)
+      $event.preventDefault()
+      // $event.stopPropagation();
+      // currentRefId.value = ref
+      // console.log("TOC ref : ", $event, currentRefId.value)
       if (item.router_hash) {
         if (item.router_refid) {
-          router.push({ name: 'Document', params: {'collId': import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, 'id': item.router_params }, query: {refId: item.router_refid}, hash: item.router_hash })
+          router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params }, query: { refId: item.router_refid }, hash: item.router_hash })
         } else {
-          router.push({ name: 'Document', params: {'collId': import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, 'id': item.router_params }, hash: item.router_hash })
+          router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params }, hash: item.router_hash })
         }
       } else if (item.router_refid) {
-        router.push({ name: 'Document', params: {'collId': import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, 'id': item.router_params }, query: {refId: item.router_refid} })
+        router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params }, query: { refId: item.router_refid } })
       } else {
-        router.push({ name: 'Document', params: {'collId': import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, 'id': item.router_params } })
+        router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params } })
       }
-    };
+    }
 
     return {
       route,
@@ -139,15 +137,15 @@ export default {
     }
   },
   methods: {
-    getNewRefId() {
-      if (Object.keys(this.route.query).length > 0 && Object.keys(this.route.query).includes("refId")) {
-          //console.log("TOC getNewRefId /this.route.query.refId : ", this.route.query.refId ? this.route.query.refId : false)
-          this.currentRefId.value = this.route.query.refId
-        }
-      //console.log("TOC getNewRefId / this.currentRefId", this.currentRefId)
+    getNewRefId () {
+      if (Object.keys(this.route.query).length > 0 && Object.keys(this.route.query).includes('refId')) {
+        // console.log("TOC getNewRefId /this.route.query.refId : ", this.route.query.refId ? this.route.query.refId : false)
+        this.currentRefId.value = this.route.query.refId
+      }
+      // console.log("TOC getNewRefId / this.currentRefId", this.currentRefId)
     }
   }
-};
+}
 </script>
 
 <style scoped>

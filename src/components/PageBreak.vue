@@ -10,40 +10,40 @@
 </template>
 
 <script>
-import { inject } from "vue";
+import { inject } from 'vue'
 
 export default {
-  name: "PageBreak",
+  name: 'PageBreak',
 
-  props: ["canvasId", "canvasNum", "image"],
+  props: ['canvasId', 'canvasNum', 'image'],
 
-  setup(props) {
-    const mirador = inject("mirador");
-    const layout = inject("variable-layout");
+  setup (props) {
+    const mirador = inject('mirador')
+    const layout = inject('variable-layout')
 
     const goToCanvas = function ($event) {
       if (mirador) {
-        mirador.setCanvasId(props.canvasId);
-        //if (layout.miradorVisible != true) {
-        //layout.setMiradorVisible(true);
-        layout.changeViewMode($event, "text-and-images-mode");
-        //}
+        mirador.setCanvasId(props.canvasId)
+        // if (layout.miradorVisible != true) {
+        // layout.setMiradorVisible(true);
+        layout.changeViewMode($event, 'text-and-images-mode')
+        // }
       }
-    };
+    }
 
     const thumbnail = `${props.image.replace(
-      "/full/full/0/default.jpg",
-      "/full/60,/0/default.jpg"
-    )}`;
-    const imageInfo = `${props.image.replace("/full/full/0/default.jpg", "")}`;
+      '/full/full/0/default.jpg',
+      '/full/60,/0/default.jpg'
+    )}`
+    const imageInfo = `${props.image.replace('/full/full/0/default.jpg', '')}`
 
     return {
       goToCanvas,
       thumbnail,
-      imageInfo,
-    };
-  },
-};
+      imageInfo
+    }
+  }
+}
 </script>
 
 <style>

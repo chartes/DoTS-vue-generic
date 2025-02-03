@@ -9,11 +9,24 @@
   </div>
 </template>
 
-<script setup>
-  import AppNavbar from "@/components/AppNavbar.vue";
-  import AppFooter from "@/components/AppFooter.vue";
-  import BackToTopButton from "@/components/BackToTopButton.vue";
+<script>
+import AppNavbar from '@/components/AppNavbar'
+import AppFooter from '@/components/AppFooter.vue'
+import BackToTopButton from '@/components/BackToTopButton.vue'
 
+import { onMounted } from 'vue'
+
+export default {
+  components: {
+    BackToTopButton,
+    AppNavbar,
+    AppFooter
+  },
+
+  setup () {
+    onMounted(() => {})
+  }
+}
 </script>
 
 <style>
@@ -190,4 +203,3 @@ p.header-baseline span {
   }
 }
 </style>
-

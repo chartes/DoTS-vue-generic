@@ -13,66 +13,65 @@
 </template>
 
 <script>
-import {ref, watch} from "vue"; //onMounted, onUnmounted,
-import router from "@/router";
-import {useRoute} from "vue-router";
+import { ref, watch } from 'vue' // onMounted, onUnmounted,
+import router from '@/router'
+import { useRoute } from 'vue-router'
 
 export default {
-  name: "ToNextButton",
-  props: ["docid", "nextdocid", "refid", "nextrefid", "nextreftitle"],
-  //emits: ["updateRefId"],
+  name: 'ToNextButton',
+  props: ['docid', 'nextdocid', 'refid', 'nextrefid', 'nextreftitle'],
+  // emits: ["updateRefId"],
 
-  setup(props) {
-
+  setup (props) {
     const nextRefId = ref(props.nextrefid)
     const nextRefTitle = ref(props.nextreftitle)
     const route = useRoute()
-    console.log("ToNextButton currentDocId : ", props.docid)
-    console.log("ToNextButton nextdocid : ", props.nextdocid)
-    console.log("ToNextButton refid : ", props.refid)
-    console.log("ToNextButton nextrefid : ", props.nextrefid)
-    console.log("ToNextButton nextreftitle : ", props.nextreftitle)
+    console.log('ToNextButton currentDocId : ', props.docid)
+    console.log('ToNextButton nextdocid : ', props.nextdocid)
+    console.log('ToNextButton refid : ', props.refid)
+    console.log('ToNextButton nextrefid : ', props.nextrefid)
+    console.log('ToNextButton nextreftitle : ', props.nextreftitle)
 
-    let cssClass = ref("to-next")
+    const cssClass = ref('to-next')
 
     // On click :
     const goToNextDocument = function (event) {
-      event.preventDefault();
+      event.preventDefault()
       if (props.nextdocid && props.nextdocid.length > 0) {
-        console.log("NextButton nextdocid : ", event, props.nextdocid)
-        router.push({path: `/document/${props.nextdocid}`})
+        console.log('NextButton nextdocid : ', event, props.nextdocid)
+        router.push({ path: `/document/${props.nextdocid}` })
       }
-    };
+    }
 
     const goToNextFragment = function ($event, nextId, nextTitle) {
-      $event.preventDefault();
-      console.log("goToNextFragment event", $event, nextId, nextTitle)
+      $event.preventDefault()
+      console.log('goToNextFragment event', $event, nextId, nextTitle)
       if (props.nextrefid && props.nextrefid.length > 0) {
-        //nextRefId.value = props.nextrefid
-        console.log("NextButton nextRefId : ", $event, props.nextrefid)
-        console.log("NextButton nextRefId : ", $event, props.nextreftitle)
-        console.log("NextButton let route", route, route.path)
+        // nextRefId.value = props.nextrefid
+        console.log('NextButton nextRefId : ', $event, props.nextrefid)
+        console.log('NextButton nextRefId : ', $event, props.nextreftitle)
+        console.log('NextButton let route', route, route.path)
         nextRefId.value = props.nextrefid
         nextRefTitle.value = props.nextreftitle
         // Replace current querystring with the new one.
-        router.push({path: route.path, query: {refId: props.nextrefid} });
+        router.push({ path: route.path, query: { refId: props.nextrefid } })
       }
-    };
+    }
     watch(props, (newProps) => {
       nextRefId.value = newProps.nextrefid
       nextRefTitle.value = newProps.nextreftitle
-      cssClass.value = "to-next"
-    }, {deep: true, immediate: true});
+      cssClass.value = 'to-next'
+    }, { deep: true, immediate: true })
 
     return {
       goToNextDocument,
       goToNextFragment,
       nextRefId,
       nextRefTitle,
-      cssClass,
-    };
-  },
-};
+      cssClass
+    }
+  }
+}
 </script>
 
 <style>

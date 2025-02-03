@@ -14,10 +14,10 @@
 </template>
 
 <script>
-  import {computed, ref, watch} from "vue";
+import { computed, ref, watch } from 'vue'
 
 export default {
-  name: "Burger",
+  name: 'Burger',
   props: {
     opened: {
       required: false,
@@ -28,24 +28,23 @@ export default {
   emits: [
     'change'
   ],
-  setup(props, context) {
-
-    let isMenuOpened = ref(false);
+  setup (props, context) {
+    const isMenuOpened = ref(false)
 
     const toggleBurger = function ($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-      isMenuOpened.value = ! isMenuOpened.value;
-      context.emit('change', { isOpened : isMenuOpened.value });
-    };
+      $event.preventDefault()
+      $event.stopPropagation()
+      isMenuOpened.value = !isMenuOpened.value
+      context.emit('change', { isOpened: isMenuOpened.value })
+    }
 
     const menuCsscClass = computed(() => {
       return isMenuOpened.value ? 'is-active' : ''
-    });
+    })
 
     watch(props, (newProps) => {
-      isMenuOpened.value = newProps.opened;
-    });
+      isMenuOpened.value = newProps.opened
+    })
 
     return {
       toggleBurger,
@@ -54,7 +53,7 @@ export default {
     }
   }
 
-};
+}
 </script>
 
 <style>
@@ -109,6 +108,5 @@ export default {
   .navbar-burger.is-active span:nth-child(3) {
     transition-delay: 0s, 0.3s;
   }
-  
-  
+
 </style>

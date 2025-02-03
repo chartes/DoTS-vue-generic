@@ -1,6 +1,6 @@
 <template>
   <ol class="tree">
-    <template v-for="(item, index) in toc.sort((a, b) => a.title > b.title ? 1 : -1 )" :key="index">
+    <template v-for="(item, index) in collectionTOC.sort((a, b) => a.title > b.title ? 1 : -1 )" :key="index">
       <li
         :style="`margin-left: ${ $props.margin }px;`"
         :class="item.totalChildren > 0 ? 'more' : ''"
@@ -54,13 +54,12 @@
 
 <script>
 
-import {reactive, ref} from "vue";
-import {useRoute} from "vue-router";
-import router from "@/router";
-import {getMetadataFromApi} from "@/api/document.js";
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { getMetadataFromApi } from '@/api/document.js'
 
-function getSimpleObject(obj) {
-  //console.log("getSimpleObject / obj", obj)
+function getSimpleObject (obj) {
+  // console.log("getSimpleObject / obj", obj)
   let simpleObject = {}
   simpleObject = {
     identifier: obj.identifier ? obj.identifier : obj['@id'],
@@ -76,40 +75,41 @@ function getSimpleObject(obj) {
     dublincore: obj.dublincore,
     extensions: obj.extensions
   }
-  //console.log("getSimpleObject / simpleObject", simpleObject)
+  // console.log("getSimpleObject / simpleObject", simpleObject)
   return simpleObject
 }
 
 export default {
-  name: "CollectionTOC",
+  name: 'CollectionTOC',
 
   components: {},
 
   props: {
     toc: { required: true, default: () => [], type: Array },
-    margin: {required: true, default: 0, type: Number }
+    margin: { required: true, default: 0, type: Number }
   },
-  setup(props) {
+  setup (props) {
     const route = useRoute()
 
     const expandedById = ref({})
 
-    const selectedParent = ref('');
+    const selectedParent = ref('')
 
     const collectionTOC = ref(props.toc)
-    console.log("collectionTOC.value props.toc : ", collectionTOC.value)
+    console.log('collectionTOC.value props.toc : ', collectionTOC.value)
 
-    /*expandedById.value = collectionTOC.value.filter(item => item.expanded === true).map(col => [col.identifier, true])
-    console.log("collectionTOC.value expandedById.value : ", expandedById.value)*/
-    expandedById.value = Object.assign({}, ...collectionTOC.value.filter(item => item.citeType === 'Collection').map((x) => ({[x.identifier]: false})))
+    /* expandedById.value = collectionTOC.value.filter(item => item.expanded === true).map(col => [col.identifier, true])
+    console.log("collectionTOC.value expandedById.value : ", expandedById.value) */
+    expandedById.value = Object.assign({}, ...collectionTOC.value.filter(item => item.citeType === 'Collection').map((x) => ({ [x.identifier]: false })))
 
     const toggleExpanded = async (collId) => {
-      console.log("collectionTOC toggleExpanded collectionTOC collId: ", collectionTOC.value, collId)
+      console.log('collectionTOC toggleExpanded collectionTOC collId: ', collectionTOC.value, collId)
       if (!collectionTOC.value.filter(item => item['@id'] === collId || item.identifier === collId)[0].children || collectionTOC.value.filter(item => item['@id'] === collId || item.identifier === collId)[0].children.length === 0) {
-        let response = getSimpleObject(await getMetadataFromApi(collId))
+        const response = getSimpleObject(await getMetadataFromApi(collId))
         console.log('response', response)
-        response.member.forEach((m) => m.identifier = m['@id'])
-        response.member.forEach((m) => m.parent = collId)
+        // eslint-disable-next-line no-return-assign
+        response.member.forEach(m => { m.identifier = m['@id'] })
+        response.member.forEach(m => { m.parent = collId })
         console.log('response after identifier', response)
         collectionTOC.value.filter(item => item.identifier === collId)[0].member = response.member
         collectionTOC.value.filter(item => item.identifier === collId)[0].children = response.member
@@ -118,20 +118,20 @@ export default {
       console.log('collectionTOC expandedById.value', expandedById.value)
 
       selectedParent.value = collId
-      console.log("CollectionTOC after selectedParent.value : ", collId)
+      console.log('CollectionTOC after selectedParent.value : ', collId)
       expandedById.value[collId] = !expandedById.value[collId]
-      console.log("CollectionTOC after expandedById[collectionId] : ", collId, expandedById.value)
-
+      console.log('CollectionTOC after expandedById[collectionId] : ', collId, expandedById.value)
     }
 
     return {
       route,
       toggleExpanded,
       expandedById,
-      selectedParent
+      selectedParent,
+      collectionTOC
     }
   }
-};
+}
 </script>
 
 <style scoped>

@@ -14,7 +14,18 @@
     </div>
   </footer>
 </template>
+<script>
+import { onMounted } from 'vue'
 
+export default {
+  name: 'AppFooter',
+  components: {},
+
+  setup () {
+    onMounted(() => {})
+  }
+}
+</script>
 <style>
 .footer {
   background-color: #4C4949;

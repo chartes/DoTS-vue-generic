@@ -60,22 +60,22 @@
   </section>
 </template>
 <script>
-import {ref, computed, onMounted, onBeforeUnmount, reactive} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue'
 import Burger from './Burger.vue'
-import {useRoute} from "vue-router";
+import { useRoute } from 'vue-router'
 
 export default {
-  name: "HomePage",
+  name: 'HomePage',
   components: { Burger },
 
-  setup() {
+  setup () {
     // State
-    let state = reactive({
+    const state = reactive({
       isMenuOpened: false
     })
     const route = useRoute()
     const isMenuOpened = ref(false)
-    const rootURL = ref(import.meta.env.VITE_APP_APP_ROOT_URL .length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_URL.slice(1, import.meta.env.VITE_APP_APP_ROOT_URL.length)}` : '')
+    const rootURL = ref(import.meta.env.VITE_APP_APP_ROOT_URL.length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_URL.slice(1, import.meta.env.VITE_APP_APP_ROOT_URL.length)}` : '')
     const homePageLink = ref(import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID.length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID}` : 'Home')
 
     // Computed property
@@ -302,7 +302,5 @@ ul.submenu a:hover {
     }
   }
 }
-
-
 
 </style>

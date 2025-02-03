@@ -3,113 +3,113 @@
 </template>
 
 <script>
-import { onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from 'vue'
 
 export default {
-  name: "BackToTopButton",
+  name: 'BackToTopButton',
   props: {
     animationDuration: {
       required: false,
       default: 700,
-      type: Number,
-    },
+      type: Number
+    }
   },
-  setup(props) {
+  setup (props) {
     // browser window scroll (in pixels) after which the "back to top" link is shown
-    const offset = 10;
+    const offset = 10
 
-    //browser window scroll (in pixels) after which the "back to top" link opacity is reduced
-    const offsetOpacity = 100;
+    // browser window scroll (in pixels) after which the "back to top" link opacity is reduced
+    const offsetOpacity = 100
 
-    let scrolling = false;
-    let cssClass = ref("back-to-top");
+    let scrolling = false
+    const cssClass = ref('back-to-top')
 
     const onScroll = function () {
       if (!scrolling) {
-        scrolling = true;
+        scrolling = true
         !window.requestAnimationFrame
           ? setTimeout(updateButton, 250)
-          : window.requestAnimationFrame(updateButton);
+          : window.requestAnimationFrame(updateButton)
       }
-    };
+    }
 
     // Updates button CssClass to show/hide and fade in/out
     const updateButton = function () {
-      const html = document.documentElement;
-      const windowTop = window.scrollY || html.startScrollAnimation;
-      const windowHeight = window.innerHeight;
+      const html = document.documentElement
+      const windowTop = window.scrollY || html.startScrollAnimation
+      const windowHeight = window.innerHeight
 
-      const body = document.body;
+      const body = document.body
       const documentHeight = Math.max(
         body.scrollHeight,
         body.offsetHeight,
         html.clientHeight,
         html.scrollHeight,
         html.offsetHeight
-      );
+      )
 
-      const minScrollForButton = (documentHeight - windowHeight) / 4;
+      const minScrollForButton = (documentHeight - windowHeight) / 4
 
-      let css = "back-to-top";
+      let css = 'back-to-top'
 
       if (windowTop > minScrollForButton - offset) {
-        css += " back-to-top--show";
+        css += ' back-to-top--show'
       }
       if (windowTop > minScrollForButton - offsetOpacity) {
-        css += " back-to-top--fade-out";
+        css += ' back-to-top--fade-out'
       }
 
-      cssClass.value = css;
-      scrolling = false;
-    };
+      cssClass.value = css
+      scrolling = false
+    }
 
     const easeInOutQuad = function (t, b, c, d) {
-      t /= d / 2;
-      if (t < 1) return (c / 2) * t * t + b;
-      t--;
-      return (-c / 2) * (t * (t - 2) - 1) + b;
-    };
+      t /= d / 2
+      if (t < 1) return (c / 2) * t * t + b
+      t--
+      return (-c / 2) * (t * (t - 2) - 1) + b
+    }
 
     // Animates automatic scroll to top of the window
-    function startScrollAnimation(duration) {
-      let currentTime = null;
-      const start = window.scrollY || document.documentElement.startScrollAnimation;
+    function startScrollAnimation (duration) {
+      let currentTime = null
+      const start = window.scrollY || document.documentElement.startScrollAnimation
       const animateScroll = function (timestamp) {
-        if (!currentTime) currentTime = timestamp;
-        const progress = timestamp - currentTime;
-        const val = Math.max(easeInOutQuad(progress, start, -start, duration), 0);
-        window.scrollTo(0, val);
+        if (!currentTime) currentTime = timestamp
+        const progress = timestamp - currentTime
+        const val = Math.max(easeInOutQuad(progress, start, -start, duration), 0)
+        window.scrollTo(0, val)
         if (progress < duration) {
-          window.requestAnimationFrame(animateScroll);
+          window.requestAnimationFrame(animateScroll)
         }
-      };
-      window.requestAnimationFrame(animateScroll);
+      }
+      window.requestAnimationFrame(animateScroll)
     }
 
     // On click :
     const backToTop = function (event) {
-      event.preventDefault();
+      event.preventDefault()
       !window.requestAnimationFrame
         ? window.scrollTo(0, 0)
-        : startScrollAnimation(props.animationDuration);
-    };
+        : startScrollAnimation(props.animationDuration)
+    }
 
     /* Vue Hooks */
 
     onMounted(() => {
-      window.addEventListener("scroll", onScroll);
-    });
+      window.addEventListener('scroll', onScroll)
+    })
 
     onUnmounted(() => {
-      window.removeEventListener("scroll", onScroll);
-    });
+      window.removeEventListener('scroll', onScroll)
+    })
 
     return {
       backToTop,
-      cssClass,
-    };
-  },
-};
+      cssClass
+    }
+  }
+}
 </script>
 
 <style>

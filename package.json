@@ -1,28 +1,32 @@
 {
   "name": "dots-vue-generic",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "serve": "vite --mode=development",
+    "build:staging": "vite build --mode=staging",
+    "build:prod": "vite build --mode=production",
+    "preview": "vite preview",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src"
   },
   "dependencies": {
-    "bulma": "1.0.2",
-    "md5": "2.3.0",
-    "mirador": "4.0.0-alpha.2",
-    "rdflib": "2.2.35",
+    "bulma": "^0.9.4",
+    "md5": "^2.3.0",
+    "mirador": "^3.3.0",
+    "rdflib": "^2.2.6",
     "vue": "3.5.12",
     "vue-router": "4.4.5",
-    "vue-slider-component": "4.1.0-beta.7",
-    "vuex": "4.1.0"
+    "vue-slider-component": "^4.1.0-beta.7",
+    "vuex": "4.1.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "vite": "5.4.8"
   },
   "devDependencies": {
-    "@babel/runtime": "7.0.0",
+    "@vue/eslint-config-standard": "^8.0.1",
     "@vitejs/plugin-vue": "5.1.4",
-    "react": "18.0.0",
-    "react-dom": "18.0.0",
-    "vite": "5.4.8"
+    "vite": "5.4.8",
+    "eslint": "^8.26.0",
+    "eslint-plugin-vue": "^9.0.0"
   }
 }

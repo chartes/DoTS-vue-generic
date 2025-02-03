@@ -89,134 +89,131 @@
 </template>
 
 <script>
-import { ref, reactive, toRefs, watch, computed } from "vue";
-import { getMetadataFromApi, getMetadataENCPOSFromApi } from "@/api/document";
-import VueSlider from "vue-slider-component";
-import "vue-slider-component/theme/antd.css";
+import { ref, reactive, watch, computed } from 'vue'
+import { getMetadataFromApi } from '@/api/document'
+import VueSlider from 'vue-slider-component'
+import 'vue-slider-component/theme/antd.css'
 
 export default {
-  name: "ListeTheseAnnee",
+  name: 'ListeTheseAnnee',
 
-  props: ["id", "textid", "toc"],
+  props: ['identifier', 'textid', 'tocprops'],
   components: {
-    VueSlider,
+    VueSlider
   },
-  async setup(props) {
-    console.log("ListeTheseAnnee setup(props)", props.id, props.textid)
+  async setup (props) {
+    console.log('ListeTheseAnnee setup(props)', props.identifier, props.textid)
 
+    const state = reactive({
+      isOpened: false
+    })
+    const id = ref(Array.isArray(props.identifier) ? props.identifier[0] : props.identifier)
+    console.log('ListeTheseAnnee setup const id', id)
+    const textid = ref(props.textid)
+    console.log('ListeTheseAnnee setup const textid', textid)
 
-    let state = reactive({
-      isOpened: false,
-    });
-    const id = ref(Array.isArray(props.id) ? props.id[0] : props.id);
-    console.log("ListeTheseAnnee setup const id", id)
-    const textid = ref(props.textid);
-    console.log("ListeTheseAnnee setup const textid", textid)
+    const toc = reactive(props.tocprops)
+    console.log('ListeTheseAnnee setup const toc', props.tocprops)
 
-    const toc = reactive(props.toc);
-    console.log("ListeTheseAnnee setup const toc", props.toc)
+    const collection = ref(Array.isArray(props.identifier) ? props.identifier[0] : props.identifier)
+    console.log('ListeTheseAnnee setup const collection', collection)
 
-    const collection = ref(Array.isArray(props.id) ? props.id[0] : props.id);
-    console.log("ListeTheseAnnee setup const collection", collection)
-
-
-    const listProm = ref([]);
-    const previousCollection = ref();
-    const nextCollection = ref();
+    const listProm = ref([])
+    const previousCollection = ref()
+    /* const nextCollection = ref() */
 
     const getItemsForCurrentCollection = async () => {
-      let metadata = {};
-      console.log("listeTheseAnnee getItemsForCurrentCollection id.value ", id.value)
-      const data = await getMetadataFromApi(id.value);
-      console.log("listeTheseAnnee id ", id)
-      var htmlnamespace = Object.keys(data["@context"]).find((k) =>
-        data["@context"][k].includes("html")
-      );
-      console.log("data && data[\"member\"]", data)
-      if (data && data["member"]) {
-        let sortedDataMembers = data["member"].sort(function (a, b) {
-          return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
-        });
-        console.log("sortedDataMembers", sortedDataMembers)
-        for (const [i, item] of sortedDataMembers.entries())
-         {
-          if (item["@id"].includes("PREV") || item["@id"].includes("NEXT")) {
-            continue;
+      const metadata = {}
+      console.log('listeTheseAnnee getItemsForCurrentCollection id.value ', id.value)
+      const data = await getMetadataFromApi(id.value)
+      console.log('listeTheseAnnee id ', id)
+      const htmlnamespace = Object.keys(data['@context']).find((k) =>
+        data['@context'][k].includes('html')
+      )
+      console.log('data && data["member"]', data)
+      if (data && data.member) {
+        const sortedDataMembers = data.member.sort(function (a, b) {
+          return a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+        })
+        console.log('sortedDataMembers', sortedDataMembers)
+        for (const [i, item] of sortedDataMembers.entries()) {
+          if (item['@id'].includes('PREV') || item['@id'].includes('NEXT')) {
+            continue
           }
-          var title = item["extensions"] && item["extensions"][htmlnamespace + ":h1"] ? item["extensions"][htmlnamespace + ":h1"] : item["dublincore"]["title"]
-          var author = item["dublincore"]["creator"] ? item["dublincore"]["creator"] : "inconnu";
-          var date = item["dublincore"]["date"] ? item["dublincore"]["date"] : "inconnue";
-          metadata[i] = [item["@id"], author, title, date];
-          /*try {
+          const title = item.extensions && item.extensions[htmlnamespace + ':h1'] ? item.extensions[htmlnamespace + ':h1'] : item.dublincore.title
+          const author = item.dublincore.creator ? item.dublincore.creator : 'inconnu'
+          const date = item.dublincore.date ? item.dublincore.date : 'inconnue'
+          metadata[i] = [item['@id'], author, title, date]
+          /* try {
             const page = item["extensions"]["dct:extend"].toString().split("-")[0];
             metadata[page] = [item["@id"], author, title];
           } catch {
             metadata[item["@id"].split("_")[2]] = [item["@id"], author, title];
-          }*/
+          } */
         }
       }
 
       state.metadata = metadata
-      console.log("state.metadata ", state.metadata)
-    };
+      console.log('state.metadata ', state.metadata)
+    }
 
     const getAllPositionsYears = async () => {
       const PROJECT = `${import.meta.env.VITE_APP_PROJECT}`
-      console.log("ListeTheseAnnee PROJECT collection.value", PROJECT, props.id)
-      //const data = await getMetadataFromApi(collection.value);
-      const data = props.toc.filter(i => i.identifier === id.value)[0]
-      console.log("ListeTheseAnnee const data", data)
-      console.log("ListeTheseAnnee const data alternative from toc", props.toc.filter(i => i.identifier === id.value))
-      let collections = [];
-      for (var member of data.member) {
-        let item = member["@id"];
-        collections.push(item);
+      console.log('ListeTheseAnnee PROJECT collection.value', PROJECT, props.identifier)
+      // const data = await getMetadataFromApi(collection.value);
+      const data = props.tocprops.filter(i => i.identifier === id.value)[0]
+      console.log('ListeTheseAnnee const data', data)
+      console.log('ListeTheseAnnee const data alternative from toc', props.tocprops.filter(i => i.identifier === id.value))
+      const collections = []
+      for (const member of data.member) {
+        const item = member['@id']
+        collections.push(item)
       }
       collections.sort(function (a, b) {
-        return a.toLowerCase().localeCompare(b.toLowerCase());
-      });
-      listProm.value = collections;
-      console.log("ListeTheseAnnee listProm", listProm.value)
-      getPreviousCollection();
-    };
+        return a.toLowerCase().localeCompare(b.toLowerCase())
+      })
+      listProm.value = collections
+      console.log('ListeTheseAnnee listProm', listProm.value)
+      getPreviousCollection()
+    }
 
     const listCssClass = computed(() => {
-      return state.isOpened ? "is-opened" : "";
-    });
+      return state.isOpened ? 'is-opened' : ''
+    })
 
     const toggleContent = function (event) {
-      event.preventDefault();
-      state.isOpened = !state.isOpened;
-    };
+      event.preventDefault()
+      state.isOpened = !state.isOpened
+    }
 
     const isNotInitialCollection = computed(() => {
-      return collection.value.toString() !== id.value.toString();
-    });
+      return collection.value.toString() !== id.value.toString()
+    })
 
     const getPreviousCollection = function () {
-      console.log("getPreviousCollection listProm, collection.value", listProm.value, textid.value, listProm.value.indexOf(textid.value.toString()))
+      console.log('getPreviousCollection listProm, collection.value', listProm.value, textid.value, listProm.value.indexOf(textid.value.toString()))
 
       if (listProm.value.indexOf(textid.value.toString()) !== 0) {
         previousCollection.value = listProm.value[
           listProm.value.indexOf(textid.value.toString()) - 1
-        ].toString();
+        ].toString()
       }
-    };
+    }
 
     const downOneCollection = function () {
       if (listProm.value.indexOf(collection.value.toString()) !== 0) {
         collection.value = listProm.value[
           listProm.value.indexOf(collection.value.toString()) - 1
-        ].toString();
+        ].toString()
       }
-      console.log("liste these année labelled collections, collection.value : ", collection.value)
-      return collection;
-    };
+      console.log('liste these année labelled collections, collection.value : ', collection.value)
+      return collection
+    }
 
     const reinitalise = function () {
-      collection.value = id.value.toString();
-      return collection;
-    };
+      collection.value = id.value.toString()
+      return collection
+    }
 
     const addOneCollection = function () {
       if (
@@ -225,64 +222,63 @@ export default {
       ) {
         collection.value = listProm.value[
           listProm.value.indexOf(collection.value.toString()) + 1
-        ].toString();
+        ].toString()
       }
-      console.log("liste these année labelled collections, collection.value : ", collection.value)
-      return collection;
-    };
+      console.log('liste these année labelled collections, collection.value : ', collection.value)
+      return collection
+    }
 
     const inputAnnee = computed({
       get: () => collection.value,
       set: (val) => {
-        const valStr = val.toString().toLowerCase(); // special string value : 1942b
+        const valStr = val.toString().toLowerCase() // special string value : 1942b
         if (valStr.length >= 4) {
           if (listProm.value.indexOf(valStr) !== -1) {
-            collection.value = valStr;
+            collection.value = valStr
           } else {
-            const valNum = parseInt(val);
-            const minDate = listProm.value[0];
-            const maxDate = listProm.value[listProm.value.length - 1];
-            collection.value = Math.min(maxDate, Math.max(minDate, valNum)).toString();
-            console.log("minDate, collection.value : ",minDate, collection.value);
+            const valNum = parseInt(val)
+            const minDate = listProm.value[0]
+            const maxDate = listProm.value[listProm.value.length - 1]
+            collection.value = Math.min(maxDate, Math.max(minDate, valNum)).toString()
+            console.log('minDate, collection.value : ', minDate, collection.value)
           }
         }
-      },
-    });
+      }
+    })
     const input = computed({
       get: () => collection.value,
       set: (val) => {
-        console.log("liste these année changed labelled input", val)
-        const valStr = val.toString().toLowerCase(); // special string value : 1942b
+        console.log('liste these année changed labelled input', val)
+        const valStr = val.toString().toLowerCase() // special string value : 1942b
         collection.value = listProm.value.filter(item => item.identifier === val)
-        console.log("liste these année labelled collections, collection.value : ", collection.value);
-        }
-    });
+        console.log('liste these année labelled collections, collection.value : ', collection.value)
+      }
+    })
 
     watch(inputAnnee, () => {
-      state.isOpened = true;
+      state.isOpened = true
     })
     watch(input, () => {
-      state.isOpened = true;
+      state.isOpened = true
     })
 
     watch(
-  () => props.id,
-    () => {
-      console.log("liste these année watch props.id", props.id)
-      id.value = props.id
-      collection.value = props.id
-      getItemsForCurrentCollection();
-      getPreviousCollection();
-      console.log("liste these année watch previousCollection", previousCollection.value)
+      () => props.identifier,
+      () => {
+        console.log('liste these année watch props.identifier', props.identifier)
+        id.value = props.identifier
+        collection.value = props.identifier
+        getItemsForCurrentCollection()
+        getPreviousCollection()
+        console.log('liste these année watch previousCollection', previousCollection.value)
       }
     )
 
-    await Promise.all([getItemsForCurrentCollection(), getAllPositionsYears()]);
-
+    await Promise.all([getItemsForCurrentCollection(), getAllPositionsYears()])
 
     const gotoTop = function () {
-      scroll(0, 0);
-    };
+      scroll(0, 0)
+    }
 
     return {
       state,
@@ -299,10 +295,10 @@ export default {
       inputAnnee,
       input,
       gotoTop,
-      listProm,
-    };
-  },
-};
+      listProm
+    }
+  }
+}
 </script>
 
 <style scoped>
