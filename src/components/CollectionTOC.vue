@@ -1,6 +1,6 @@
 <template>
   <ol class="tree">
-    <template v-for="(item, index) in collectionTOC.sort((a, b) => a.title > b.title ? 1 : -1 )" :key="index">
+    <template v-for="(item, index) in componentTOC.sort((a, b) => a.title > b.title ? 1 : -1 )" :key="index">
       <li
         :style="`margin-left: ${ $props.margin }px;`"
         :class="item.totalChildren > 0 ? 'more' : ''"
@@ -95,27 +95,27 @@ export default {
 
     const selectedParent = ref('')
 
-    const collectionTOC = ref(props.toc)
-    console.log('collectionTOC.value props.toc : ', collectionTOC.value)
+    const componentTOC = ref(props.toc)
+    console.log('componentTOC.value props.toc : ', componentTOC.value)
 
-    /* expandedById.value = collectionTOC.value.filter(item => item.expanded === true).map(col => [col.identifier, true])
-    console.log("collectionTOC.value expandedById.value : ", expandedById.value) */
-    expandedById.value = Object.assign({}, ...collectionTOC.value.filter(item => item.citeType === 'Collection').map((x) => ({ [x.identifier]: false })))
+    /* expandedById.value = componentTOC.value.filter(item => item.expanded === true).map(col => [col.identifier, true])
+    console.log("componentTOC.value expandedById.value : ", expandedById.value) */
+    expandedById.value = Object.assign({}, ...componentTOC.value.filter(item => item.citeType === 'Collection').map((x) => ({ [x.identifier]: false })))
 
     const toggleExpanded = async (collId) => {
-      console.log('collectionTOC toggleExpanded collectionTOC collId: ', collectionTOC.value, collId)
-      if (!collectionTOC.value.filter(item => item['@id'] === collId || item.identifier === collId)[0].children || collectionTOC.value.filter(item => item['@id'] === collId || item.identifier === collId)[0].children.length === 0) {
+      console.log('CollectionTOC toggleExpanded componentTOC collId: ', componentTOC.value, collId)
+      if (!componentTOC.value.filter(item => item['@id'] === collId || item.identifier === collId)[0].children || componentTOC.value.filter(item => item['@id'] === collId || item.identifier === collId)[0].children.length === 0) {
         const response = getSimpleObject(await getMetadataFromApi(collId))
         console.log('response', response)
         // eslint-disable-next-line no-return-assign
         response.member.forEach(m => { m.identifier = m['@id'] })
         response.member.forEach(m => { m.parent = collId })
         console.log('response after identifier', response)
-        collectionTOC.value.filter(item => item.identifier === collId)[0].member = response.member
-        collectionTOC.value.filter(item => item.identifier === collId)[0].children = response.member
-        console.log('collectionTOC', collectionTOC.value)
+        componentTOC.value.filter(item => item.identifier === collId)[0].member = response.member
+        componentTOC.value.filter(item => item.identifier === collId)[0].children = response.member
+        console.log('CollectionTOC componentTOC', componentTOC.value)
       }
-      console.log('collectionTOC expandedById.value', expandedById.value)
+      console.log('CollectionTOC expandedById.value', expandedById.value)
 
       selectedParent.value = collId
       console.log('CollectionTOC after selectedParent.value : ', collId)
@@ -128,13 +128,16 @@ export default {
       toggleExpanded,
       expandedById,
       selectedParent,
-      collectionTOC
+      componentTOC
     }
   }
 }
 </script>
 
 <style scoped>
+.tree {
+  list-style: none;
+}
 
 .tree li {
   font-family: "Barlow Semi Condensed", sans-serif !important;

@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="wrapper">
     <div class="row" :class="currentLevelIndicator === 'renderToc' ? 'remove-bottom-padding' : ''">
       <Suspense @resolve="scrollTo()">
         <component :is="customDocument"/>
@@ -194,6 +194,11 @@ export default {
 </script>
 
 <style src="@/assets/css/html.css" id="document-html-css">
+.wrapper {
+  display: flex;
+  flex-direction: row;
+}
+
 header {
   clear: both;
   padding: 1ex;

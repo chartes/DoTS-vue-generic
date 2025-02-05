@@ -1865,6 +1865,9 @@ export default {
   border-bottom: 1px dotted #ffffff;
   min-height: 100%;
 }
+div.remove-bottom-padding {
+  display: flex;
+}
 div.remove-bottom-padding #article {
   padding: 40px 10% 10px !important;
 }

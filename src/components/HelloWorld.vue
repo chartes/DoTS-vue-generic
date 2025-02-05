@@ -19,20 +19,20 @@
             </div>
           </div>
           <div class="wrapper">
-            <div class="wrapper">
+            <div>
               <document-metadata
                 :ispopup="false"
-                :metadata="currentCollection"
+                :metadataprop="currentCollection"
                 class="metadata-area app-width-margin"
               />
             </div>
-          <div class="toc-area app-width-margin" :class="tocCssClass">
+            <div class="toc-area app-width-margin" :class="tocCssClass">
               <div class="toc-area-header">
                 <a href="#">Parcourir la collection </a>
                 <!--<a href="#">Parcourir la collection </a>-->
                 <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
               </div>
-              <div v-if="Object.keys(collectionTOC).length > 0 && collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0"
+              <div v-if="Object.keys(componentTOC).length > 0 && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0"
                 class="menu app-width-margin"
                 :class="expandedById[collectionId] ? 'expanded': ''"
               >
@@ -42,9 +42,9 @@
                 >
                   Parcourir la collection
                 </button>-->
-                <div v-if="expandedById[collectionId] && collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0">
+                <div v-if="expandedById[collectionId] && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0">
                   <CollectionTOC
-                    :toc="collectionTOC.filter(item => item.identifier === collectionId)[0].member"
+                    :toc="componentTOC.filter(item => item.identifier === collectionId)[0].member"
                     :margin="0"
                   />
                 </div>
@@ -68,7 +68,7 @@
             <!- -<a href="#">Parcourir la collection </a>- ->
             <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
           </div>
-          <div v-if="Object.keys(collectionTOC).length > 0 && collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0"
+          <div v-if="Object.keys(componentTOC).length > 0 && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0"
             class="menu app-width-margin"
             :class="expandedById[collectionId] ? 'expanded': ''"
           >
@@ -78,9 +78,9 @@
             >
               Parcourir la collection
             </button>- ->
-            <div v-if="expandedById[collectionId] && collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0">
+            <div v-if="expandedById[collectionId] && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0">
               <CollectionTOC
-                :toc="collectionTOC.filter(item => item.identifier === collectionId)[0].member"
+                :toc="componentTOC.filter(item => item.identifier === collectionId)[0].member"
                 :margin="0"
               />
             </div>
@@ -197,9 +197,9 @@ export default {
 
     console.log('HelloWorld setup collectionId', collectionId.value)
 
-    const collectionTOC = reactive([])
+    const componentTOC = ref([])
 
-    const currentCollection = reactive({})
+    const currentCollection = ref({})
 
     const getCurrentItem = async (route) => {
       console.log('HelloWorld getCurrentItem origin route', origin, route)
@@ -220,27 +220,34 @@ export default {
       formatedResponse.member.forEach(m => { m.parent = collectionId.value })
       console.log('HelloWorld formatedResponse', formatedResponse)
       formatedResponse = { ...formatedResponse, member: formatedResponse.member?.map(m => { return getSimpleObject(m) }) }
-      Object.assign(currentCollection, formatedResponse)
+      currentCollection.value = formatedResponse
     }
 
-    // collectionTOC.value = [currentCollection.value]
-    // console.log("HelloWorld currentCollection.value / collectionTOC.value : ", currentCollection.value / collectionTOC.value)
+    // componentTOC.value = [currentCollection.value]
+    // console.log("HelloWorld currentCollection.value / componentTOC.value : ", currentCollection.value / componentTOC.value)
 
-    console.log('HelloWorld collectionTOC / collectionId : ', Object.fromEntries(collectionTOC.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false])), collectionTOC, collectionId, currentCollection)
+    console.log('HelloWorld componentTOC / collectionId : ', Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false])), componentTOC.value, collectionId, currentCollection)
     const target = ref(null)
 
-    const expandedById = ref(false)
+    const expandedById = ref([])
+    let oldExpanded = false
 
     const toggleExpanded = async (event, collId) => {
       event.preventDefault()
-      console.log('HelloWorld Modal toggleExpanded', collectionTOC.filter(item => item.identifier === collId)[0].member)
-      if (collectionTOC.filter(item => item.identifier === collId)[0].member.length === 0) {
+      console.log('HelloWorld Modal toggleExpanded', componentTOC.value.filter(item => item.identifier === collId)[0].member)
+      if (componentTOC.value.filter(item => item.identifier === collId)[0].member.length === 0) {
         const response = await getMetadataFromApi(collId)
-        response.member.forEach(m => { m.identifier = m['@id'] })
-        response.member.forEach(m => { m.parent = collId })
-        console.log('HelloWorld response', response, response.member.forEach((i) => { i.identifier = i['@id'] }))
-        collectionTOC.filter(item => item.identifier === collId)[0].member = response.member
-        console.log('HelloWorld HelloWorld collectionTOC', collectionTOC)
+        response.member.forEach(m => {
+          m.identifier = m['@id']
+        })
+        response.member.forEach(m => {
+          m.parent = collId
+        })
+        console.log('HelloWorld response', response, response.member.forEach(i => {
+          i.identifier = i['@id']
+        }))
+        componentTOC.value.filter(item => item.identifier === collId)[0].member = response.member
+        console.log('HelloWorld componentTOC', componentTOC.value)
       }
       expandedById.value[collId] = !expandedById.value[collId]
       state.isTreeOpened = !state.isTreeOpened
@@ -261,14 +268,16 @@ export default {
           collectionId.value = props.collectionIdentifier
           console.log('HelloWorld watch collectionId.value : ', collectionId.value)
           await getCurrentItem(newRoute)
-          collectionTOC.push(currentCollection)
-          currentCollection.member.forEach(m => {
-            collectionTOC.push(getSimpleObject(m))
+          componentTOC.value.push(currentCollection.value)
+
+          console.log('HelloWorld watch currentCollection.value.member : ', currentCollection.value.member)
+          currentCollection.value.member.forEach(m => {
+            componentTOC.value.push(getSimpleObject(m))
           }
           )
-          console.log('HelloWorld watch collectionTOC.value : ', collectionTOC, collectionId)
-          console.log('HelloWorld watch collectionTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', collectionTOC.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
-          expandedById.value = Object.fromEntries(collectionTOC.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
+          console.log('HelloWorld watch componentTOC.value : ', componentTOC.value, collectionId)
+          console.log('HelloWorld watch componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', componentTOC.value.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
+          // expandedById.value = Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
           isLoading.value = true
         }
       }, { deep: true, immediate: true }
@@ -283,7 +292,7 @@ export default {
       target,
       collectionId,
       currentCollection,
-      collectionTOC,
+      componentTOC,
       toggleExpanded,
       expandedById
     }
@@ -292,68 +301,98 @@ export default {
 </script>
 
 <style scoped>
-  .modal-mask {
-    position: fixed;
-    z-index: 9998;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-  .modal-container {
-    max-width: 1100px !important;
-    margin: 150px auto;
-    padding: 20px 30px;
-    background-color: #fbf8f4;
-    border-radius: 2px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-    max-height: 60vh;
-    overflow-y: auto;
-    color: #4a4a4a;
-  }
-  .modal-header {
-    display: flex;
-    width: 100%;
-    padding: 20px;
-    background-color: #b8b5ad;
-    border-radius: 6px;
+.modal-mask {
+  position: fixed;
+  z-index: 9998;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.modal-container {
+  max-width: 1100px !important;
+  margin: 150px auto;
+  padding: 20px 30px;
+  background-color: #fbf8f4;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+  max-height: 60vh;
+  overflow-y: auto;
+  color: #4a4a4a;
+}
+.modal-header {
+  display: flex;
+  width: 100%;
+  padding: 20px;
+  background-color: #b8b5ad;
+  border-radius: 6px;
 
-    font-family: "Barlow Semi Condensed", sans-serif !important;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 25px;
-    letter-spacing: 0;
-    text-transform: uppercase;
-  }
-  .modal-header span.modal-header-section {
-    color: #4a4a4a;
-  }
-  .modal-header span.modal-header-title {
-    margin-left: 40px;
-    color: #161616;
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 25px;
+  font-family: "Barlow Semi Condensed", sans-serif !important;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 25px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.modal-header span.modal-header-section {
+  color: #4a4a4a;
+}
+.modal-header span.modal-header-title {
+  margin-left: 40px;
+  color: #161616;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 25px;
+  text-transform: none;
+}
+
+.modal-body {
+  display: flex;
+  width: 100%;
+  padding: 20px;
+  background-color: #e4e4e4;
+  border-radius: 6px;
+  position: relative;
+
+  font-family: "Barlow Semi Condensed", sans-serif !important;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.metadata-area {
+  margin-top: 15px !important;
+  margin-bottom: 15px !important;
+}
+.toc-area {
+  width: 100%;
+  font-family: "Barlow", sans-serif !important;
+  margin-bottom: 30px !important;
+}
+.toc-area-header {
+  display: flex;
+  width: 100%;
+  padding: 20px;
+  background-color: #f1f1f1;
+  border-radius: 6px;
+  position: relative;
+}
+.toc-area-header > a {
+  text-transform: uppercase;
+  font-family: "Barlow Semi Condensed", sans-serif;
+  font-weight: 500;
+  color: #4a4a4a !important;
+  text-decoration: none;
+  border: none;
+  &:first-child {
     text-transform: none;
+    margin-left: auto;
+    margin-right: 47px;
   }
-
-  .modal-body {
-    display: flex;
-    width: 100%;
-    padding: 20px;
-    background-color: #e4e4e4;
-    border-radius: 6px;
-    position: relative;
-
-    font-family: "Barlow Semi Condensed", sans-serif !important;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 22px;
-  }
-  .is-tree-opened .toc-area-header {
-    border-radius: 6px 6px 0 0;
-  }
+}
+.is-tree-opened .toc-area-header {
+  border-radius: 6px 6px 0 0;
+}
 
   .modal-body-header span.modal-body-header-section {
     margin-right: 40px;
@@ -361,36 +400,39 @@ export default {
   .modal-body-header span.modal-body-header-title {
     color: #929292;
   }
-  .is-tree-opened .menu {
-    display: flex;
-    flex-direction: column;
-    padding: 0px 20px 0px;
-    /*border-top: solid 2px #fcfcfc;*/
-    background-color: #e4e4e4;
-    border-radius: 0 0 6px 6px;
-  }
-  /* toggle */
-  .toggle-btn {
-    position: absolute;
-    right: 20px;
-    width: 27px;
-    height: 27px;
-    background: url(../assets/images/chevron_rouge.svg) center top -7px / cover no-repeat;
-    border: none;
-    text-decoration: none;
-  }
-  .is-tree-opened .toggle-btn {
-    background: url(../assets/images/croix.svg) center / cover no-repeat;
-  }
-  #article {
-    margin-bottom: 30px !important;
-    padding: 10px 0 10px !important;
-  }
-  .wrapper {
-    width: 100%;
-  }
-  .title-tile {
-    margin-top: 30px !important;
-    margin-bottom: 30px !important;
-  }
+.is-tree-opened .menu {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 20px 0px;
+  /*border-top: solid 2px #fcfcfc;*/
+  background-color: #e4e4e4;
+  border-radius: 0 0 6px 6px;
+}
+ol {
+  list-style: none;
+}
+/* toggle */
+.toggle-btn {
+  position: absolute;
+  right: 20px;
+  width: 27px;
+  height: 27px;
+  background: url(../assets/images/chevron_rouge.svg) center top -7px / cover no-repeat;
+  border: none;
+  text-decoration: none;
+}
+.is-tree-opened .toggle-btn {
+  background: url(../assets/images/croix.svg) center / cover no-repeat;
+}
+#article {
+  margin-bottom: 30px !important;
+  padding: 10px 0 10px !important;
+}
+.wrapper {
+  width: 100%;
+}
+.title-tile {
+  margin-top: 30px !important;
+  margin-bottom: 30px !important;
+}
 </style>

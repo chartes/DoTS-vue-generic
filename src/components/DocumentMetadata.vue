@@ -493,7 +493,7 @@ export default {
     })
     const isPopUp = ref(props.ispopup)
     const isNew = ref(true)
-    const metadata = reactive({})
+    const metadata = ref({})
     const authorThumbnailUrl = ref(null)
 
     const getValue = (data) => {
@@ -515,20 +515,14 @@ export default {
     }
     const ImgUrl = (source) => {
       console.log('ImgUrl / source', source)
-      const path = new URL('@/assets/images/', import.meta.url)
-      return `${path}/Logo_${source}.png`
+      return new URL(`/src/assets/images/Logo_${source}.png`, import.meta.url).href
     }
 
-    /* const ImgUrl = (source) => {
-      var images = require.context('../assets/', false, /\.png$/)
-      return images('./' + source + ".png")
-    } */
-
-    console.log('state.metadata', metadata)
+    console.log('DocumentMetadata metadata.value : ', metadata.value)
 
     const fetchAuthorThumbnailUrl = async (options = {}) => {
-      if (metadata.wikidata) {
-        let wikidata_id = metadata.wikidata.split('/')
+      if (metadata.value.wikidata) {
+        let wikidata_id = metadata.value.wikidata.split('/')
         wikidata_id = wikidata_id[wikidata_id.length - 1]
 
         console.log('fetchAuthorThumbnailUrl')
@@ -557,8 +551,8 @@ export default {
     }
 
     const fetchBiblioData = async () => {
-      if (metadata.data_bnf) {
-        const httpsUrl = metadata.data_bnf.replace('http:', 'https:')
+      if (metadata.value.data_bnf) {
+        const httpsUrl = metadata.value.data_bnf.replace('http:', 'https:')
         // console.log("extra metadata:", httpsUrl);
         console.log(decodeURIComponent(`${httpsUrl}`))
         const redirectUrl = await fetch(`${httpsUrl}`, {
@@ -597,11 +591,11 @@ export default {
 
     // const $rdf = require('rdflib')
     const fetchRDF = async () => {
-      console.log('metadata.value.idref : ', metadata.idref)
-      if (metadata.idref) {
-        console.log('metadata.value.idref : ', metadata.idref)
+      console.log('metadata.value.idref : ', metadata.value.idref)
+      if (metadata.value.idref) {
+        console.log('metadata.value.idref : ', metadata.value.idref)
         const store = $rdf.graph()
-        const me = store.sym(metadata.idref)
+        const me = store.sym(metadata.value.idref)
         console.log('me : ', me)
       }
     }
@@ -611,14 +605,7 @@ export default {
     watch(
       () => props.metadataprop,
       () => {
-        console.log('metadataprop watch current, new : ', metadata, props.metadataprop)
-        /* let cleanMetadata = Object.keys(props.metadata)
-          .filter(key => props.metadata[key] !== null)
-          .reduce((acc, key) => {
-            acc[key] = props.metadata[key];
-            return acc;
-          }, {});
-        Object.assign(metadata, cleanMetadata) */
+        console.log('metadataprop watch current, new : ', metadata.value, props.metadataprop)
 
         const removeKeys = (obj, keys) => obj !== Object(obj)
           ? obj
@@ -634,10 +621,11 @@ export default {
         const removedKeys = ['children', 'member', 'editorialLevelIndicator', 'renderToc', 'level', 'expanded', 'link_type', 'router', 'dublincore', 'extensions']/* gerer les 'url' à supp pour les collections seulement */
 
         let filteredMetadata = {}
-        Object.assign(filteredMetadata, {})
+        // Object.assign(filteredMetadata, {})
         filteredMetadata = removeKeys(props.metadataprop, removedKeys)
         console.log('filteredMetadata', filteredMetadata)
-        Object.assign(metadata, filteredMetadata)
+        metadata.value = filteredMetadata
+        // Object.assign(metadata, filteredMetadata)
         fetchAuthorThumbnailUrl()
         fetchBiblioData()
         fetchRDF()
