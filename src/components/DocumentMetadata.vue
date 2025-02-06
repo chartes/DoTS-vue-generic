@@ -493,7 +493,7 @@ export default {
     })
     const isPopUp = ref(props.ispopup)
     const isNew = ref(true)
-    const metadata = ref({})
+    const metadata = ref(props.metadataprop)
     const authorThumbnailUrl = ref(null)
 
     const getValue = (data) => {
@@ -620,9 +620,11 @@ export default {
 
         const removedKeys = ['children', 'member', 'editorialLevelIndicator', 'renderToc', 'level', 'expanded', 'link_type', 'router', 'dublincore', 'extensions']/* gerer les 'url' à supp pour les collections seulement */
 
+        metadata.value = props.metadataprop
+
         let filteredMetadata = {}
         // Object.assign(filteredMetadata, {})
-        filteredMetadata = removeKeys(props.metadataprop, removedKeys)
+        filteredMetadata = removeKeys(metadata.value, removedKeys)
         console.log('filteredMetadata', filteredMetadata)
         metadata.value = filteredMetadata
         // Object.assign(metadata, filteredMetadata)

@@ -24,6 +24,7 @@
                 :ispopup="false"
                 :metadataprop="currentCollection"
                 class="metadata-area app-width-margin"
+                :key="currentCollection"
               />
             </div>
             <div class="toc-area app-width-margin" :class="tocCssClass">
@@ -32,7 +33,7 @@
                 <!--<a href="#">Parcourir la collection </a>-->
                 <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
               </div>
-              <div v-if="Object.keys(componentTOC).length > 0 && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0"
+              <div v-if="componentTOC.length > 0"
                 class="menu app-width-margin"
                 :class="expandedById[collectionId] ? 'expanded': ''"
               >
@@ -42,9 +43,9 @@
                 >
                   Parcourir la collection
                 </button>-->
-                <div v-if="expandedById[collectionId] && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0">
+                <div v-if="expandedById[collectionId] && componentTOC.length > 0">
                   <CollectionTOC
-                    :toc="componentTOC.filter(item => item.identifier === collectionId)[0].member"
+                    :toc="componentTOC"
                     :margin="0"
                   />
                 </div>
@@ -226,16 +227,15 @@ export default {
     // componentTOC.value = [currentCollection.value]
     // console.log("HelloWorld currentCollection.value / componentTOC.value : ", currentCollection.value / componentTOC.value)
 
-    console.log('HelloWorld componentTOC / collectionId : ', Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false])), componentTOC.value, collectionId, currentCollection)
+    console.log('HelloWorld componentTOC / collectionId : ', Object.fromEntries(componentTOC.value.map(col => [col.identifier, false])), componentTOC.value, collectionId, currentCollection)
     const target = ref(null)
 
     const expandedById = ref([])
-    let oldExpanded = false
 
     const toggleExpanded = async (event, collId) => {
       event.preventDefault()
-      console.log('HelloWorld Modal toggleExpanded', componentTOC.value.filter(item => item.identifier === collId)[0].member)
-      if (componentTOC.value.filter(item => item.identifier === collId)[0].member.length === 0) {
+      console.log('HelloWorld Modal toggleExpanded', componentTOC.value)
+      if (componentTOC.value.length === 0) {
         const response = await getMetadataFromApi(collId)
         response.member.forEach(m => {
           m.identifier = m['@id']
@@ -246,7 +246,7 @@ export default {
         console.log('HelloWorld response', response, response.member.forEach(i => {
           i.identifier = i['@id']
         }))
-        componentTOC.value.filter(item => item.identifier === collId)[0].member = response.member
+        componentTOC.value = response.member
         console.log('HelloWorld componentTOC', componentTOC.value)
       }
       expandedById.value[collId] = !expandedById.value[collId]
@@ -260,6 +260,7 @@ export default {
 
     watch(
       router.currentRoute, async (newRoute, oldRoute) => {
+        console.log('HelloWorld watch change in route : ', oldRoute, newRoute)
         if (newRoute === oldRoute) {
           console.log('HelloWorld watch no change in route')
         } else {
@@ -268,15 +269,13 @@ export default {
           collectionId.value = props.collectionIdentifier
           console.log('HelloWorld watch collectionId.value : ', collectionId.value)
           await getCurrentItem(newRoute)
-          componentTOC.value.push(currentCollection.value)
-
-          console.log('HelloWorld watch currentCollection.value.member : ', currentCollection.value.member)
-          currentCollection.value.member.forEach(m => {
-            componentTOC.value.push(getSimpleObject(m))
+          console.log('HelloWorld currentCollection.value : ', currentCollection.value)
+          if (currentCollection.value.member) {
+            console.log('HelloWorld watch currentCollection.value.member : ', currentCollection.value.member)
+            componentTOC.value = currentCollection.value.member
           }
-          )
           console.log('HelloWorld watch componentTOC.value : ', componentTOC.value, collectionId)
-          console.log('HelloWorld watch componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', componentTOC.value.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
+          // console.log('HelloWorld watch componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', componentTOC.value.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
           // expandedById.value = Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
           isLoading.value = true
         }

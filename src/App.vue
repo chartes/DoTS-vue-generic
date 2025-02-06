@@ -48,19 +48,20 @@ body {
 }
 
 .layout-navbar {
-  grid-area: "header";
+  grid-area: header;
 }
 .layout-main {
-  grid-area: "main";
+  grid-area: main;
 }
 .layout-footer {
-  grid-area: "footer";
+  grid-area: footer;
 }
 .layout-grid-container {
   display: grid;
-  height: calc(100% - 50px);
+  height: 100%;
+  /* height: calc(100% - 50px); */
   grid-template-columns: 100%;
-  grid-template-rows: auto auto 272px;
+  grid-template-rows: 85px auto 272px;
   grid-template-areas:
     "header"
     "main"

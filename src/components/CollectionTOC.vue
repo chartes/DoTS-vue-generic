@@ -1,6 +1,6 @@
 <template>
   <ol class="tree">
-    <template v-for="(item, index) in componentTOC.sort((a, b) => a.title > b.title ? 1 : -1 )" :key="index">
+    <template v-for="(item, index) in componentTOC" :key="index">
       <li
         :style="`margin-left: ${ $props.margin }px;`"
         :class="item.totalChildren > 0 ? 'more' : ''"
@@ -96,6 +96,8 @@ export default {
     const selectedParent = ref('')
 
     const componentTOC = ref(props.toc)
+    componentTOC.value.sort((a, b) => a.title > b.title ? 1 : -1)
+
     console.log('componentTOC.value props.toc : ', componentTOC.value)
 
     /* expandedById.value = componentTOC.value.filter(item => item.expanded === true).map(col => [col.identifier, true])
