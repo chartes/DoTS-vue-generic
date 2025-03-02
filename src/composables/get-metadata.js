@@ -36,7 +36,7 @@ function findSource (id) {
   return null
 }
 
-export default async function fetchMetadata (resourceId, documentType, route) {
+export default async function fetchMetadata (source, resourceId, documentType, route) {
   const startTimefetchMetadata = new Date()
   const initial_metadata = {
     id: null,
@@ -62,18 +62,20 @@ export default async function fetchMetadata (resourceId, documentType, route) {
   const metadata = initial_metadata
 
   const getMetadata = async function () {
+    console.log('fetchMetadata source : ', source)
     console.log('fetchMetadata resourceId : ', resourceId)
     console.log('fetchMetadata see TOC from store.state : ', store.state.TOC)
     console.log('fetchMetadata see TOC from store.state filtered : ', store.state.TOC.filter(item => item.identifier === resourceId))
     // console.log("fetchMetadata see TOC from store.state filtered parents: ", store.state.TOC.filter(item => item.identifier === resourceId)[0].parent)
-
+    const startTimefetchMetadataFromDots = new Date()
     let listmetadata = {}
     if (documentType === 'Resource') {
       listmetadata = await getMetadataFromApi(resourceId, 'Resource')
     } else {
       listmetadata = await getMetadataFromApi(resourceId, 'Collection')
     }
-
+    const endTimefetchMetadataFromDots = new Date()
+    console.log('fetchMetadata metadata get time from DOTS : ', endTimefetchMetadataFromDots - startTimefetchMetadataFromDots)
     const htmlnamespace = Object.keys(listmetadata['@context']).find((k) =>
       listmetadata['@context'][k].includes('html')
     )
@@ -154,11 +156,11 @@ export default async function fetchMetadata (resourceId, documentType, route) {
         console.log("dublincore:", dublincore); */
     try {
       metadata.iiifManifestUrl = extensions['dct:source'][0]['@id']
-      // layout.imageIsAvailable.value = true;
+      // layout.imageIsAvailable.value = true
     } catch {
       metadata.iiifManifestUrl = null
       // TODO: resolve why layout undefined and uncomment
-      // layout.imageIsAvailable.value = false;
+      // layout.imageIsAvailable.value = false
     }
 
     console.log('metadata.iiifManifestUrl:', metadata.iiifManifestUrl)

@@ -2,19 +2,53 @@
   <div class="layout-grid-container">
     <app-navbar class="layout-navbar"/>
       <suspense>
-        <router-view class="layout-main"/>
+        <router-view
+
+          class="layout-main"
+          :collection-identifier="collectionId === 'elec' ? '' : collectionId"
+          :current-collection="currCollection"
+          :key="currCollection"
+        />
       </suspense>
     <back-to-top-button class="back-to-top-button"/>
-    <app-footer class="layout-footer" />
+    <app-footer
+
+      class="layout-footer"
+      :collection-identifier="collectionId === 'elec' ? '' : collectionId"
+      :current-collection="currCollection"
+      :key="currCollection"
+    />
   </div>
 </template>
 
 <script>
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import router from '@/router'
+
 import AppNavbar from '@/components/AppNavbar'
 import AppFooter from '@/components/AppFooter.vue'
 import BackToTopButton from '@/components/BackToTopButton.vue'
+import fetchMetadata from '@/composables/get-metadata'
 
-import { onMounted } from 'vue'
+function getSimpleObject (obj) {
+  // console.log("getSimpleObject / obj", obj)
+  let simpleObject = {}
+  simpleObject = {
+    identifier: obj.identifier ? obj.identifier : obj['@id'],
+    citeType: obj['@type'] ? obj['@type'] : obj.citeType,
+    title: obj.title,
+    level: obj.level,
+    editorialLevelIndicator: obj.editorialLevelIndicator,
+    totalChildren: obj.totalChildren,
+    member: !obj.member ? obj.children : obj.member,
+    parent: obj.parent,
+    dublincore: obj.dublincore,
+    extensions: obj.extensions
+  }
+  // console.log("getSimpleObject / simpleObject", simpleObject)
+  return simpleObject
+}
 
 export default {
   components: {
@@ -24,7 +58,69 @@ export default {
   },
 
   setup () {
-    onMounted(() => {})
+    const isLoading = ref(false)
+    const route = useRoute()
+    const collectionId = ref('')
+    const currCollection = ref({})
+    const collectionAltTitle = `${import.meta.env.VITE_APP_PROJECT_ALT_TITLE}`
+
+    // identifying current collection
+    /* if (route.params.collId) {
+      collectionId.value = route.params.collId
+    } else {
+      collectionId.value = 'elec'
+    } */
+    console.log('App.vue setup route / route.params.collId / collectionId.value : ', route, route.params.collId, collectionId)
+    // getting and formatting collection details
+    const getCurrentCollection = async (route) => {
+      console.log('App.vue getCurrentCollection origin route', origin, route)
+      const metadataResponse = await fetchMetadata('app.vue', collectionId.value, 'Collection', route)
+      console.log('App.vue metadataResponse', metadataResponse)
+      let formatedResponse = getSimpleObject(metadataResponse)
+      console.log('App.vue formatedResponse', formatedResponse)
+      formatedResponse.member.forEach(m => { m.identifier = m['@id'] })
+      formatedResponse.member.forEach(m => { m.parent = collectionId.value })
+      console.log('App.vue formatedResponse', formatedResponse)
+      formatedResponse = { ...formatedResponse, member: formatedResponse.member?.map(m => { return getSimpleObject(m) }) }
+      currCollection.value = formatedResponse
+      isLoading.value = true
+    }
+    watch(
+      router.currentRoute, async (newRoute, oldRoute) => {
+        console.log('App.vue watch change in route : ', oldRoute, newRoute)
+        if (newRoute && oldRoute && newRoute.params.collId === oldRoute.params.collId) {
+          console.log('App.vue watch no change in route')
+        } else {
+          isLoading.value = false
+          console.log('App.vue watch route.params : ', newRoute.params)
+          if (newRoute.params.collId) {
+            collectionId.value = newRoute.params.collId
+          } else {
+            collectionId.value = 'elec'
+          }
+          console.log('App.vue watch collectionId.value : ', collectionId.value)
+          await getCurrentCollection(newRoute)
+          console.log('App.vue currCollection.value : ', currCollection.value)
+          /* if (currentCollection.value.member) {
+            console.log('HelloWorld watch currentCollection.value.member : ', currentCollection.value.member)
+            componentTOC.value = currentCollection.value.member
+          }
+          console.log('HelloWorld watch componentTOC.value : ', componentTOC.value, collectionId) */
+          // console.log('HelloWorld watch componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', componentTOC.value.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
+          // expandedById.value = Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
+          isLoading.value = true
+        }
+      }, { deep: true, immediate: true }
+    )
+
+    return {
+      isLoading,
+      route,
+      collectionId,
+      currCollection,
+      collectionAltTitle,
+      getCurrentCollection
+    }
   }
 }
 </script>
@@ -61,7 +157,7 @@ body {
   height: 100%;
   /* height: calc(100% - 50px); */
   grid-template-columns: 100%;
-  grid-template-rows: 85px auto 272px;
+  grid-template-rows: 70px auto 272px;
   grid-template-areas:
     "header"
     "main"
@@ -185,16 +281,7 @@ p.header-baseline span {
   }
 }
 
-@media screen and (max-width: 800px) {
-  .layout-grid-container {
-    margin-top: 71px;
-  }
-}
-
 @media screen and (max-width: 500px) {
-  .layout-grid-container {
-    margin-top: 71px;
-  }
   .layout-navbar {
     position: fixed;
     left:0;

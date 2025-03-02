@@ -1,48 +1,31 @@
 <template>
   <div class="home-mask" :class="homeCssClass">
-    <!--<div v-if="isLoading" class="modal-wrapper">-->
-      <!--<div class="modal-container" ref="target">-->
-        <!--<div class="modal-header is-flex is-flex-direction-row">
-          <span class="modal-header-section">Collection :</span>
-          <span class="modal-header-title">{{ currentCollection.title }}</span>
-        </div>-->
       <div class="tiles">
       <div class="tile page-header app-width-padding">
         <div class="is-flex is-flex-direction-column is-align-items-center is-justify-content-center wrapper">
           <div class="tile is-child">
-            <div class="is-flex is-flex-direction-row title-tile">
-              <p class="title">Editions électroniques de l'ENC</p>
-              <!--<p class="header-baseline">
-                <span>Position</span> : à l’origine, les positions prises et à défendre par
-                l’élève, face au jury. Depuis, un résumé de la thèse soutenue.
-              </p>-->
+            <div class="title-tile">
+              <p class="title">{{ collectionAltTitle ? collectionAltTitle : currCollection.title }}</p>
+            </div>
+            <div class="project-tile">
+              <router-link
+                :to="{ name: 'About', params: {collId: collectionId} }"
+                active-class="active"
+              >
+                En savoir plus
+              </router-link>
             </div>
           </div>
           <div class="wrapper">
-            <div>
-              <document-metadata
-                :ispopup="false"
-                :metadataprop="currentCollection"
-                class="metadata-area app-width-margin"
-                :key="currentCollection"
-              />
-            </div>
             <div class="toc-area app-width-margin" :class="tocCssClass">
               <div class="toc-area-header">
                 <a href="#">Parcourir la collection </a>
-                <!--<a href="#">Parcourir la collection </a>-->
                 <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
               </div>
               <div v-if="componentTOC.length > 0"
                 class="menu app-width-margin"
                 :class="expandedById[collectionId] ? 'expanded': ''"
               >
-                <!--<button
-                  class="show-children"
-                  @click="toggleExpanded(collectionId)"
-                >
-                  Parcourir la collection
-                </button>-->
                 <div v-if="expandedById[collectionId] && componentTOC.length > 0">
                   <CollectionTOC
                     :toc="componentTOC"
@@ -55,44 +38,9 @@
         </div>
       </div>
     </div>
-      <!--<div>
-          <document-metadata
-            :ispopup="false"
-            :metadata="currentCollection"
-            class="metadata-area app-width-margin"
-          />
-        </div>
-
-        <div class="toc-area app-width-margin" :class="tocCssClass">
-          <div class="toc-area-header">
-            <a href="#">Parcourir la collection </a>
-            <!- -<a href="#">Parcourir la collection </a>- ->
-            <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
-          </div>
-          <div v-if="Object.keys(componentTOC).length > 0 && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0"
-            class="menu app-width-margin"
-            :class="expandedById[collectionId] ? 'expanded': ''"
-          >
-            <!- -<button
-              class="show-children"
-              @click="toggleExpanded(collectionId)"
-            >
-              Parcourir la collection
-            </button>- ->
-            <div v-if="expandedById[collectionId] && componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0">
-              <CollectionTOC
-                :toc="componentTOC.filter(item => item.identifier === collectionId)[0].member"
-                :margin="0"
-              />
-            </div>
-          </div>
-        </div>-->
-
-      <!--</div>-->
-    <!--</div>-->
     <div id="article" class="article app-width-margin">
 
-      <h1>Cartulaires d'Île-de-France</h1>
+      <h1>La collection</h1>
 
         <p class="texte">Dans le cadre des projets de numérisation soutenus par la sous-direction
             des bibliothèques et de la documentation à la direction de l'Enseignement supérieur du
@@ -133,12 +81,12 @@
 <script>
 import { computed, inject, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import router from '@/router/index.js'
+import router from '@/router'
 
-import DocumentMetadata from '@/components/DocumentMetadata.vue'
 import { getMetadataFromApi } from '@/api/document.js'
-import CollectionTOC from '@/components/CollectionTOC.vue'
 import fetchMetadata from '@/composables/get-metadata.js'
+
+import CollectionTOC from '@/components/CollectionTOC.vue'
 
 function getSimpleObject (obj) {
   // console.log("getSimpleObject / obj", obj)
@@ -148,7 +96,6 @@ function getSimpleObject (obj) {
     citeType: obj['@type'] ? obj['@type'] : obj.citeType,
     title: obj.title,
     level: obj.level,
-    link_type: obj.link_type,
     editorialLevelIndicator: obj.editorialLevelIndicator,
     totalChildren: obj.totalChildren,
     member: !obj.member ? obj.children : obj.member,
@@ -176,10 +123,14 @@ function findDeep (array, id) {
 } */
 
 export default {
-  components: { CollectionTOC, DocumentMetadata },
+  components: { CollectionTOC },
   props: {
     collectionIdentifier: {
       type: String,
+      required: true
+    },
+    currentCollection: {
+      type: Object,
       required: true
     }
   },
@@ -189,45 +140,19 @@ export default {
     })
 
     const layout = inject('variable-layout')
-
     const route = useRoute()
-
     const isLoading = ref(false)
-
+    const collectionAltTitle = `${import.meta.env.VITE_APP_PROJECT_ALT_TITLE}`
     const collectionId = ref(props.collectionIdentifier)
-
     console.log('HelloWorld setup collectionId', collectionId.value)
 
     const componentTOC = ref([])
+    const currCollection = ref(props.currentCollection)
 
-    const currentCollection = ref({})
+    componentTOC.value = [...currCollection.value.member]
+    console.log('HelloWorld currentCollection.value / componentTOC.value : ', currCollection.value, componentTOC.value)
 
-    const getCurrentItem = async (route) => {
-      console.log('HelloWorld getCurrentItem origin route', origin, route)
-      /*
-      let response = await getMetadataFromApi(collectionId.value)
-      let formatedResponse = getSimpleObject(response)
-      formatedResponse.member.forEach((m) => m.identifier = m['@id'])
-      formatedResponse.member.forEach((m) => m.parent = collectionId.value)
-      console.log("HelloWorld formatedResponse", formatedResponse)
-      formatedResponse = {...formatedResponse, member: formatedResponse.member.map(m => {return getSimpleObject(m)})}
-      Object.assign(currentCollection, formatedResponse)
-      */
-      const metadataResponse = await fetchMetadata(props.collectionIdentifier, 'Collection', route)
-      console.log('HelloWorld metadataResponse', metadataResponse)
-      let formatedResponse = getSimpleObject(metadataResponse)
-      console.log('HelloWorld formatedResponse', formatedResponse)
-      formatedResponse.member.forEach(m => { m.identifier = m['@id'] })
-      formatedResponse.member.forEach(m => { m.parent = collectionId.value })
-      console.log('HelloWorld formatedResponse', formatedResponse)
-      formatedResponse = { ...formatedResponse, member: formatedResponse.member?.map(m => { return getSimpleObject(m) }) }
-      currentCollection.value = formatedResponse
-    }
-
-    // componentTOC.value = [currentCollection.value]
-    // console.log("HelloWorld currentCollection.value / componentTOC.value : ", currentCollection.value / componentTOC.value)
-
-    console.log('HelloWorld componentTOC / collectionId : ', Object.fromEntries(componentTOC.value.map(col => [col.identifier, false])), componentTOC.value, collectionId, currentCollection)
+    console.log('HelloWorld componentTOC / collectionId : ', Object.fromEntries(componentTOC.value.map(col => [col.identifier, false])), componentTOC.value, collectionId, currCollection)
     const target = ref(null)
 
     const expandedById = ref([])
@@ -258,39 +183,20 @@ export default {
       return state.isTreeOpened ? 'is-tree-opened' : ''
     })
 
-    watch(
-      router.currentRoute, async (newRoute, oldRoute) => {
-        console.log('HelloWorld watch change in route : ', oldRoute, newRoute)
-        if (newRoute === oldRoute) {
-          console.log('HelloWorld watch no change in route')
-        } else {
-          isLoading.value = false
-          console.log('HelloWorld watch route.params : ', newRoute.params)
-          collectionId.value = props.collectionIdentifier
-          console.log('HelloWorld watch collectionId.value : ', collectionId.value)
-          await getCurrentItem(newRoute)
-          console.log('HelloWorld currentCollection.value : ', currentCollection.value)
-          if (currentCollection.value.member) {
-            console.log('HelloWorld watch currentCollection.value.member : ', currentCollection.value.member)
-            componentTOC.value = currentCollection.value.member
-          }
-          console.log('HelloWorld watch componentTOC.value : ', componentTOC.value, collectionId)
-          // console.log('HelloWorld watch componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', componentTOC.value.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
-          // expandedById.value = Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
-          isLoading.value = true
-        }
-      }, { deep: true, immediate: true }
-    )
+    watch(props, (newProps) => {
+      collectionId.value = newProps.collectionIdentifier
+      currCollection.value = newProps.currentCollection
+    }, { deep: true, immediate: true })
 
     return {
+      collectionAltTitle,
       isLoading,
       route,
       homeCssClass,
       tocCssClass: layout.tocCssClass,
-      getCurrentItem,
       target,
       collectionId,
-      currentCollection,
+      currCollection,
       componentTOC,
       toggleExpanded,
       expandedById
@@ -300,6 +206,30 @@ export default {
 </script>
 
 <style scoped>
+a {
+  border-bottom: none;
+}
+#article {
+  padding: 40px 10% 120px;
+  border-bottom: 1px dotted #ffffff;
+  min-height: 100%;
+}
+#article article {
+  margin: 0;
+}
+#article h1,
+#article {
+  font-family: "Barlow", sans-serif !important;
+}
+#article h1 {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 33px;
+  text-transform: none;
+  color: #971716;
+}
 .modal-mask {
   position: fixed;
   z-index: 9998;
@@ -407,9 +337,9 @@ export default {
   background-color: #e4e4e4;
   border-radius: 0 0 6px 6px;
 }
-ol {
+/* ol {
   list-style: none;
-}
+} */
 /* toggle */
 .toggle-btn {
   position: absolute;
@@ -430,8 +360,32 @@ ol {
 .wrapper {
   width: 100%;
 }
+.tile.is-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 .title-tile {
-  margin-top: 30px !important;
-  margin-bottom: 30px !important;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+.project-tile {
+  display: flex;
+  width: fit-content;
+  margin-bottom: 30px;
+  padding: 6px 10px;
+  border: #b9192f 1px solid;
+  border-radius: 6px;
+  & > a {
+    font-family: "Barlow Semi Condensed", sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #b9192f;
+  }
 }
 </style>

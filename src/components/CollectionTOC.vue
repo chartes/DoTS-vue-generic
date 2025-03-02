@@ -1,5 +1,5 @@
 <template>
-  <ol class="tree">
+  <ul class="tree">
     <template v-for="(item, index) in componentTOC" :key="index">
       <li
         :style="`margin-left: ${ $props.margin }px;`"
@@ -12,14 +12,6 @@
             :class="expandedById[item.identifier] || item.expanded === true ? 'expanded' : ''"
             @click="toggleExpanded(item.identifier)"
           />
-          <!--<router-link
-            v-if="item['@type'] === 'Collection' || item.citeType === 'Collection'"
-            :class="route.params.collId === item.identifier ? 'is-current' : ''"
-            :to="{ name: 'Home', params: {collId: item.identifier} }"
-          >
-            {{ item.citeType }}
-            {{ item.title }}
-          </router-link>-->
           <span
             v-if="item['@type'] === 'Collection' || item.citeType === 'Collection'"
             :class="route.params.collId === item.identifier ? 'is-current' : ''"
@@ -31,7 +23,7 @@
           <router-link
             v-else
             :class="route.params.id === item.identifier ? 'is-current' : ''"
-            :to="{ name: 'Document', params: {collId: item.parent, id: item.identifier} }"
+            :to="{ name: 'Document', params: {collId: Array.isArray(item.parent) ? item.parent.filter(p => p === route.params.collId)[0] : item.parent, id: item.identifier} }"
           >
             {{ item.citeType }}
             {{ item.title }}
@@ -46,10 +38,9 @@
             :toc="item.children"
           />
         </div>
-
       </li>
     </template>
-  </ol>
+  </ul>
 </template>
 
 <script>
@@ -67,7 +58,6 @@ function getSimpleObject (obj) {
     expanded: obj.expanded,
     title: obj.title,
     level: obj.level,
-    link_type: obj.link_type,
     editorialLevelIndicator: obj.editorialLevelIndicator,
     totalChildren: obj.totalChildren,
     member: !obj.member ? obj.children : obj.member,
@@ -115,6 +105,7 @@ export default {
         console.log('response after identifier', response)
         componentTOC.value.filter(item => item.identifier === collId)[0].member = response.member
         componentTOC.value.filter(item => item.identifier === collId)[0].children = response.member
+        componentTOC.value.sort((a, b) => a.title > b.title ? 1 : -1)
         console.log('CollectionTOC componentTOC', componentTOC.value)
       }
       console.log('CollectionTOC expandedById.value', expandedById.value)
@@ -138,24 +129,42 @@ export default {
 
 <style scoped>
 .tree {
-  list-style: none;
+  /* list-style: none;*/
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .tree li {
-  font-family: "Barlow Semi Condensed", sans-serif !important;
+  font-family: "Barlow Semi Condensed", sans-serif;
   font-size: 15px;
   font-weight: 500;
   line-height: 22px;
+  &::before {
+    margin-left: -8px;
+    margin-right: 11px;
+    content: '○';
+    font-size: 10px;
+    color: #999;
+    float: left;
+  }
   & .li.container {
       display: flex;
-      align-items: center;
       margin: 0;
     & > a {
+      border-bottom: none;
       color: #4a4a4a !important;
+      &.is-current {
+        font-weight: bold !important;
+      }
     }
   }
+
   &.more {
     padding-left: 0px !important;
+
+    &.li.container > a, span {
+      margin-top: 4px;
+    }
 
     &::before {
       content: none !important;
@@ -171,7 +180,7 @@ button {
 
   background: url(@/assets/images/chevron_red_rounded.svg) center / 20px auto no-repeat;
   &.expanded {
-    background: url(@/assets/images/chevron_red_rounded.svg) center / 15px auto no-repeat;
+    background: url(@/assets/images/chevron_red_rounded.svg) center / 20x auto no-repeat;
     transform: rotate(90deg);
   }
 }

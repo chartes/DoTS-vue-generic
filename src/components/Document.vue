@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import { defineAsyncComponent, ref, reactive } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import { getCoverDataFromApi, getDocumentFromApi } from '@/api/document'
 import { useRoute } from 'vue-router'
 import TOC from '@/components/TOC.vue'
@@ -65,7 +65,7 @@ export default {
     TOC
   },
 
-  props: ['id', 'level', 'editoriallevel', 'asidetoc', 'maxcitedepth', 'documenttype', 'editorialLevelIndicator'],
+  props: ['id', 'level', 'editoriallevel', 'bottomtoc', 'maxcitedepth', 'documenttype', 'editorialLevelIndicator'],
 
   async setup (props) {
     // Declare route to capture route hash (used in scrollTo()) to display selected Table Of Content items below the editorial level
@@ -89,8 +89,8 @@ export default {
     console.log('Document.vue const documenttype', documentType)
 
     // For items hierarchically above the editorial level, display the item TOC
-    const asideTOC = reactive(props.asidetoc)
-    console.log('Document.vue const asideTOC', props.asidetoc)
+    const asideTOC = ref(props.bottomtoc)
+    console.log('Document.vue const asideTOC', props.bottomtoc)
     // Required for the TOC component
     console.log('Document.vue props.maxcitedepth', props.maxcitedepth)
 
@@ -118,7 +118,7 @@ export default {
         } else if (currentLevelIndicator.value === 'toEdit' && documentType.value === 'Resource') {
           console.log("Document.vue currentLevelIndicator.value === \"toEdit\" && documentType.value === 'Resource'", currentLevelIndicator.value === 'toEdit' && documentType.value === 'Resource')
           data = await getDocumentFromApi(parentId.value, false)
-          console.log('Document.vue data', data)
+          //  console.log('Document.vue data', data)
         } else {
           console.log('Document.vue else')
           return
@@ -162,7 +162,7 @@ export default {
       // Return what will make the async component
       return new Promise((resolve) => {
         const doc = new DOMParser().parseFromString(tmpDom.innerHTML, 'text/html')
-        console.log('custom document', doc, doc.getElementById('center').innerHTML)
+        // console.log('custom document', doc, doc.getElementById('center').innerHTML)
         resolve({
           template: doc.getElementById('center').innerHTML
         })
@@ -170,7 +170,7 @@ export default {
     })
 
     function scrollTo () {
-      console.log('custom document', customDocument, typeof (customDocument))
+      // console.log('custom document', customDocument, typeof (customDocument))
       // If the selected item is an anchor, capture and scroll to that anchor
       const hash = route.hash ? route.hash.replace('#', '') : ''
       console.log('Document.vue scrollTo on resolve hash : ', hash)

@@ -1,20 +1,22 @@
-import { computed, readonly, ref } from 'vue'
+import { computed, onUnmounted, readonly, watch } from 'vue'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { Provider } from 'react-redux'
 import Mirador from 'mirador'
+import MiradorApp from 'mirador/dist/es/src/components/App'
+import createPluggableStore from 'mirador/dist/es/src/state/createPluggableStore'
 
-export default function useMirador (containerId = 'vue-mirador-container', _manifestUrl, _canvasIndex = 0) {
+export default function useMirador (container, manifest) {
   const _windowId = 'document'
-  let mirador = null
-
-  const manifestUrl = ref(_manifestUrl)
 
   const config = computed(() => {
     return {
-      id: containerId,
+      id: container.value.id,
       windows: [
         {
           id: _windowId,
-          loadedManifest: manifestUrl.value,
-          canvasIndex: _canvasIndex
+          loadedManifest: manifest.value.id,
+          canvasId: manifest.value.items[0].id
         }
       ],
       window: {
@@ -48,40 +50,57 @@ export default function useMirador (containerId = 'vue-mirador-container', _mani
       }
     }
   })
-
-  const initialize = function () {
+  const instance = {
+    manifestUrl: readonly(manifest.value?.id),
+    initialize,
+    setCanvasId,
+    dispatchAction,
+    config: readonly(config),
+    reactRoot: null,
+    miradorStore: null
+  }
+  function initialize () {
     console.log('mirador init')
-    mirador = Mirador.viewer(config.value)
+    instance.reactRoot = ReactDOM.createRoot(container.value)
+    console.log('mirador initialize config.value', config.value)
+    instance.miradorStore = createPluggableStore(config.value)
+    instance.reactRoot.render(
+      React.createElement(
+        Provider,
+        { store: instance.miradorStore },
+        React.createElement(
+          MiradorApp,
+          { plugins: [] }
+        )
+      )
+    )
   }
 
-  const dispatchAction = function (action) {
-    if (mirador === null) {
+  const isReady = computed(() => manifest.value !== null && container.value !== null)
+
+  watch(isReady, (isReady, wasReady) => {
+    if (isReady && !wasReady) {
       initialize()
     }
-    mirador.store.dispatch(action)
+  })
+  onUnmounted(() => {
+    if (instance.reactRoot !== null) {
+      console.log('mirador unmount in onUnmounted')
+      instance.reactRoot.unmount()
+    }
+  })
+
+  function dispatchAction (action) {
+    if (instance.miradorStore !== null) {
+      instance.miradorStore.dispatch(action)
+    }
   }
 
-  const setManifestUrl = function (newUrl) {
-    console.log('setManifestUrl', newUrl)
-    manifestUrl.value = newUrl
-    const action = Mirador.actions.updateWindow(_windowId, {
-      manifestId: manifestUrl.value
-    })
-    dispatchAction(action)
-  }
-
-  const setCanvasId = function (canvasId) {
+  function setCanvasId (canvasId) {
     console.log('setCanvasId', canvasId)
     const action = Mirador.actions.setCanvas(_windowId, canvasId)
     dispatchAction(action)
   }
-
-  return {
-    manifestUrl: readonly(manifestUrl),
-    initialize,
-    setManifestUrl,
-    setCanvasId,
-    dispatchAction,
-    config: readonly(config)
-  }
+  console.log('mirador instance', instance)
+  return instance
 }

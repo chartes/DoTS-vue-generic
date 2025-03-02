@@ -1,8 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
+// import { getTOCFromApi } from '@/api/document'
 
-/* import HomePage from '@/views/HomePage.vue'
-import AboutPage from '@/views/AboutPage.vue'
-import DocumentationPage from '@/views/DocumentationPage.vue' */
+/* const allowedIds = async (id, type) => {
+  const response = await getTOCFromApi(id, type)
+  console.log('router.beforeEach response', response)
+  if (response.member && type === 'Collection') {
+    return response.member.map(item => item['@id'])
+  }
+} */
 
 const rootURL = `${import.meta.env.VITE_APP_APP_ROOT_URL}`
 console.log('const rootURL :', rootURL)
@@ -34,7 +39,35 @@ const router = createRouter({
     }
   ]
 })
+/* router.beforeEach(async (to, from) => {
+  if ((to && to.params.collId === '' && to.name === 'Home') || (to && !to.params.collId && to.name === 'Home')) {
+    console.log('router.beforeEach (to && !to.params.collId) || (to && to.params.collId === \'\')', to)
+    return true
+  } else if (to && to.params.collId === '') {
+    return { name: 'Home' }
+  } else if (to) {
+    console.log('router.beforeEach else if (to) ?', to)
+    console.log('router.beforeEach else if (to) to.params.collId !== \'\' ?', to)
+    const allowedResourceIds = to.params.collId !== '' ? await allowedIds(to.params.collId, 'Collection') : await allowedIds('ELEC', 'Collection')
+    console.log('router.beforeEach ', allowedResourceIds, typeof (allowedResourceIds))
+    if ((to.params.collId && !to.params.id) || (to.params.id && allowedResourceIds.some(substr => to.params.id.startsWith(substr)))) {
+      return true
+    } else {
+      console.log('router.beforeEach else if (to) else', to)
+      return { name: 'Home', params: { collId: to.params.collId } }
+    }
+  } else {
+    const allowedResourceIds = await allowedIds(to.params.collId, 'Collection')
+    console.log('router.beforeEach ', allowedResourceIds, typeof (allowedResourceIds))
+    console.log('router.beforeEach from ?', from)
+    if (from.params.id && allowedResourceIds.includes(from.params.id)) {
+      return true
+    } else {
+      return { name: 'Home', params: { collId: from.params.collId } }
+    }
+  }
+}) */
 router.afterEach((to, from, next) => {
-  console.log(`Navigating to: ${to.name}, with params: ${to.params.id}, with query: ${to.query}, with hash: ${to.hash}`)
+  console.log(`Navigating to: ${to.name}, with params.collId: ${to.params.collId}, with params.id: ${to.params.id}, with query: ${to.query.refId}, with hash: ${to.hash}`)
 })
 export default router

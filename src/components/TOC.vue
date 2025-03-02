@@ -1,56 +1,30 @@
 <template>
-  <ol class="tree">
-    <template v-for="(item, index) in toc" :key="index">
+  <ul class="tree">
+    <template v-for="(item, index) in componentTOC" :key="index">
       <li
-        :style="`margin-left: ${ $props.margin }px;`"
-        :class="item.children && item.children.length > 0 ? 'more' : ''"
+        v-if="item.show"
+        :style="`margin-left: ${ (item.level -1) * 7 }px;`"
+        :class="item.level < maxcitedepth && item.children && item.children.length > 0 ? 'more' : ''"
       >
-        <!--<router-link
-          :class="route.hash === item.hash ? 'is-current' : !route.hash && item.identifier === currentRefId ? 'is-current' : ''"
-          :to="item.router"
-        >
-          Lvl {{ item.level }}
-          {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" : "pas de titre"}}
-          {{ item.identifier }}
-        </router-link>-->
         <div class="li container">
           <button
             v-if="item.level < maxcitedepth && item.children && item.children.length > 0"
             class="expand-collection"
-            :class="expandedById[item.identifier] || item.expanded === true ? 'expanded' : ''"
+            :class="item.expanded === true ? 'expanded' : ''"
             @click="toggleExpanded(item.identifier)"
-          />
+          /><!--expandedById[item.identifier] || -->
           <a
+            class="toc-title"
+            :title="item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions['tei:role'] ? item.extensions['tei:role'] : item.citeType && item.extensions['tei:num'] ? item.citeType + ' ' + item.extensions['tei:num'] : 'pas de titre' : `Fragment n° ${index + 1}`"
             :data-href="item.url"
             :class="route.hash === item.hash ? 'is-current' : !route.hash && item.identifier === currentRefId ? 'is-current' : ''"
-            v-on:click="goTo($event, item)"
-          ><!--v-on:click="goTo($event, item)"-->
-            {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" : `Fragment n° ${index + 1}` }}
+            v-on:click.prevent="goTo(item)"
+          >
+            {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions['tei:role'] ? item.extensions['tei:role'] : item.citeType && item.extensions['tei:num'] ? item.citeType + ' ' + item.extensions['tei:num'] : 'pas de titre' : `Fragment n° ${index + 1}` }}
 
-          </a><!-- Lvl {{ item.level }} {{ item.identifier }}-->
-          <!--<router-link
-            :class="route.hash === item.hash ? 'is-current' : !route.hash && item.identifier === currentRefId ? 'is-current' : ''"
-            v-if="item.link_type === 'link'"
-            :to="item.level <= 0 ? { name: 'Document', params: {id: item.identifier} } : { name: 'Document', params: {id: route.params.id}, query: { refId: item.identifier }}"
-          >
-            Lvl {{ item.level }}
-            {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" : "pas de titre"}}
-            {{ item.identifier }}
-            {{ item.url }}
-          </router-link>
-          <router-link
-           :class="route.hash === item.hash ? 'is-current' : !route.hash && item.identifier === currentRefId ? 'is-current' : ''"
-            v-else
-            :to="currentRefId ? { name: 'Document', params: {id: route.params.id}, query: { refId: item.ancestor_editorialLevel }, hash: item.link_type === 'hash' ? item.url : false }
-                              : { name: 'Document', params: {id: route.params.id}, hash: item.link_type === 'hash' ? item.url : false }"
-          >
-            Lvl {{ item.level }}
-            {{ item.dublincore && item.dublincore.title.length ? item.dublincore.title : item.extensions ? item.extensions["tei:role"] ? item.extensions["tei:role"] : item.citeType && item.extensions["tei:num"] ? item.citeType + ' ' + item.extensions["tei:num"] : "pas de titre" : "pas de titre"}}
-            {{ item.identifier }}
-            {{ item.url }}
-          </router-link>-->
+          </a>
         </div>
-        <div
+        <!-- <div
           v-if="expandedById[item.identifier]"
         >
           <TOC
@@ -61,22 +35,24 @@
             :refid="currentRefId"
             @update-ref-id="getNewRefId"
           />
-        </div>
+        </div>-->
       </li>
     </template>
-  </ol>
+  </ul>
 </template>
 
 <script>
 
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
+import store from '@/store'
 
 export default {
   name: 'TOC',
 
-  components: {},
+  components: {
+  }, // CarouselPlugin, Slide, Pagination, Navigation
 
   props: {
     margin: { required: true, default: 0, type: Number },
@@ -89,10 +65,27 @@ export default {
     const currentRefId = ref(props.refid)
     const route = useRoute()
     const expandedById = ref({})
-
-    // console.log("TOC props.toc :", props.toc)
+    const componentTOC = ref(props.toc.filter(i => i.level <= props.maxcitedepth))
+    console.log('TOC componentTOC.value.length', componentTOC.value.length)
+    // console.log('TOC setup props.toc :', props.toc)
     // console.log("TOC props.maxcitedepth :", props.maxcitedepth)
     // console.log("TOC props.refid :", props.refid)
+
+    componentTOC.value.filter(i => i.parent === route.params.id).forEach((item) => {
+      if (item.parent === route.params.id) {
+        item.show = true
+      }
+    })
+    if (store.state.arianeDocument && store.state.arianeDocument.length > 0) {
+      store.state.arianeDocument.forEach(item => {
+        componentTOC.value.filter(i => i.identifier === item || i.parent === item).forEach((n) => {
+          n.show = true
+        })
+        expandedById.value[item] = !expandedById.value[item]
+      })
+    }
+    console.log('TOC componentTOC.value', componentTOC.value)
+    console.log('TOC setup expandedById.value :', expandedById.value)
 
     // remove when proved unneeded
     const toggleBurger = function ($event, ref) {
@@ -105,35 +98,79 @@ export default {
 
     const toggleExpanded = async (id) => {
       console.log('TOC toggleExpanded id : ', id, expandedById.value)
+      function hideDescendants (ident) {
+        const node = componentTOC.value.find(item => item.identifier === ident)
+        node.show = false
+        console.log('TOC toggleExpanded id hideDescendants (ident) node', node)
+        if (node.children && node.children.length > 0) {
+          for (let i = 0; i < node.children.length; i += 1) {
+            if (expandedById.value[node.identifier]) {
+              hideDescendants(node.children[i].identifier)
+            }
+          }
+        }
+      }
       expandedById.value[id] = !expandedById.value[id]
+      componentTOC.value.find(n => n.identifier === id).expanded = expandedById.value[id]
+      componentTOC.value.filter(n => n.parent === id).forEach((item) => {
+        if (expandedById.value[id]) {
+          item.show = true
+        } else {
+          item.show = false
+          hideDescendants(item.identifier)
+        }
+      })
       console.log('TOC after expandedById[id] : ', id, expandedById.value)
     }
 
-    const goTo = function ($event, item) {
-      $event.preventDefault()
-      // $event.stopPropagation();
+    const goTo = function (item) {
       // currentRefId.value = ref
       // console.log("TOC ref : ", $event, currentRefId.value)
       if (item.router_hash) {
         if (item.router_refid) {
-          router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params }, query: { refId: item.router_refid }, hash: item.router_hash })
+          router.push({ name: 'Document', params: { collId: route.params.collId, id: item.router_params }, query: { refId: item.router_refid }, hash: item.router_hash })
         } else {
-          router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params }, hash: item.router_hash })
+          router.push({ name: 'Document', params: { collId: route.params.collId, id: item.router_params }, hash: item.router_hash })
         }
       } else if (item.router_refid) {
-        router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params }, query: { refId: item.router_refid } })
+        console.log('TOC goto item.router_refid: ', item.router_refid)
+        router.push({ name: 'Document', params: { collId: route.params.collId, id: item.router_params }, query: { refId: item.router_refid } })
       } else {
-        router.push({ name: 'Document', params: { collId: import.meta.env.VITE_APP_APP_ROOT_COLLECTION_ID, id: item.router_params } })
+        router.push({ name: 'Document', params: { collId: route.params.collId, id: item.router_params } })
       }
     }
-
+    watch(expandedById, () => {
+      console.log('TOC watch expandedById', expandedById.value)
+      function hideDescendants (id) {
+        const node = componentTOC.value.filter(item => item.identifier === id)
+        node.show = false
+        console.log('TOC watch hideDescendants (id) node', node)
+        if (node.children && node.children.length > 0) {
+          for (let i = 0; i < node.children.length; i += 1) {
+            if (expandedById.value[node.identifier]) {
+              hideDescendants(node.children[i].identifier)
+            }
+          }
+        }
+      }
+      expandedById.value.forEach((item) => {
+        componentTOC.value.filter(n => n.parent === item).forEach((child) => {
+          if (expandedById.value[child.identifier]) {
+            child.show = true
+          } else {
+            hideDescendants(child.identifier)
+          }
+        })
+      })
+    })
     return {
       route,
       toggleBurger,
       currentRefId,
       goTo,
       expandedById,
-      toggleExpanded
+      toggleExpanded,
+      componentTOC
     }
   },
   methods: {
@@ -150,6 +187,19 @@ export default {
 
 <style scoped>
 div.toc-content {
+  .tree {
+    font-family: "Barlow Semi Condensed", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 22px;
+    /* columns: 6;
+    gap: 20px;
+    min-height: 100px;
+    max-height: 300px; */
+    width: 100%;
+    /* overflow-x: auto;
+    overflow-y: hidden; */
+  }
   .tree li {
     /*margin-left: 10px;*/
     font-family: "Barlow Semi Condensed", sans-serif;
@@ -166,14 +216,17 @@ div.toc-content {
       margin: 0;
 
       & > a {
-        margin-top: 4px;
         color: #4a4a4a;
+        width: 218px;
       }
     }
 
     &.more {
       /*margin-left: 0px;*/
       padding-left: 0px;
+      & .li.container > a, span {
+      margin-top: 4px;
+    }
 
       &::before {
         content: none !important;
@@ -192,14 +245,13 @@ div.bottom-toc {
     font-weight: 500;
     line-height: 22px;
 
-    &:before {
+    &::before {
       margin-left: -8px;
       margin-right: 11px;
     }
 
     & .li.container {
       display: flex;
-      align-items: center;
       margin: 0;
 
       & > a {
@@ -210,7 +262,9 @@ div.bottom-toc {
     &.more {
       /*margin-left: 0px;*/
       padding-left: 0px;
-
+      & .li.container > a {
+        margin-top: 4px;
+      }
       &::before {
         content: none !important;
       }
@@ -227,6 +281,7 @@ button {
   height: 30px;
   border: none;
   cursor: pointer;
+  padding: 0 !important;
 
   background: url(@/assets/images/chevron_red_rounded.svg) center / 20px auto no-repeat;
 

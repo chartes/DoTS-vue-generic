@@ -9,6 +9,7 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
+    base: env.VITE_APP_APP_ROOT_URL,
     plugins: [vue()],
     resolve: {
       alias: {
@@ -17,6 +18,8 @@ export default defineConfig(({ mode }) => {
       },
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
     },
-    base: env.VITE_APP_APP_ROOT_URL
+    optimizeDeps: {
+      include: ['vue']
+    }
   }
 })

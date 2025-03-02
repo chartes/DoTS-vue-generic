@@ -20,19 +20,13 @@
           <div class="modal-body-header">
             <span class="modal-body-header-section">Sommaire </span>
             <span class="modal-body-header-title">Parcourir la collection </span>
-            <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
+            <a href="#" class="toggle-btn" v-on:click.prevent="toggleExpanded(collectionId)"></a>
           </div>
         </div>
         <div v-if="currentCollection.member.length > 0"
           class="menu"
           :class="expandedById[collectionId] ? 'expanded': ''"
         >
-          <!--<button
-            class="show-children"
-            @click="toggleExpanded(collectionId)"
-          >
-            Parcourir la collection
-          </button>-->
           <div v-if="expandedById[collectionId] && collectionTOC.filter(item => item.identifier === collectionId)[0].children.length > 0">
             <CollectionTOC
               :margin="0"
@@ -75,7 +69,7 @@ export default {
   ],
   setup (props, context) {
     const state = reactive({
-      isTreeOpened: false
+      isTreeOpened: props.toc.filter(item => item.identifier === props.collectionIdentifier)[0].expanded
     })
 
     const isModalOpened = ref(props.isOpen)
@@ -104,10 +98,9 @@ export default {
             expanded: currentCollection.value.expanded,
             title: obj.title,
             level: currentCollection.value.level,
-            link_type: currentCollection.value.link_type,
             editorialLevelIndicator: currentCollection.value.editorialLevelIndicator,
             totalChildren: obj.totalChildren,
-            children: obj.children ? obj.children : [],
+            children: obj.children ? obj.children : obj.member ? obj.member : [],
             member: obj.member ? obj.member : [],
             parent: currentCollection.value.identifier,
             dublincore: obj.dublincore,
@@ -139,13 +132,7 @@ export default {
 
     const expandedById = ref(false)
 
-    expandedById.value = collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].expanded === true
-      ? Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, true]))
-      : Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
-
-    console.log('CollectionModal expandedById.value : ', expandedById.value)
-    const toggleExpanded = async (event, collId) => {
-      event.preventDefault()
+    const toggleExpanded = async (collId) => {
       console.log('Modal toggleExpanded', collectionTOC.value.filter(item => item.identifier === collId)[0].children)
       // Add all members to the expanded collection
       const response = await getMetadataFromApi(collId)
@@ -173,6 +160,26 @@ export default {
       console.log('toggleExpanded after expandedById[collectionId] : ', collId, expandedById.value)
     }
 
+    expandedById.value = collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].expanded === true && collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].children.length === 0
+    ? Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, true]))
+    : Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
+
+    if (collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].expanded === true && collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].children.length === 0) {
+      console.log('CollectionModal test : ', collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].expanded, collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].children.length === 0, collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].identifier, expandedById.value)
+      // toggleExpanded(collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].identifier)
+    } else if (collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].expanded === true) {
+      expandedById.value = Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, true]))
+    } else if (collectionTOC.value.filter(item => item.identifier === collectionId.value)[0].expanded === false) {
+      expandedById.value = Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
+    }
+
+    /* expandedById.value = collectionTOC.value.find(item => item.identifier === collectionId.value).expanded === true
+      ? Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, true]))
+      : Object.fromEntries(collectionTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false])) */
+
+    console.log('CollectionModal expandedById.value : ', expandedById.value)
+
+
     const toggleContent = function (event) {
       event.preventDefault()
       event.stopPropagation()
@@ -193,6 +200,7 @@ export default {
     return {
       modalCssClass,
       isModalOpened,
+      appendMissingChildren,
       toggleContent,
       target,
       collectionId,

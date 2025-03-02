@@ -28,16 +28,22 @@
             >{{ homePageLink }}</router-link
           >
         </span>
-        <span class="level-item">
+        <!-- <span class="level-item">
           <router-link :to="{ name: 'About', params: {collId: homePageLink} }" active-class="active"
-            >Le projet</router-link
-          >
-        </span>
+            >Le projet
+          </router-link>
+        </span> -->
       </div>
        <div class="level-right">
        <div class="level-item menu">
-          <router-link :to="{ name: 'Documentation', params: {collId: homePageLink} }" active-class="active"
-            >Documentation</router-link>
+         <a
+          target="_blank"
+          href="https://chartes.github.io/dots_documentation/api/"
+         >
+          Documentation de l'API
+         </a>
+          <!--<router-link :to="{ name: 'Documentation', params: {collId: homePageLink} }" active-class="active"
+            >Documentation de l'API</router-link>
            <ul class="submenu">
             <li>
               <a target="_blank" href="https://chartes.github.io/dots_documentation/">
@@ -49,7 +55,7 @@
                 DoTS-Vue
               </a>
             </li>
-          </ul>
+          </ul>-->
         </div>
       </div>
     </nav>

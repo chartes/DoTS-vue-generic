@@ -97,7 +97,9 @@ export default {
   margin-top: 5px;
 }
 .to-previous.to-previous-button-page-top, .to-previous.to-previous-button-page-bottom {
-  text-align: left;
+  display: flex;
+  justify-content: center;
+  /* text-align: right; */
   vertical-align: top;
   width: 100%;
   height: 100%;
@@ -107,16 +109,18 @@ export default {
   & > span {
     font-family: "Barlow", sans-serif;
     font-size: 14px;
+    &:not(.b_previous) {
+      margin-right: auto;
+    }
     &:hover {
       text-decoration: underline;
     }
   }
     & > span.b_previous {
-    display: inline-block;
     vertical-align: middle;
     width: 10px;
     height: 10px;
-    margin: 5px;
+    margin: 9px 5px 5px 5px;
     background: url(../assets/images/b_previous.svg) center / cover no-repeat;
   }
 

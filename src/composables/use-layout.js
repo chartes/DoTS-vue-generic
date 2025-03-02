@@ -38,8 +38,7 @@ export default function useLayout () {
     }
   })
 
-  const changeViewMode = function (event, v) {
-    event.preventDefault()
+  const changeViewMode = function (v) {
     viewMode.value = v
   }
 
