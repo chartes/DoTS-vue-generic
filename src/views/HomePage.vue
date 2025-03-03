@@ -4,13 +4,14 @@
       v-if="Object.keys(currCollection).length > 0"
       :collection-identifier="collectionId"
       :currentCollection="currCollection"
+      :key="currCollection"
     />
   </main>
 </template>
 
 <script>
 import { useRoute } from 'vue-router'
-import {ref, watch} from 'vue'
+import { ref, watch } from 'vue'
 
 import HelloWorld from '@/components/HelloWorld.vue'
 
