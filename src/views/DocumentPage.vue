@@ -690,7 +690,7 @@ export default {
       console.log('currentLevel / typeof : ', currentLevel, typeof (currentLevel.value))
       // in any case, max the TOC depth (available or user driven) by the availability of fragment title metadata
       console.log('TOC_DEPTH.value / typeof : ', TOC_DEPTH.value, typeof (TOC_DEPTH.value))
-      TOC_DEPTH.value = TOC_DEPTH.value > maxTocDepth ? maxTocDepth : TOC_DEPTH.value
+      // TOC_DEPTH.value = TOC_DEPTH.value > maxTocDepth ? maxTocDepth : TOC_DEPTH.value
 
       if (refId.value) {
         console.log('there is a refId , update currentLevel', processFlatTOC.filter(item => item.identifier === refId.value)[0].level)
