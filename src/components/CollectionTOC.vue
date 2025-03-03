@@ -86,7 +86,7 @@ export default {
     const selectedParent = ref('')
 
     const componentTOC = ref(props.toc)
-    componentTOC.value.sort((a, b) => a.title > b.title ? 1 : -1)
+    componentTOC.value.sort((a, b) => a.title.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '') > b.title.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '') ? 1 : -1)
 
     console.log('componentTOC.value props.toc : ', componentTOC.value)
 
