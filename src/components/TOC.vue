@@ -3,7 +3,7 @@
     <template v-for="(item, index) in componentTOC" :key="index">
       <li
         v-if="item.show"
-        :style="`margin-left: ${ (item.level -1) * 7 }px;`"
+        :style="`margin-left: ${ (item.level -1) * 15 }px;`"
         :class="item.level < maxcitedepth && item.children && item.children.length > 0 ? 'more' : ''"
       >
         <div class="li container">
@@ -186,28 +186,73 @@ export default {
 </script>
 
 <style scoped>
-div.toc-content {
+div.toc-area-content.toc-content {
   .tree {
     font-family: "Barlow Semi Condensed", sans-serif;
     font-size: 15px;
     font-weight: 500;
     line-height: 22px;
-    /* columns: 6;
-    gap: 20px;
+    columns: 4;
+    gap: 40px;
     min-height: 100px;
-    max-height: 300px; */
+    max-height: 300px;
     width: 100%;
-    /* overflow-x: auto;
-    overflow-y: hidden; */
+    overflow-x: auto;
+    overflow-y: hidden;
+    ;
   }
   .tree li {
     /*margin-left: 10px;*/
     font-family: "Barlow Semi Condensed", sans-serif;
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 400;
     line-height: 20px;
-    &:before {
-      margin-left: 0;
+    &:not(.more)::before {
+      margin-left: -7px;
+      margin-right: 11px;
+    }
+
+    & .li.container {
+      display: flex;
+      margin: 0;
+
+      & > a {
+        display:inline-block;
+        color: #4a4a4a;
+        width: 218px;
+      }
+    }
+
+    &.more {
+      /*margin-left: 0px;*/
+      display:inline-block;
+      padding-left: 0px;
+      & .li.container > a, span {
+      margin-top: 4px;
+    }
+
+      &::before {
+        content: none !important;
+      }
+    }
+  }
+}
+div.toc-area-aside.toc-content {
+  .tree {
+    font-family: "Barlow Semi Condensed", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 22px;
+    width: 100%;
+  }
+  .tree li {
+    /*margin-left: 10px;*/
+    font-family: "Barlow Semi Condensed", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 20px;
+    &:not(.more)::before {
+      margin-left: -7px;
       margin-right: 11px;
     }
 
@@ -232,9 +277,6 @@ div.toc-content {
         content: none !important;
       }
     }
-    &:not(.more) {
-      padding-left: 30px !important;
-    }
   }
 }
 div.bottom-toc {
@@ -245,8 +287,8 @@ div.bottom-toc {
     font-weight: 500;
     line-height: 22px;
 
-    &::before {
-      margin-left: -8px;
+    &:not(.more)::before {
+      margin-left: -7px;
       margin-right: 11px;
     }
 
