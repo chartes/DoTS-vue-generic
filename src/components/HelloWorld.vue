@@ -20,7 +20,7 @@
             <div class="toc-area app-width-margin" :class="tocCssClass">
               <div class="toc-area-header">
                 <a href="#">Parcourir la collection </a>
-                <a href="#" class="toggle-btn" v-on:click="toggleExpanded($event, collectionId)"></a>
+                <a href="#" class="toggle-btn" v-on:click.prevent="toggleExpanded(collectionId)"></a>
               </div>
               <div v-if="componentTOC.length > 0"
                 class="menu app-width-margin"
@@ -80,47 +80,9 @@
 
 <script>
 import { computed, inject, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import router from '@/router'
 
 import { getMetadataFromApi } from '@/api/document.js'
-import fetchMetadata from '@/composables/get-metadata.js'
-
 import CollectionTOC from '@/components/CollectionTOC.vue'
-
-function getSimpleObject (obj) {
-  // console.log("getSimpleObject / obj", obj)
-  let simpleObject = {}
-  simpleObject = {
-    identifier: obj.identifier ? obj.identifier : obj['@id'],
-    citeType: obj['@type'] ? obj['@type'] : obj.citeType,
-    title: obj.title,
-    level: obj.level,
-    editorialLevelIndicator: obj.editorialLevelIndicator,
-    totalChildren: obj.totalChildren,
-    member: !obj.member ? obj.children : obj.member,
-    parent: obj.parent,
-    dublincore: obj.dublincore,
-    extensions: obj.extensions
-  }
-  // console.log("getSimpleObject / simpleObject", simpleObject)
-  return simpleObject
-}
-/* function findById (array, id) {
-  for (const item of array) {
-    if (item.identifier === id) return item
-    if (item.children?.length) {
-      const innerResult = findById(item.children, id)
-      if (innerResult) return innerResult
-    }
-  }
-}
-function findDeep (array, id) {
-  return array.some(function (item) {
-    if (item.id === id) return item
-    else if (item.children?.length) return findDeep(item.children, id)
-  })
-} */
 
 export default {
   components: { CollectionTOC },
@@ -140,8 +102,6 @@ export default {
     })
 
     const layout = inject('variable-layout')
-    const route = useRoute()
-    const isLoading = ref(false)
     const collectionAltTitle = `${import.meta.env.VITE_APP_PROJECT_ALT_TITLE}`
     const collectionId = ref(props.collectionIdentifier)
     console.log('HelloWorld setup collectionId', collectionId.value)
@@ -153,13 +113,11 @@ export default {
     console.log('HelloWorld currentCollection.value / componentTOC.value : ', currCollection.value, componentTOC.value)
 
     console.log('HelloWorld componentTOC / collectionId : ', Object.fromEntries(componentTOC.value.map(col => [col.identifier, false])), componentTOC.value, collectionId, currCollection)
-    const target = ref(null)
 
     const expandedById = ref([])
 
-    const toggleExpanded = async (event, collId) => {
-      event.preventDefault()
-      console.log('HelloWorld Modal toggleExpanded', componentTOC.value)
+    const toggleExpanded = async (collId) => {
+      // console.log('HelloWorld Modal toggleExpanded', componentTOC.value)
       if (componentTOC.value.length === 0) {
         const response = await getMetadataFromApi(collId)
         response.member.forEach(m => {
@@ -168,15 +126,12 @@ export default {
         response.member.forEach(m => {
           m.parent = collId
         })
-        console.log('HelloWorld response', response, response.member.forEach(i => {
-          i.identifier = i['@id']
-        }))
         componentTOC.value = response.member
-        console.log('HelloWorld componentTOC', componentTOC.value)
+        // console.log('HelloWorld toggleExpanded componentTOC', componentTOC.value)
       }
       expandedById.value[collId] = !expandedById.value[collId]
       state.isTreeOpened = !state.isTreeOpened
-      console.log('HelloWorld toggleExpanded after expandedById[collectionId] : ', collId, expandedById.value)
+      // console.log('HelloWorld toggleExpanded after expandedById[collectionId] : ', collId, expandedById.value)
     }
 
     const homeCssClass = computed(() => {
@@ -190,11 +145,8 @@ export default {
 
     return {
       collectionAltTitle,
-      isLoading,
-      route,
       homeCssClass,
       tocCssClass: layout.tocCssClass,
-      target,
       collectionId,
       currCollection,
       componentTOC,
@@ -230,69 +182,6 @@ a {
   text-transform: none;
   color: #971716;
 }
-.modal-mask {
-  position: fixed;
-  z-index: 9998;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.modal-container {
-  max-width: 1100px !important;
-  margin: 150px auto;
-  padding: 20px 30px;
-  background-color: #fbf8f4;
-  border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-  max-height: 60vh;
-  overflow-y: auto;
-  color: #4a4a4a;
-}
-.modal-header {
-  display: flex;
-  width: 100%;
-  padding: 20px;
-  background-color: #b8b5ad;
-  border-radius: 6px;
-
-  font-family: "Barlow Semi Condensed", sans-serif !important;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 25px;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-.modal-header span.modal-header-section {
-  color: #4a4a4a;
-}
-.modal-header span.modal-header-title {
-  margin-left: 40px;
-  color: #161616;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 25px;
-  text-transform: none;
-}
-
-.modal-body {
-  display: flex;
-  width: 100%;
-  padding: 20px;
-  background-color: #e4e4e4;
-  border-radius: 6px;
-  position: relative;
-
-  font-family: "Barlow Semi Condensed", sans-serif !important;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 22px;
-}
-.metadata-area {
-  margin-top: 15px !important;
-  margin-bottom: 15px !important;
-}
 .toc-area {
   width: 100%;
   font-family: "Barlow", sans-serif !important;
@@ -319,27 +208,15 @@ a {
     margin-right: 47px;
   }
 }
-.is-tree-opened .toc-area-header {
-  border-radius: 6px 6px 0 0;
-}
-
-  .modal-body-header span.modal-body-header-section {
-    margin-right: 40px;
-  }
-  .modal-body-header span.modal-body-header-title {
-    color: #929292;
-  }
 .is-tree-opened .menu {
   display: flex;
   flex-direction: column;
   padding: 0px 20px 0px;
-  /*border-top: solid 2px #fcfcfc;*/
+  /* border-top: solid 2px #fcfcfc; */
   background-color: #e4e4e4;
   border-radius: 0 0 6px 6px;
 }
-/* ol {
-  list-style: none;
-} */
+
 /* toggle */
 .toggle-btn {
   position: absolute;
