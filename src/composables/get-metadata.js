@@ -1,5 +1,6 @@
-import { getMetadataFromApi } from '@/api/document.js'
 import store from '@/store/index.js'
+
+import { getMetadataFromApi } from '@/api/document.js'
 
 const sources = [
   { name: 'databnf', ext: 'data.bnf.fr', type: 'author_link' },
@@ -110,14 +111,6 @@ export default async function fetchMetadata (source, resourceId, documentType, r
       } else {
         metadata.parent = []
       }
-      /* metadata.parent = store.state.TOC.filter(item => item.identifier === resourceId)[0].parent
-                            ? [store.state.TOC.filter(item => item.identifier === resourceId)[0].parent]
-                            : []
-            console.log("metadata.parent", metadata.parent)
-          metadata.parent = metadata.parent.length > 0
-                            ? metadata.parent.map((p) => `${p} (${store.state.TOC.filter(item => item.identifier === p)[0].citeType})`)
-                            : []
-                            */
     }
 
     if (dublincore) {
@@ -141,7 +134,6 @@ export default async function fetchMetadata (source, resourceId, documentType, r
           metadata.downloadXML = { source, url: listmetadata.download.XML }
           console.log('source found:', source, listmetadata.download.XML)
         }
-        // metadata.downloadXML = listmetadata.download.XML
       }
 
       // 9-12metadata.page = extensions["dct:extend"] ? extensions["dct:extend"] : null
@@ -150,10 +142,6 @@ export default async function fetchMetadata (source, resourceId, documentType, r
       // 9-12metadata.title = extensions[htmlnamespace + ":h1"] ? extensions[htmlnamespace + ":h1"] : null
     }
 
-    /* const dublincore = listmetadata["dublincore"];
-        const extensions = listmetadata["extensions"];
-        console.log("---------");
-        console.log("dublincore:", dublincore); */
     try {
       metadata.iiifManifestUrl = extensions['dct:source'][0]['@id']
       // layout.imageIsAvailable.value = true
@@ -173,19 +161,9 @@ export default async function fetchMetadata (source, resourceId, documentType, r
       }
       console.log('metadata after reset', metadata)
 
-      // wikidata test 26/11/2024
-      // metadata.wikidata = extensions.creator_wikidata_url ? extensions.creator_wikidata_url : null
-      // metadata.rights = extensions["dct:rights"] ? extensions["dct:rights"] : extensions["dct:license"] ? extensions["dct:license"] : null
-
-      // metadata['dublincore'] = {}
-      // metadata['extensions'] = {}
       for (const keydub of Object.keys(dublincore)) {
         metadata[`dc:${keydub}`] = dublincore[keydub]
-        // metadata['dublincore'][keydub] = dublincore[keydub]
       }
-      /* for (let keyext of Object.keys(extensions)) {
-              metadata['extensions'][keyext] = extensions[keyext]
-            } */
 
       // benc & sudoc & thenca
       if (extensions['dct:isVersionOf']) {
@@ -200,33 +178,6 @@ export default async function fetchMetadata (source, resourceId, documentType, r
           }
         }
       }
-      // benc & sudoc & thenca
-      /* if (extensions) {
-              let document_links = []
-              let author_links = []
-              let other_links = []
-              for (const object of Object.values(extensions)) {
-                for (const member of object) {
-                  if (member["@id"]) {
-                    const source = findSource(member["@id"]);
-                    console.log("source Object.values(extensions):", source);
-                    if (source && source.type === "document_link") {
-                      document_links.push({'source': source.name, 'url': member["@id"]})
-                      metadata["document_links"] = document_links
-                      console.log("source document_links found:", metadata["document_links"]);
-                    } else if (source && source.type === "author_link") {
-                      author_links.push({'source': source.name, 'url': member["@id"]})
-                      metadata["author_links"] = author_links
-                      console.log("source author_links found:", metadata["author_links"]);
-                    } else if (source && source.type === "other_link"){
-                      other_links.push({'source': source.name, 'url': member["@id"]})
-                      metadata["other_links"] = other_links
-                      console.log("source other_links found:", metadata["other_links"]);
-                    }
-                  }
-                }
-              }
-            } */
       // license
       if (extensions['dct:license']) {
         const source = findSource(extensions['dct:license'])
@@ -264,15 +215,6 @@ export default async function fetchMetadata (source, resourceId, documentType, r
         }
       }
     }
-    /* } else {
-          console.log("getMetadata this is a collection !!!!!!!!!")
-          //reset to null
-          Object.keys(metadata).forEach(key => {
-            Object.assign(metadata, { [key]: null })
-          });
-          console.log("getMetadata this is a collection updated metadata", metadata)
-        } */
-    // return metadata
   }
   await getMetadata()
   const endTimefetchMetadata = new Date()
