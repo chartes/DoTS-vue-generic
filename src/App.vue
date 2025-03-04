@@ -3,7 +3,6 @@
     <app-navbar class="layout-navbar"/>
       <suspense>
         <router-view
-
           class="layout-main"
           :collection-identifier="collectionId === 'elec' ? '' : collectionId"
           :current-collection="currCollection"
@@ -12,7 +11,6 @@
       </suspense>
     <back-to-top-button class="back-to-top-button"/>
     <app-footer
-
       class="layout-footer"
       :collection-identifier="collectionId === 'elec' ? '' : collectionId"
       :current-collection="currCollection"
@@ -58,18 +56,11 @@ export default {
   },
 
   setup () {
-    const isLoading = ref(false)
     const route = useRoute()
     const collectionId = ref('')
     const currCollection = ref({})
     const collectionAltTitle = `${import.meta.env.VITE_APP_PROJECT_ALT_TITLE}`
 
-    // identifying current collection
-    /* if (route.params.collId) {
-      collectionId.value = route.params.collId
-    } else {
-      collectionId.value = 'elec'
-    } */
     console.log('App.vue setup route / route.params.collId / collectionId.value : ', route, route.params.collId, collectionId)
     // getting and formatting collection details
     const getCurrentCollection = async (route) => {
@@ -83,7 +74,6 @@ export default {
       console.log('App.vue formatedResponse', formatedResponse)
       formatedResponse = { ...formatedResponse, member: formatedResponse.member?.map(m => { return getSimpleObject(m) }) }
       currCollection.value = formatedResponse
-      isLoading.value = true
     }
     watch(
       router.currentRoute, async (newRoute, oldRoute) => {
@@ -91,7 +81,6 @@ export default {
         if (newRoute && oldRoute && newRoute.params.collId === oldRoute.params.collId) {
           console.log('App.vue watch no change in route')
         } else {
-          isLoading.value = false
           console.log('App.vue watch route.params : ', newRoute.params)
           if (newRoute.params.collId) {
             collectionId.value = newRoute.params.collId
@@ -101,21 +90,11 @@ export default {
           console.log('App.vue watch collectionId.value : ', collectionId.value)
           await getCurrentCollection(newRoute)
           console.log('App.vue currCollection.value : ', currCollection.value)
-          /* if (currentCollection.value.member) {
-            console.log('HelloWorld watch currentCollection.value.member : ', currentCollection.value.member)
-            componentTOC.value = currentCollection.value.member
-          }
-          console.log('HelloWorld watch componentTOC.value : ', componentTOC.value, collectionId) */
-          // console.log('HelloWorld watch componentTOC.filter(item => item.identifier === collectionId)[0].member.length > 0 : ', componentTOC.value.filter(item => item.identifier === collectionId.value)[0].member.length > 0)
-          // expandedById.value = Object.fromEntries(componentTOC.value.filter(item => item.identifier === collectionId.value).map(col => [col.identifier, false]))
-          isLoading.value = true
         }
       }, { deep: true, immediate: true }
     )
 
     return {
-      isLoading,
-      route,
       collectionId,
       currCollection,
       collectionAltTitle,
@@ -208,6 +187,9 @@ p.header-baseline span {
 }
 
 @media screen and (max-width: 1150px) {
+  .tile.page-header {
+    min-height: auto;
+  }
   .tile.page-header:first-child {
     padding-top:35px;
     padding-bottom:35px;

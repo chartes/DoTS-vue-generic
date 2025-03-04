@@ -44,7 +44,7 @@
   </article>
 </template>
 <script>
-import {shallowRef, defineAsyncComponent, ref} from 'vue'
+import { shallowRef, defineAsyncComponent, ref } from 'vue'
 import myComponents from '@/views/about/index'
 
 export default {
@@ -55,43 +55,28 @@ export default {
       required: true
     }
   },
-  /*
-  components: {
-    tabs: () => myComponents.forEach((comp) => {
-      return defineAsyncComponent(async () => comp.tabPath)
-    })
-  }, */
 
   setup (props) {
     const collectionAltTitle = `${import.meta.env.VITE_APP_PROJECT_ALT_TITLE}`
     const currCollection = ref(props.currentCollection)
-    console.log('AboutPage setup props.currentCollection / currCollection', props.currentCollection, currCollection.value)
-    console.log('AboutPage setup myComponents', myComponents)
+    // console.log('AboutPage setup props.currentCollection / currCollection', props.currentCollection, currCollection.value)
+    // console.log('AboutPage setup myComponents', myComponents)
     const tabs = []
     for (let i = 0; i < myComponents.length; i += 1) {
-      console.log('AboutPage setup comp : ', myComponents[i], '\n comp.tabName : ', myComponents[i].tabName, '\n comp.tabPath : ', myComponents[i].tabPath)
-      // const name = filePath.split('/').pop().replace('.vue', '')
-      const component = defineAsyncComponent(async () => import(`${myComponents[i].tabPath}.vue`))
+      // console.log('AboutPage setup comp : ', myComponents[i], '\n comp.tabName : ', myComponents[i].tabName, '\n comp.compName : ', myComponents[i].compName)
+      const component = defineAsyncComponent(() => import(`./about/${myComponents[i].compName}.vue`)
+        .then((comp) => {
+          return comp
+        })
+        .catch((error) => {
+          console.log(`error loading ${myComponents[i].compName}.vue : `, error)
+        })
+      )
+
       tabs.push([myComponents[i].tabName, component])
     }
-    console.log('AboutPage setup tabs', tabs)
-
-    /* const componentsTest = () => {
-  for (const filePath in Object.keys(components)) {
-    console.log('AboutPage setup filePath', filePath)
-    console.log('AboutPage setup components[filePath]', components[filePath])
-    defineAsyncComponent(async () => {
-      return new Promise((resolve) => {
-        resolve({
-          template: components[filePath]
-        })
-      })
-    })
-  }
-}
-
-console.log('AboutPage setup componentsTest', componentsTest) */
-    console.log('AboutPage setup tabs[0]', tabs[0])
+    // console.log('AboutPage setup tabs', tabs)
+    // console.log('AboutPage setup tabs[0]', tabs[0])
     const currentTab = shallowRef(tabs[0][1])
     return {
       currCollection,
@@ -215,6 +200,64 @@ article.about {
   .about .content h2 {
     text-align: left;
     width: 80%;
+  }
+}
+@media screen and (max-width: 1150px) {
+  .about-page {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    width: 100%;
+    & .tab-menu {
+      margin: 10px;
+      height: 100%;
+      width: 100%;
+      padding-left: 2.5%;
+      padding-right: 2.5%;
+      & > div > aside {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-content: center;
+        & > p.menu-label {
+          margin: 0;
+          padding: 5px 5px 5px 5px;
+          color: #B9192F;
+          font-size: 10px;
+          text-transform: uppercase;
+
+          &:hover {
+            background-color: rgba(185, 25, 47, 15%);
+          }
+
+          &.is-active {
+            padding: 5px 5px 5px 5px;
+            border-left: none;
+            border-bottom: solid 2px #B9192F;
+          }
+        }
+      }
+    }
+    & .content-menu {
+      display: flex;
+      justify-content: center;
+      align-content: center;
+      height: 100%;
+      width: 100%;
+      margin: 20px 0 20px;
+      & >.about.content {
+        padding: 0;
+        & > .title {
+          text-align: center;
+          font-size: 20px;
+        }
+        & > .about-content > p {
+          text-align: justify;
+        }
+      }
+    }
   }
 }
 </style>
