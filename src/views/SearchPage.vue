@@ -624,6 +624,7 @@
         :total-buckets="search.bucketCount.value"
         :is-with-highlights="!!(isFulltextSearch && inputTerm.trim() && inputTerm.trim().length > 0)"
         :filters="filters"
+        :collection-indexed="search.collectionIndexed.value"
         @filter-change="updateFilter"
         @sort-change="updateSort"
       /><!--v-if="tableData.length > 0"-->
