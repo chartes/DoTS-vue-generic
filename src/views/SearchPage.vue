@@ -1059,12 +1059,9 @@ export default {
           }))
       }
 
-      // fallback minimal (ancien comportement)
+      // Minimal fallback on title only as in default.conf.json (namespaced metadata key)
       return [
-        { key: 'title', label: 'Title', type: 'text' },
-        { key: 'creator', label: 'Creator', type: 'text' },
-        { key: 'date', label: 'Date', type: 'text' },
-        { key: 'coverage', label: 'Coverage', type: 'text' }
+        { key: 'dublinCore.title', label: 'Title', type: 'text' }
       ]
     })
 
@@ -1219,58 +1216,23 @@ export default {
 
     // SORT
 
+    // The API resolves metadata keys to their indexed sort fields:
+    // `dublinCore.title` → `resource_metadata.dublincore.title.sort`
+
     // Temporal properties bounds are normalized in the indexes:
     // `dublinCore.created` → `temporal.dublincore.created_start` / `_end`
-
-    // Date columns should sort on the normalized bound, not the raw value
+    //
+    // The .sort sub-field orders accented letters with their base letter
+    // Temporal property sorts on their normalised numeric bound rather, not the raw value
     // Unparseable dates, excluded from results (`getRowValue`), should not affect sorting either
 
-    const toElasticTemporalSortField = key => {
-      const [namespace, ...rest] = key.split('.')
-
-      // Namespace dublinCore normalised during indexation (`dublinCore` -> `dublincore`)
-      const path = [namespace.toLowerCase(), ...rest].join('.')
-
-      return `temporal.temporal.${path}_start`
-    }
-
-    const toElasticSortField = (key, type) => {
-      if (!key) return null
-
-      if (type === 'date') {
-        return toElasticTemporalSortField(key)
-      }
-
-      const parts = key.split('.')
-
-      const field = [
-        'resource_metadata',
-        ...parts
-      ]
-        .map((part, index) => {
-          // Namespace dublinCore normalised during indexation (`dublinCore` -> `dublincore`)
-          if (parts[0] === 'dublinCore') {
-            return part.toLowerCase()
-          }
-
-          return part
-        })
-        .join('.')
-
-      return `${field}.keyword`
-    }
-
-    const updateSort = ({ key, direction, column }) => {
+    const updateSort = ({ key, direction }) => {
       if (!key || direction === 'none') {
         inputSort.value = null
         return
       }
 
-      const elasticField = toElasticSortField(key, column?.type)
-
-      inputSort.value = direction === 'desc'
-        ? `-${elasticField}`
-        : elasticField
+      inputSort.value = direction === 'desc' ? `-${key}` : key
     }
 
 
