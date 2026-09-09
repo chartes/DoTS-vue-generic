@@ -12,7 +12,7 @@
     <div class = "search-bar-row">
           <div class="tile is-child search-form">
             <div class="search-bar-row">
-                              <button
+                  <button
                   class="button is-medium burger-menu-button"
                   @click="toggleSidebar"
                   :title="sidebarOpen ? 'Fermer les filtres' : 'Ouvrir les filtres'"
@@ -81,7 +81,15 @@
             </div>
 
             <div class="active-filters-and-sliders">
-
+              <ActiveSearchFilters
+              v-show="!filtersHidden"
+              :facets="activeFacetTags"
+              :ranges="ranges"
+              :temporal-facets="visibleTemporal"
+              @remove-facet="removeActiveFacet"
+              @remove-range="removeActiveRange"
+              @clear-all="clearAllFilters"
+            />
 
 
   </div>
@@ -235,35 +243,40 @@
   </div>
           <div class="page-body app-width-margin" :class="{ 'sidebar-open': sidebarOpen }">
 
-            <aside class="facets-sidebar" v-if="sidebarOpen">
-              <div class="facets-sidebar-header">
+            <!-- Fond assombri : uniquement visible en mobile (cf. media query
+                 max-width:768px) pendant que la sidebar des filtres est ouverte
+                 en superposition. Cliquer dessus referme les filtres. -->
+            <Transition name="backdrop-fade">
+              <div
+                v-if="sidebarOpen"
+                class="sidebar-backdrop"
+                @click="toggleSidebar"
+              ></div>
+            </Transition>
 
-              </div>
-              <ActiveSearchFilters
-              v-show="!filtersHidden"
-              :facets="activeFacetTags"
-              :ranges="ranges"
-              :temporal-facets="visibleTemporal"
-              @remove-facet="removeActiveFacet"
-              @remove-range="removeActiveRange"
-              @clear-all="clearAllFilters"
-            />
-              <SearchFacets
-                class="search-facets"
-                :opened-facets="openedFacets"
-                :facets="visibleFacets"
-                :temporal-facets="visibleTemporal"
-                :active-facets="activeFacetTags"
-                :ranges="ranges"
-                @facet-open="openFacet"
-                @facet-close="closeFacet"
-                @toggleFacet="onToggleFacet"
-                @change-range="onTemporalChange"
-                @apply-collections="executeSearches()"
-                @reset-range="resetRange"
-                @reset-facet="resetFacet"
-              />
-            </aside>
+            <Transition name="sidebar-slide">
+              <aside class="facets-sidebar" v-if="sidebarOpen">
+                <div class="facets-sidebar-header">
+
+                </div>
+
+                <SearchFacets
+                  class="search-facets"
+                  :opened-facets="openedFacets"
+                  :facets="visibleFacets"
+                  :temporal-facets="visibleTemporal"
+                  :active-facets="activeFacetTags"
+                  :ranges="ranges"
+                  @facet-open="openFacet"
+                  @facet-close="closeFacet"
+                  @toggleFacet="onToggleFacet"
+                  @change-range="onTemporalChange"
+                  @apply-collections="executeSearches()"
+                  @reset-range="resetRange"
+                  @reset-facet="resetFacet"
+                />
+              </aside>
+            </Transition>
 
             <div class="page-main">
 
@@ -302,20 +315,6 @@
           class="tile is-parent search-form-and-carousel"
           :class="searchMinimizedCssClass"
         >
-
-          <!--<div class="tile is-child carousel-parent">
-            <article class="tile is-child">
-              <div class="content">
-                <carousel
-                  :items="['histogram']"
-                  @click="minimizeSearchForm"
-                  v-show="!search.totalCount || search.totalCount.value > 0"
-                >
-                  <template v-slot:histogram><histogram /></template>
-                </carousel>
-              </div>
-            </article>
-          </div>-->
         </div>
         <div class="tile is-parent is-vertical">
           <!-- Table toogle + pagination -->
@@ -1981,13 +1980,23 @@ tr td.chevron-up a::before {
   margin-bottom: 2px !important;
 }
 .search-form {
+  /* Un seul gris (foncé) sur tout le bloc : avant, .search-form (le
+     conteneur) était en #f0f0f0 (clair) pendant que ses enfants étaient en
+     #e4e4e4 (plus foncé), ce qui laissait apparaître un liseré plus clair
+     autour du bloc de recherche. */
   background-color: #f0f0f0 !important;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
 }
 
+.search-form > *:first-child {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  padding: 32px 0 34px 0;
+  margin-bottom: 0;
+}
+
 .search-form > *:not(:first-child) {
-  background-color: #e4e4e4;
   margin-bottom: 0;
 }
 .search-form > *.search-form-footer {
@@ -2028,14 +2037,42 @@ tr td.chevron-up a::before {
   position: sticky;
   top: 0;
   z-index: 22;
-  background-color: #f0f0f0fa;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  /* même gris que .search-form (voir plus bas) : évite tout liseré plus
+     clair visible autour du bloc de recherche */
+  background-color: #ffffff;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+
+  /* .app-width-margin (classe partagée avec .wrapper.collection-header dans
+     CollectionHeader.vue) n'est PLUS neutralisée ici : en la laissant agir
+     normalement, cette barre reçoit exactement le même inset gauche/droite
+     que le titre/l'image du bandeau au-dessus, donc s'aligne dessus par
+     construction - que la sidebar des filtres soit dépliée ou repliée. */
 }
 .sticky-search-header .search-bar-row {
   display: flex;
   align-items: center;
-  padding: 10px 10px 10px 10px;
+  width: 100%;
+  margin : 2px 0 0 0;
+  padding: 0px 0px 0 0;
+}
+
+/* La ligne qui contient le burger + le sélecteur de mode + l'input doit
+   rester une ligne horizontale (burger à gauche), quoi qu'il arrive :
+   @flex !important pour ne jamais retomber en colonne (ex. si une règle
+   externe/globale plus tenace repasse cette ligne en display:block). */
+.search-form > .search-bar-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  /* gap à 0 : le sélecteur/l'input/le bouton sont conçus pour se toucher
+     (rayons de bordure complémentaires) ; un gap ici créait un espace visible
+     entre le burger et le sélecteur "notices". */
+  gap: 0;
+}
+.search-form > .search-bar-row > .burger-menu-button {
+  flex: 0 0 auto;
 }
 
 .hide-filters-button {
@@ -2050,20 +2087,30 @@ tr td.chevron-up a::before {
   width: 100%;
   max-height: 100%;
   overflow: hidden;
+
+  /* .app-width-margin n'est plus neutralisée : même inset gauche/droite que
+     .sticky-search-header et que .wrapper.collection-header au-dessus, donc
+     sidebar + résultats s'alignent sur la largeur du bandeau, dépliés ou
+     repliés (l'inset ne dépend pas de sidebarOpen). */
 }
 
 .facets-sidebar {
-  position: sticky;
-  top: 130 px;
-  max-height: auto;
-  overflow-y: auto;
+  position: flex;
+  max-height: 100%;
+  overflow-y: 0%;
   flex: 0 0 33.333%;
   max-width: 33.333%;
   box-sizing: border-box;
-  padding: 20px;
+  padding: 0 0 0 0 !important;
   background: #fff;
-  border-right: none;
   min-height: 100%;
+}
+
+/* Fond assombri derrière la sidebar mobile : masqué par défaut (desktop),
+   activé uniquement dans la media query mobile ci-dessous pour ne jamais
+   perturber la mise en page flex de .page-body en desktop. */
+.sidebar-backdrop {
+  display: none;
 }
 
 .facets-sidebar-header {
@@ -2087,12 +2134,20 @@ tr td.chevron-up a::before {
   flex: 1 1 0;
   min-width: 0;
   max-width: 100%;
+  /* Pas de padding gauche/droite ici : .page-body reçoit maintenant le même
+     inset app-width-margin que le bandeau, donc pour que "X ressources"/le
+     tableau aille jusqu'au même bord droit que l'image du bandeau (comme la
+     sidebar va jusqu'au même bord gauche), .page-main ne doit pas rajouter
+     sa propre marge par-dessus. */
+  box-sizing: border-box;
 }
 
 /* Bouton burger */
 .burger-menu-button {
   background-color: transparent !important;
   box-shadow: none;
+  width: 44px;
+  align-items: center;
 }
 
 .burger-icon {
@@ -2883,6 +2938,59 @@ tr.row-details :deep(em),
   .search-minimized .search-form {
     flex: unset;
   }
+
+  /* ===================================================================
+     Sidebar des filtres en superposition sur mobile : au lieu de pousser
+     .page-main sur le côté (comportement desktop, flex-basis 33.333%),
+     elle sort du flux (position: fixed) et se cale par-dessus la liste de
+     documents, avec un fond assombri cliquable pour la refermer. Comme
+     elle n'occupe plus de place dans .page-body (display:flex), .page-main
+     reprend naturellement toute la largeur disponible : les documents ne
+     sont donc jamais décalés, qu'elle soit ouverte ou fermée.
+     =================================================================== */
+  .facets-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    flex: none;
+    width: 85vw;
+    max-width: 340px;
+    height: 100vh;
+    max-height: 100vh;
+    z-index: 40;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, .25);
+    overflow-y: auto;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 39;
+  }
+
+  /* Transitions Vue <Transition name="sidebar-slide"/"backdrop-fade"> :
+     définies uniquement ici pour ne pas introduire d'animation d'ouverture
+     des filtres en desktop, où le comportement actuel (apparition immédiate,
+     sidebar qui pousse le contenu) reste inchangé. */
+  .sidebar-slide-enter-active,
+  .sidebar-slide-leave-active {
+    transition: transform .25s ease;
+  }
+  .sidebar-slide-enter-from,
+  .sidebar-slide-leave-to {
+    transform: translateX(-100%);
+  }
+
+  .backdrop-fade-enter-active,
+  .backdrop-fade-leave-active {
+    transition: opacity .2s ease;
+  }
+  .backdrop-fade-enter-from,
+  .backdrop-fade-leave-to {
+    opacity: 0;
+  }
 }
 @media screen and (max-width: 640px) {
   .table thead th {
@@ -2902,7 +3010,7 @@ tr.row-details :deep(em),
   }
 }
 .search-facets {
-  padding: 40px;
+  padding: 24px 24px 0 44px;
 }
 
 .active-filters {
@@ -2910,8 +3018,9 @@ tr.row-details :deep(em),
   width: flex;
   top: 0;
   z-index: 20;
-  padding: .75rem 1rem;
+  padding-left: 44px;
   border: 0px solid #f9f9f9;
+  
 }
 
 .active-filters-header {

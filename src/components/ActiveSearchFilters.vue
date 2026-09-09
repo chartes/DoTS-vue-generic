@@ -14,17 +14,15 @@
         <span class="active-filters-title">Filtres actifs</span>
         <i class="collapse-arrow" :class="{ opened: !collapsed }" />
       </button>
-
-      <!-- supprimer tous les filtres -->
-      <svg
-        class="clearall-icon"
-        viewBox="0 0 24 24"
+<!-- supprimer tous les filtres version bouton -->
+      <button
+        v-show="!collapsed"
+        type="button"
+        class="clearall-btn"
         @click.stop="clearAll"
       >
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="15" y1="9" x2="9" y2="15"/>
-        <line x1="9" y1="9" x2="15" y2="15"/>
-      </svg>
+        Réinitialiser les filtres
+      </button>
 
     </div>
 
@@ -71,6 +69,9 @@
       </span>
     </div>
   </div>
+  <div v-else class="active-filters">
+    <span class="active-filters-title">Aucun filtre actif</span>
+  </div>
 </template>
 <script setup>
 import { computed, ref } from 'vue'
@@ -113,13 +114,20 @@ const hasActiveFilters = computed(() => {
 })
 
 // labels issus de la config
+// NB : les facettes temporelles sont indexées par leur "key" canonique
+// (ex. "dublinCore.created", voir le commentaire dans SearchPage.vue sur
+// disabledTemporalFacetIds) - c'est aussi cette clé que setRange()/ranges
+// utilisent. On mappe donc sur f.key en priorité ; on garde f.field en repli
+// au cas où une facette n'exposerait que ce champ.
 const temporalLabels = computed(() => {
 
   return Object.fromEntries(
-    props.temporalFacets.map(f => [
-      f.field,
-      f.label
-    ])
+    props.temporalFacets.flatMap(f => {
+      const entries = []
+      if (f.key) entries.push([f.key, f.label])
+      if (f.field && f.field !== f.key) entries.push([f.field, f.label])
+      return entries
+    })
   )
 
 })
@@ -170,10 +178,10 @@ function clearAll(){
   position: sticky;
   top: 0;
   z-index: 20;
-  background: #fff;
+  background: #ffffff00;
   padding: .75rem 1rem;
-  border-bottom: 1px solid #e2e2e2;
-  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  border-bottom: 0px solid #e2e2e2;
+  box-shadow: none;
   font-family: "Barlow", sans-serif !important;
 }
 
@@ -187,6 +195,7 @@ function clearAll(){
   font-family: "Barlow", sans-serif !important;
   font-size: .95rem !important;
   font-weight: 600 !important;
+  padding-left: 0rem;
   color: #1a1a1a !important;
 }
 
@@ -247,6 +256,7 @@ function clearAll(){
   display:flex;
   flex-wrap:wrap;
   gap:.5rem;
+  padding-top:.5rem;
 }
 
 .filter-tag {
@@ -281,11 +291,10 @@ function clearAll(){
 .clearall-icon {
   width:18px;
   height:18px;
-
   cursor:pointer;
-
   fill:none;
-  stroke:#666;
+  align-self:center;
+  stroke:#000000ad;
   stroke-width:2;
 }
 
@@ -297,15 +306,14 @@ function clearAll(){
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  background: #fdecee;
-  color: #b9192f;
-  border: 1px solid #f3c4cb;
+  background: none;
+  color: #000000;
+  border: none;
   border-radius: 20px;
   padding: .35rem .85rem;
   font-size: .85rem;
-  font-weight: 600;
+  font-weight: 100;
   cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
 .clearall-btn:hover {

@@ -1,14 +1,15 @@
 <template>
   <div class="search-facets">
     <div
-      class="title filters-header"
+      class="filters-header-title"
       @click="toggleAllFacets"
     >
-      <span>Filtres</span>
-      <i
-        class="arrow"
-        :class="{ opened: allOpened }"
-      />
+      Filtres
+          <i
+            class="arrow"
+            :class="{ opened: allOpened }
+            "
+          />
     </div>
 
     <div
@@ -20,13 +21,21 @@
         class="facet-header"
         @click="toggleOpen(facet.id)"
       >
-        <span>
+        <span class="facet-header-label">
           {{ facet.label }} {{ facet.values?.length ? `(${facet.values.length})` : '' }}
+          <i
+            class="arrow"
+            :class="{ opened: isOpen(facet.id) }"
+          />
         </span>
-        <i
-          class="arrow"
-          :class="{ opened: isOpen(facet.id) }"
-        />
+        <button
+          type="button"
+          class="facet-reset-btn"
+          @click.stop="resetFacet(facet)"
+          title="Réinitialiser cette facette"
+        >
+          ↺
+        </button>
       </div>
       <div
         v-show="isOpen(facet.id)"
@@ -73,7 +82,7 @@
                 @focus="openFacetDropdown(facet.id)"
                 @blur="closeFacetDropdown(facet.id)"
                 @keydown.escape="closeFacetDropdown(facet.id)"
-                :placeholder="`Filtrer ${facet.label}`"
+                :placeholder="facetPlaceholder(facet)"
               >
 
 
@@ -94,32 +103,8 @@
                 </div>
               </div>
             </div>
-
-            <!-- Valeurs déjà sélectionnées pour cette facette : toujours visibles -->
-            <div
-              v-for="item in selectedFacetValues(facet.id, facet.values)"
-              :key="item.facet_key || item.value"
-              class="facet-item is-selected"
-              role="checkbox"
-              aria-checked="true"
-              tabindex="0"
-              @click="toggleFacet(facet.id, item)"
-              @keydown.enter.prevent="toggleFacet(facet.id, item)"
-              @keydown.space.prevent="toggleFacet(facet.id, item)"
-            >
-              {{ item.label || item.value }}
-              ({{ item.count }})
-            </div>
           </template>
         </template>
-        <button
-          type="button"
-          class="facet-reset-btn"
-          @click.stop="resetFacet(facet)"
-          title="Réinitialiser cette facette"
-        >
-          ↺
-        </button>
       </div>
     </div>
   </div>
@@ -127,7 +112,7 @@
 
 <script setup>
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, reactive, watch, onBeforeUnmount } from 'vue'
 import TemporalFacetSlider from './TemporalFacetSlider.vue'
 import AlphabetFacetPicker from './AlphabetFacetPicker.vue'
 
@@ -323,6 +308,104 @@ const orderedFacets = computed(()=>{
     )
 })
 
+// =====================================================================
+// Placeholder animé des champs de filtre de facette : fait défiler, lettre
+// par lettre, une valeur choisie au hasard parmi les vraies valeurs déjà
+// chargées pour cette facette (ex. un vrai nom d'auteur), à titre d'exemple
+// de ce qu'on peut taper. Ne touche jamais à la valeur réelle du champ
+// (facetFilters) : uniquement au texte de placeholder affiché.
+// =====================================================================
+
+const animatedPlaceholders = reactive({})
+const placeholderLoops = new Set()
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function labelOfFacetValue(item) {
+    return (item && (item.label || item.value)) || ''
+}
+
+async function runPlaceholderLoop(facetId) {
+
+    if (placeholderLoops.has(facetId)) return
+    placeholderLoops.add(facetId)
+
+    while (placeholderLoops.has(facetId)) {
+
+        const facet = orderedFacets.value.find(f => f.id === facetId)
+        const values = (facet && facet.values) || []
+
+        if (!values.length) {
+            await sleep(1000)
+            continue
+        }
+
+        const candidate = values[Math.floor(Math.random() * values.length)]
+        const text = labelOfFacetValue(candidate)
+
+        if (!text) {
+            await sleep(500)
+            continue
+        }
+
+        // Tape le mot lettre par lettre
+        for (let i = 1; i <= text.length; i++) {
+            if (!placeholderLoops.has(facetId)) return
+            animatedPlaceholders[facetId] = text.slice(0, i)
+            await sleep(70)
+        }
+
+        await sleep(1400)
+
+        // Efface le mot lettre par lettre
+        for (let i = text.length; i >= 0; i--) {
+            if (!placeholderLoops.has(facetId)) return
+            animatedPlaceholders[facetId] = text.slice(0, i)
+            await sleep(35)
+        }
+
+        await sleep(400)
+    }
+}
+
+function stopPlaceholderLoop(facetId) {
+    placeholderLoops.delete(facetId)
+    delete animatedPlaceholders[facetId]
+}
+
+// Texte affiché comme placeholder : le mot en cours d'animation, ou le
+// texte par défaut ("Filtrer ...") tant que rien n'a encore été tapé.
+function facetPlaceholder(facet) {
+    return animatedPlaceholders[facet.id] || `Filtrer ${facet.label}`
+}
+
+// Démarre/arrête les boucles au fil des facettes affichées : seules les
+// facettes "terms" au rendu par défaut utilisent .facet-input (pas les
+// facettes temporelles, ni celles en parcours alphabétique).
+watch(
+    orderedFacets,
+    facets => {
+
+        const activeIds = facets
+            .filter(f => f.type === 'terms' && !isAlphabetFacet(f.id))
+            .map(f => f.id)
+
+        activeIds.forEach(id => runPlaceholderLoop(id))
+
+        // Nettoie les boucles des facettes qui ont disparu
+        Array.from(placeholderLoops).forEach(id => {
+            if (!activeIds.includes(id)) stopPlaceholderLoop(id)
+        })
+    },
+    { immediate: true }
+)
+
+onBeforeUnmount(() => {
+    Array.from(placeholderLoops).forEach(stopPlaceholderLoop)
+})
+
 // Clé d'identification d'une valeur de facette (constante quel que soit le
 // nom de champ utilisé selon la provenance de la donnée).
 function facetValueKey(item){
@@ -366,29 +449,6 @@ function mergeSelected(facetId, values){
 const sortAlpha = (a,b) =>
     (a.label || a.value || '')
         .localeCompare((b.label || b.value || ''), 'fr', { sensitivity:'base' })
-
-// Valeurs déjà actives pour une facette : affichées en permanence, hors
-// menu déroulant, pour que l'utilisateur voie et puisse retirer ses
-// sélections sans avoir à retaper quoi que ce soit.
-function selectedFacetValues(facetId, values) {
-    const selectedKeys = selectedKeysFor(facetId)
-
-    const selectedFromActive = selectedKeys.map(key => {
-        const existing = values.find(v =>
-            facetValueKey(v) === key
-        )
-        if (existing) return existing
-        return {
-            facet_key: key,
-            value: key,
-            label: key,
-            count: 0,
-            selected: true
-        }
-    })
-
-    return selectedFromActive.sort(sortAlpha)
-}
 
 // Candidats (non sélectionnés) proposés dans le menu déroulant
 // d'autocomplétion, sous le champ de saisie.
@@ -477,22 +537,55 @@ watch(
     deep:true
   }
 )
+
+// Déplier toutes les facettes par défaut, une seule fois au premier
+// chargement (dès que la liste n'est plus vide). On ne le refait pas
+// ensuite, pour ne pas ré-ouvrir une facette que l'utilisateur a
+// volontairement repliée après coup.
+const facetsInitiallyOpened = ref(false)
+
+watch(
+  orderedFacets,
+  facets => {
+
+    if (facetsInitiallyOpened.value) return
+    if (!facets.length) return
+
+    facetsInitiallyOpened.value = true
+
+    facets.forEach(f => {
+      if (!props.openedFacets.includes(f.id)) {
+        emit('facet-open', f.id)
+      }
+    })
+  },
+  {
+    immediate:true
+  }
+)
 </script>
 <style scoped>
 .search-facets{
   display:flex;
   flex-direction:column;
   gap:1rem;
+  padding: 0 1rem;
   font-family: "Barlow", sans-serif;
+
 }
 
-.filters-header{
+.filters-header-title{
+  font-size : 24px;
+  font-weight: 700;
+  font-style: normal;
+  color: #000000;
+  font-family: "Barlow", sans-serif;
   display:flex;
-  justify-content:space-between;
   align-items:center;
   cursor:pointer;
   user-select:none;
-  margin:0;
+  margin:42px 0 0 0;
+  gap: .5rem;
 }
 
 .facet-box{
@@ -509,9 +602,16 @@ watch(
   font-weight:600;
 }
 
+/* Label + flèche "déplier" regroupés à gauche du header */
+.facet-header-label{
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
 .facet-body{
   position: relative;
-  padding:1rem;
+  padding: 16px;
 }
 
 .facet-search{
@@ -610,22 +710,19 @@ watch(
   background: var(--meta-area-fill-color, #eee);
 }
 .facet-reset-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-
+  flex: 0 0 auto;
   border: none;
   background: transparent;
   cursor: pointer;
 
   font-size: 18px;
   line-height: 1;
-  padding: 2px 5px;
+  padding: 2px 4px;
   color: #666;
 }
 
 .facet-reset-btn:hover {
-  color: #000;
+  color: var(--fill-color, #000);
 }
 
 .arrow {

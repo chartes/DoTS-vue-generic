@@ -618,8 +618,8 @@ watch(
 
 .temporal-slider {
   flex: 50% 0 0;
-  padding-top: 10px;
-  padding-right: 15px;
+  padding-top: 0px;
+  padding-right: 0px;
   font-weight: 500;
   text-transform: uppercase;
 }
@@ -662,7 +662,7 @@ watch(
 .slider-content {
   /*background: white;*/
   /*border: 1px solid #ddd;*/
-  background: var(--meta-area-fill-color);
+  background:#f5f5f5;
   padding: 16px;
   padding-bottom: 30px;
 }
