@@ -55,6 +55,7 @@
               {{ Object.values(item)[0] }}
             </a>-->
           </template>
+          
           <!-- replaced by the above breadcrum to have sub-collections
           <router-link
             v-if="isDocProjectIdInc && collectionId && collectionId !== rootCollectionId"
@@ -552,6 +553,7 @@ ul.submenu a:hover {
 @media screen and (max-width: 768px) {
   nav {
     display: flex;
+    position : static !important;
     margin-top: 0;
     z-index: 10; /* cf documentation menu */
     padding-left: 12px;
@@ -567,9 +569,17 @@ ul.submenu a:hover {
     max-width: unset;
     margin-right: 12px;
   }
+
+  .level-left {
+    width: 100%;
+    gap: 0px;
+    position : static !important;
+  }
+
   .level-left .level-item:not(:last-child),
   .level-right .level-item:not(:last-child) {
     margin-right: .5rem;
+
   }
   nav span.level-item:not(:last-child)::after {
     padding-left: .5rem;
@@ -587,7 +597,7 @@ ul.submenu a:hover {
 @media screen and (max-width: 640px) {
   .level {
     display: flex;
-    height: 100%;
+
   }
   .level .level-item {
     flex-direction: row;

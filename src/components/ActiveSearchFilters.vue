@@ -35,7 +35,7 @@
         class="filter-tag"
       >
 
-        {{ facet.label }}
+        {{ facetTypeLabel(facet) }} : {{ facet.label }}
 
         <svg
           class="clear-icon"
@@ -89,6 +89,14 @@ const props = defineProps({
   temporalFacets:{
     type:Array,
     default:()=>[]
+  },
+  // Config des facettes "terms" (mêmes objets que ceux passés à
+  // SearchFacets en :facets) : sert uniquement à retrouver le label
+  // "maison" défini en config (ex. "Auteur") à partir de la clé technique
+  // (facet.facetType, ex. "dct:contributor" / une propriété Dublin Core).
+  facetsConfig:{
+    type:Array,
+    default:()=>[]
   }
 })
 
@@ -134,6 +142,26 @@ const temporalLabels = computed(() => {
 
 function getRangeLabel(field){
   return temporalLabels.value[field] || field
+}
+
+// Labels "maison" des facettes terms, définis en config (ex. "Auteur")
+// plutôt que la clé technique brute (ex. une propriété Dublin Core comme
+// "dct:contributor"). Indexés par f.key en priorité, f.id en repli, comme
+// pour temporalLabels ci-dessus.
+const facetConfigLabels = computed(() => {
+
+  return Object.fromEntries(
+    props.facetsConfig.map(f => [f.key ?? f.id, f.label])
+  )
+
+})
+
+// Label affiché devant la valeur sélectionnée, pour toutes les facettes
+// (Auteurs, Sujets, etc.), pas seulement pour les plages temporelles.
+// On retombe sur la clé technique uniquement si aucun label de config
+// n'a été trouvé (facette non déclarée dans facetsConfig).
+function facetTypeLabel(facet){
+  return facetConfigLabels.value[facet.facetType] || facet.facetType
 }
 
 function formatRange(range){

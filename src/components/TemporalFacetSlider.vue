@@ -662,7 +662,7 @@ watch(
 .slider-content {
   /*background: white;*/
   /*border: 1px solid #ddd;*/
-  background:#f5f5f5;
+  background: none  ;
   padding: 16px;
   padding-bottom: 30px;
 }

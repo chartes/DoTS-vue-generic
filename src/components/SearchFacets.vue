@@ -28,14 +28,6 @@
             :class="{ opened: isOpen(facet.id) }"
           />
         </span>
-        <button
-          type="button"
-          class="facet-reset-btn"
-          @click.stop="resetFacet(facet)"
-          title="Réinitialiser cette facette"
-        >
-          ↺
-        </button>
       </div>
       <div
         v-show="isOpen(facet.id)"
@@ -112,7 +104,7 @@
 
 <script setup>
 
-import { computed, ref, reactive, watch, onBeforeUnmount } from 'vue'
+import { computed, ref, watch } from 'vue'
 import TemporalFacetSlider from './TemporalFacetSlider.vue'
 import AlphabetFacetPicker from './AlphabetFacetPicker.vue'
 
@@ -308,103 +300,11 @@ const orderedFacets = computed(()=>{
     )
 })
 
-// =====================================================================
-// Placeholder animé des champs de filtre de facette : fait défiler, lettre
-// par lettre, une valeur choisie au hasard parmi les vraies valeurs déjà
-// chargées pour cette facette (ex. un vrai nom d'auteur), à titre d'exemple
-// de ce qu'on peut taper. Ne touche jamais à la valeur réelle du champ
-// (facetFilters) : uniquement au texte de placeholder affiché.
-// =====================================================================
-
-const animatedPlaceholders = reactive({})
-const placeholderLoops = new Set()
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-function labelOfFacetValue(item) {
-    return (item && (item.label || item.value)) || ''
-}
-
-async function runPlaceholderLoop(facetId) {
-
-    if (placeholderLoops.has(facetId)) return
-    placeholderLoops.add(facetId)
-
-    while (placeholderLoops.has(facetId)) {
-
-        const facet = orderedFacets.value.find(f => f.id === facetId)
-        const values = (facet && facet.values) || []
-
-        if (!values.length) {
-            await sleep(1000)
-            continue
-        }
-
-        const candidate = values[Math.floor(Math.random() * values.length)]
-        const text = labelOfFacetValue(candidate)
-
-        if (!text) {
-            await sleep(500)
-            continue
-        }
-
-        // Tape le mot lettre par lettre
-        for (let i = 1; i <= text.length; i++) {
-            if (!placeholderLoops.has(facetId)) return
-            animatedPlaceholders[facetId] = text.slice(0, i)
-            await sleep(70)
-        }
-
-        await sleep(1400)
-
-        // Efface le mot lettre par lettre
-        for (let i = text.length; i >= 0; i--) {
-            if (!placeholderLoops.has(facetId)) return
-            animatedPlaceholders[facetId] = text.slice(0, i)
-            await sleep(35)
-        }
-
-        await sleep(400)
-    }
-}
-
-function stopPlaceholderLoop(facetId) {
-    placeholderLoops.delete(facetId)
-    delete animatedPlaceholders[facetId]
-}
-
-// Texte affiché comme placeholder : le mot en cours d'animation, ou le
-// texte par défaut ("Filtrer ...") tant que rien n'a encore été tapé.
+// Texte affiché comme placeholder dans le champ de recherche de facette :
+// simplement le label de la facette (plus de suggestion animée de valeurs).
 function facetPlaceholder(facet) {
-    return animatedPlaceholders[facet.id] || `Filtrer ${facet.label}`
+    return `Filtrer ${facet.label}`
 }
-
-// Démarre/arrête les boucles au fil des facettes affichées : seules les
-// facettes "terms" au rendu par défaut utilisent .facet-input (pas les
-// facettes temporelles, ni celles en parcours alphabétique).
-watch(
-    orderedFacets,
-    facets => {
-
-        const activeIds = facets
-            .filter(f => f.type === 'terms' && !isAlphabetFacet(f.id))
-            .map(f => f.id)
-
-        activeIds.forEach(id => runPlaceholderLoop(id))
-
-        // Nettoie les boucles des facettes qui ont disparu
-        Array.from(placeholderLoops).forEach(id => {
-            if (!activeIds.includes(id)) stopPlaceholderLoop(id)
-        })
-    },
-    { immediate: true }
-)
-
-onBeforeUnmount(() => {
-    Array.from(placeholderLoops).forEach(stopPlaceholderLoop)
-})
 
 // Clé d'identification d'une valeur de facette (constante quel que soit le
 // nom de champ utilisé selon la provenance de la donnée).
@@ -584,7 +484,7 @@ watch(
   align-items:center;
   cursor:pointer;
   user-select:none;
-  margin:42px 0 0 0;
+  margin:30px 0 0 0;
   gap: .5rem;
 }
 
@@ -593,7 +493,7 @@ watch(
 }
 
 .facet-header{
-  background: var(--meta-area-fill-color);
+  background: #f0f0f0;
   padding:.75rem;
   display:flex;
   justify-content:space-between;
@@ -631,7 +531,7 @@ watch(
   font-family: "Barlow", sans-serif;
   font-size: .85rem;
   color: inherit;
-  background: #fff;
+  background: #f0f0f0;
   border: 1px solid #979797;
   border-radius: 6px;
   box-shadow: none;
@@ -640,7 +540,7 @@ watch(
 .facet-input:focus{
   outline: none !important;
   box-shadow: none !important;
-  border-color: #979797;
+  border-color: #ffffff;
 }
 
 /* Bouton "Show all/Hide" harmonisé avec les boutons de la barre de recherche */

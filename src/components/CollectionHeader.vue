@@ -685,6 +685,9 @@ export default {
 /* ===== RESPONSIVE ===== */
 
 @media screen and (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
   .collection-list {
     --first-column-width: 100%;
   }
@@ -696,12 +699,19 @@ export default {
     gap: 0;
   }
 
+
   .collection-header.app-width-margin {
     padding: 0;
+    gap: 0 !important;
   }
 
   .collection-header.app-width-margin :deep(.home-content.app-width-padding) {
     padding: 0;
+  }
+
+  .tile.article, .tile.app-width-margin {
+    width: var(--first-column-width);
+    flex : auto;
   }
 }
 

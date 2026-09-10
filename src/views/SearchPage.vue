@@ -84,6 +84,7 @@
               <ActiveSearchFilters
               v-show="!filtersHidden"
               :facets="activeFacetTags"
+              :facets-config="visibleFacets"
               :ranges="ranges"
               :temporal-facets="visibleTemporal"
               @remove-facet="removeActiveFacet"
@@ -94,135 +95,9 @@
 
   </div>
 
-            <!-- FACET AUTOCOMPLETE -->
-<!--            <div class="field">-->
-<!--              <div class="control is-expanded search-control">-->
-<!--                <input-->
-<!--                  class="input is-small"-->
-<!--                  type="text"-->
-<!--                  placeholder="Filtrer les collections"-->
-<!--                  v-model="inputFacet"-->
-<!--                  @click="$event.preventDefault()"-->
-<!--                />-->
-<!--                <span class="icon is-right clear-input" @click="inputFacet = ''">-->
-<!--                  <i class="fas fa-times"></i>-->
-<!--                </span>-->
-<!--              </div>-->
-
-
-<!--              &lt;!&ndash; dropdown &ndash;&gt;-->
-<!--              <div v-if="inputFacet.length && facetSuggestions.length" class="autocomplete-box">-->
-<!--                <div-->
-<!--                  v-for="facet in facetSuggestions"-->
-<!--                  :key="facet.facet_key"-->
-<!--                  class="autocomplete-item"-->
-<!--                  @click="applyFacet(facet)"-->
-<!--                >-->
-<!--                  <span>{{ facet.label }} ({{ facet.count }})</span>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            <div v-if="activeFacetTags.length > 0" class="active-filters">-->
-
-<!--              <div class="active-filters-header">-->
-<!--                <button-->
-<!--                  class="clear-all-btn"-->
-<!--                  @click="removeAllFacets"-->
-<!--                  title="Supprimer tous les filtres"-->
-<!--                >-->
-<!--                  ✕-->
-<!--                </button>-->
-
-<!--                <span>filtres actifs</span>-->
-<!--              </div>-->
-
-<!--              <div class="active-filters-list">-->
-<!--                <div-->
-<!--                  v-for="tag in activeFacetTags"-->
-<!--                  :key="tag.raw"-->
-<!--                  class="filter-chip"-->
-<!--                >-->
-<!--                  <span class="filter-chip-type">-->
-<!--                    {{ tag.facetType }}-->
-<!--                  </span>-->
-
-<!--                  <span class="filter-chip-label" :title="tag.label">-->
-<!--                    {{ tag.label }}-->
-<!--                  </span>-->
-
-<!--                  <button-->
-<!--                    class="filter-chip-remove"-->
-<!--                    @click="removeFacet(tag)"-->
-<!--                    title="retirer ce filtre"-->
-<!--                  >-->
-<!--                    ×-->
-<!--                  </button>-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--            </div>-->
-            <!-- Input sliders -->
+         
             <div class="is-flex sliders">
-              <!--<div class="field slider-control is-inline-block" v-if="temporalConfig.promotion">
-                <div class="control">
-                  <label>{{ temporalConfig.promotion.label || 'Promotions' }}</label>
-                  <span>Entre</span>
-                  <input
-                    type="number"
-                    class="year"
-                    v-model.number="inputPromotionYearRangeStart"
-                  />
-                  <span>et</span>
-                  <input
-                    type="number"
-                    class="year"
-                    v-model.number="inputPromotionYearRangeEnd"
-                  />
-                  <vue-slider
-                    v-model="inputPromotionYearRange"
-                    :min="minPromotionYear"
-                    :max="currentYear"
-                    :tooltip="'none'"
-                    :disabled="search.loading.value"
-                  ></vue-slider>
-                </div>
-              </div>
-              <div class="field slider-control is-inline-block"  v-if="temporalConfig.coverage">
-                <div class="control">
-                  <label>Période du sujet</label>
-                  <span>Entre</span>
-                  <input
-                    type="number"
-                    class="year"
-                    v-model="inputTopicRangeStart"
-                    v-on:blur="onBlurCheckTopicRangeStart($event)"
-                  />
-                  <span>et</span>
-                  <input
-                    type="number"
-                    class="year"
-                    v-model="inputTopicRangeEnd"
-                    v-on:blur="onBlurCheckTopicRangeEnd($event)"
-                  />
-                  <vue-slider
-                    v-model="inputTopicRange"
-                    :min="minTopicYear"
-                    :max="currentYear"
-                    :tooltip="'none'"
-                    :disabled="search.loading.value"
-                  ></vue-slider>
-                </div>
-              </div>-->
 
-<!--              <div class="field slider-control is-inline-block">-->
-<!--                <div class="control">-->
-<!--                  <TemporalFacetSlider-->
-<!--                    :temporal-facets="visibleTemporal"-->
-<!--                    :ranges="ranges"-->
-<!--                    @change="onTemporalChange"-->
-<!--                  />-->
-<!--                </div>-->
-<!--              </div>-->
             </div>
 
 
@@ -280,36 +155,7 @@
 
             <div class="page-main">
 
-
-  <!--<div class="collection-list" :class="{ 'root-collection-list' : collectionId === rootCollectionId }">
-    <div class="tiles">
-      <div class="tile page-header">
-        <div class="is-flex is-flex-direction-row wrapper collection-header app-width-margin">
-          <div class="tile article">
-            <div class="title-tile">
-              <p class="title">
-                {{ collectionAltTitle ? collectionAltTitle : currCollection.title }}
-              </p>
-            </div>
-          </div>
-          <div class="collection-image"></div>
-        </div>
-      </div>
-    </div>-->
-    <div><!--class="tile"-->
-      <!--<div class="tile page-header app-width-padding">
-        <article class="tile is-child">
-          <div class="is-flex is-flex-direction-row title-tile">
-            <p class="title">
-              Les positions de thèses<br />de l'École nationale des chartes
-            </p>
-            <p class="header-baseline">
-              <span>Position</span> : à l’origine, les positions prises et à défendre par
-              l’élève, face au jury. Depuis, un résumé de la thèse soutenue.
-            </p>
-          </div>
-        </article>
-      </div>-->
+    <div>
       <div class="tile is-vertical">
         <div
           class="tile is-parent search-form-and-carousel"
@@ -335,303 +181,11 @@
                 v-if="!isResultTableMode && isFulltextSearch"
                 class="field is-inline-block px-1"
               >
-                <div class="control mb-6 block is-inline-block sort-options">
-                  <span> Tris </span>
-                  <div class="is-inline-block">
-                    <select name="tri" id="tri-select" v-model="inputSort">
-                      <option value="">Pertinence</option>
-                      <option
-                        :value="
-                          inputSort.includes('-')
-                            ? '-metadata.author_name.keyword'
-                            : 'metadata.author_name.keyword'
-                        "
-                      >
-                        Auteur
-                      </option>
-                      <option
-                        :value="
-                          inputSort.includes('-')
-                            ? '-metadata.promotion_year'
-                            : 'metadata.promotion_year'
-                        "
-                      >
-                        Promotion
-                      </option>
-                      <option
-                        :value="
-                          inputSort.includes('-')
-                            ? '-metadata.topic_notBefore'
-                            : 'metadata.topic_notBefore'
-                        "
-                      >
-                        Période du sujet (borne inf.)
-                      </option>
-                      <option
-                        :value="
-                          inputSort.includes('-')
-                            ? '-metadata.topic_notAfter'
-                            : 'metadata.topic_notAfter'
-                        "
-                      >
-                        Période du sujet (borne sup.)
-                      </option>
-                    </select>
-                    <span
-                      v-if="inputSort.includes('-')"
-                      class="icon button"
-                      @click="inputSort = inputSort.replace('-', '')"
-                    >
-                      <i class="fas fa-arrow-up" />
-                    </span>
-                    <span
-                      v-else
-                      v-show="inputSort.length > 0"
-                      class="icon button"
-                      @click="inputSort = `-${inputSort}`"
-                    >
-                      <i class="fas fa-arrow-down" />
-                    </span>
-                  </div>
-                </div>
+
               </div>
             </div>
-            <!--<div v-if="search.pageCount" class="has-text-centered">
-              <pagination />
-            </div>-->
+
           </div>
-          <!--<div class="block text-results" v-if="isFulltextSearch && !isResultTableMode">
-            <div
-              class="table is-hoverable is-narrow is-fulldwidth"
-              v-if="search.result.value && search.result.value.length"
-            >
-              <template
-                v-for="position in search.result.value"
-                :key="position.id"
-              >
-                <router-link
-                  :to="{
-                    name: 'DocumentPage',
-                    params: { docId: position.id },
-                  }"
-                  style="text-decoration: none; color: inherit"
-                >
-                  <div class="columns mb-6">
-                    <div class="column is-2">
-                      <img
-                        class="pb-thumnbail"
-                        onerror="this.onerror=null; this.src='https://iiif.chartes.psl.eu/images/enc/logo-enc.png/full/120,/0/default.png'"
-                        :src="`${VITE_IIIF_IMAGES_URL}/${position.id}/${position.id}_01.TIF/full/120,/0/default.jpg`"
-                      />
-                    </div>
-                    <div class="block column is-10">
-                      <div
-                        class="has-text-left is-size-5 position-title"
-                        v-html="position.fields.metadata.title_rich"
-                      ></div>
-                      <div class="has-text-left has-text-weight-bold position-author">
-                        {{ position.fields.metadata.author_name }}
-                        {{ position.fields.metadata.author_firstname }}
-                      </div>
-                      <div class="has-text-right is-inline-block position-infos">
-                        <span class="year"
-                          >Promotion : {{ position.fields.metadata.promotion_year }}</span
-                        >|<span class="period"
-                          >Période du sujet :
-                          {{ position.fields.metadata.topic_notBefore }} -
-                          {{ position.fields.metadata.topic_notAfter }}</span
-                        >
-                      </div>
-                      <div v-if="position.highlight" class="position-highlight">
-                        <span v-for="phrase in position.highlight.content" :key="phrase">
-                          <span v-html="phrase"></span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </router-link>
-              </template>
-            </div>
-          </div>
-          <div v-else class="table-container table-results">
-            <table
-              class="table is-hoverable is-narrow is-fulldwidth"
-              v-if="search.result.value && search.result.value.length"
-            >
-              <thead>
-                <tr>
-                  <th
-                    @click="inputSort = '-metadata.author_name.keyword'"
-                    v-if="inputSort === 'metadata.author_name.keyword'"
-                  >
-                    <div class="sortable sort-alpha-down"><span>Nom</span></div>
-                  </th>
-                  <th
-                    @click="inputSort = ''"
-                    v-else-if="inputSort === '-metadata.author_name.keyword'"
-                  >
-                    <div class="sortable sort-alpha-up"><span>Nom</span></div>
-                  </th>
-                  <th @click="inputSort = 'metadata.author_name.keyword'" v-else>
-                    <div class="sortable"><span>Nom</span></div>
-                  </th>
-                  <th>
-                    <div><span>Prénom</span></div>
-                  </th>
-                  <th
-                    class="largerTab"
-                    @click="inputSort = '-metadata.promotion_year'"
-                    v-if="inputSort === 'metadata.promotion_year'"
-                  >
-                    <div class="sortable sort-numeric-down">
-                      <abbr title="Promotion" class="is-inline-block">Prom.</abbr>
-                    </div>
-                  </th>
-                  <th
-                    class="largerTab"
-                    @click="inputSort = ''"
-                    v-else-if="inputSort === '-metadata.promotion_year'"
-                  >
-                    <div class="sortable sort-numeric-up">
-                      <abbr title="Promotion" class="is-inline-block">Prom.</abbr>
-                    </div>
-                  </th>
-                  <th
-                    class="largerTab"
-                    @click="inputSort = 'metadata.promotion_year'"
-                    v-else
-                  >
-                    <div class="sortable">
-                      <abbr title="Promotion" class="is-inline-block">Prom.</abbr>
-                    </div>
-                  </th>
-                  <th>
-                    <div><span>Titre</span></div>
-                  </th>
-                  <th
-                    class="largerTab"
-                    @click="inputSort = '-metadata.topic_notBefore'"
-                    v-if="inputSort === 'metadata.topic_notBefore'"
-                  >
-                    <div class="sortable sort-numeric-down">
-                      <abbr title="Période du sujet">De </abbr>
-                    </div>
-                  </th>
-                  <th
-                    class="largerTab"
-                    @click="inputSort = ''"
-                    v-else-if="inputSort === '-metadata.topic_notBefore'"
-                  >
-                    <div class="sortable sort-numeric-up">
-                      <abbr title="Période du sujet">De </abbr>
-                    </div>
-                  </th>
-                  <th
-                    class="largerTab"
-                    @click="inputSort = 'metadata.topic_notBefore'"
-                    v-else
-                  >
-                    <div class="sortable"><abbr title="Période du sujet">De </abbr></div>
-                  </th>
-                  <th
-                    class="inline"
-                    @click="inputSort = '-metadata.topic_notAfter'"
-                    v-if="inputSort === 'metadata.topic_notAfter'"
-                  >
-                    <div class="sortable sort-numeric-down">
-                      <abbr title="Période du sujet">A </abbr>
-                    </div>
-                  </th>
-                  <th
-                    class="inline"
-                    @click="inputSort = ''"
-                    v-else-if="inputSort === '-metadata.topic_notAfter'"
-                  >
-                    <div class="sortable sort-numeric-up">
-                      <abbr title="Période du sujet">A </abbr>
-                    </div>
-                  </th>
-                  <th
-                    class="inline"
-                    @click="inputSort = 'metadata.topic_notAfter'"
-                    v-else
-                  >
-                    <div class="sortable"><abbr title="Période du sujet">A </abbr></div>
-                  </th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <template
-                  v-for="position in search.result.value"
-                  :key="position.id"
-                >
-                  <tr
-                    class="row-infos"
-                    :class="positionCssClass(position)"
-                  >
-                    <td>
-                      <router-link
-                        :to="{ name: 'DocumentPage', params: { docId: position.id } }"
-                      >
-                        {{ position.fields.metadata.author_name }}
-                      </router-link>
-                    </td>
-                    <td>{{ position.fields.metadata.author_firstname }}</td>
-                    <td>{{ position.fields.metadata.promotion_year }}</td>
-                    <td>
-                      <router-link
-                        :to="{ name: 'DocumentPage', params: { docId: position.id } }"
-                      >
-                        <span v-html="position.fields.metadata.title_rich"></span>
-                      </router-link>
-                    </td>
-                    <td>{{ position.fields.metadata.topic_notBefore }}</td>
-                    <td>{{ position.fields.metadata.topic_notAfter }}</td>
-                    <td class="inline oeil">
-                      <router-link
-                        :to="{ name: 'DocumentPage', params: { docId: position.id } }"
-                      />
-                    </td>
-                    <td
-                      v-if="
-                        isFulltextSearch &&
-                        isResultTableMode &&
-                        position.highlight !== null
-                      "
-                      class="inline"
-                      :class="
-                        !onrollActive.includes(position.id)
-                          ? 'chevron-up'
-                          : 'chevron-down'
-                      "
-                    >
-                      <a href="#" @click="rollActive($event, position.id)"></a>
-                    </td>
-                    <td v-else-if="position.highlight === null"></td>
-                  </tr>
-                  <tr
-                    v-if="
-                      onrollActive.includes(position.id) &&
-                      isFulltextSearch &&
-                      isResultTableMode &&
-                      position.highlight !== null
-                    "
-                    class="row-details"
-                  >
-                    <td colspan="8">
-                      <ul>
-                        <li v-for="phrase in position.highlight.content" :key="phrase">
-                          <span v-html="phrase"></span>
-                        </li>
-                      </ul>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
-          </div>-->
         </div>
       </div>
     </div>
@@ -2208,6 +1762,7 @@ tr td.chevron-up a::before {
   padding-top: 6px;
   border-color: #979797;
 }
+
 .search-form .input:focus {
   outline: none !important;
   box-shadow: none !important;
@@ -2234,15 +1789,12 @@ tr td.chevron-up a::before {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-
   width: 22px;
   height: 22px;
   padding: 0;
-
   border: none;
   background: transparent;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
