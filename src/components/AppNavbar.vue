@@ -111,6 +111,10 @@ export default {
       type: Boolean,
       required: true
     },
+    appState: {
+      type: String,
+      default: 'ready'
+    },
     dtsRootCollectionIdentifier: {
       type: String,
       required: true
@@ -346,9 +350,16 @@ export default {
     })
 
     watch(collectionId, (newCollectionId) => {
-      if (newCollectionId) {
-          setImgUrl(newCollectionId)
-          setApiImgUrl(newCollectionId)
+      // Degraded mode has no collection id, so fall back to what these two
+      // actually read -- they ignore the id they are passed. Nominal path
+      // keeps the original guard.
+      const ready = props.appState === 'error'
+        ? collConfig.value?.homePageSettings?.appNavBar
+        : newCollectionId
+
+      if (ready) {
+        setImgUrl()
+        setApiImgUrl()
       }
     }, { immediate: true })
 

@@ -12,46 +12,67 @@
       class="document-list app-width-margin"
       :class="displayOpt + '-mode'"
     ><!--:class="isAboutOpened ? `is-about-opened ${displayOpt}-mode` : `${displayOpt}-mode`"-->
+      <div
+        v-if="appState === 'error'"
+        class="app-banner app-width-margin"
+        role="alert"
+      >
+        <span class="app-banner__text">
+          Les données ne peuvent pas être chargées pour le moment.
+        </span>
+        <button
+          class="app-banner__retry"
+          type="button"
+          @click="reload"
+        >
+          Réessayer
+        </button>
+        <pre
+          v-if="isDev && appError"
+          class="app-banner__debug"
+        >{{ appError.url || '' }} {{ appError.message }}</pre>
+      </div>
+      <div v-else>
+        <CollectionTOC
+          v-if="displayOpt !== 'list' && displayOpt !== 'mixed'"
+          :is-doc-projectId-included="isDocProjectIdInc"
+          :display-option="displayOpt"
+          :current-collection="currCollection"
+          :dts-root-collection-identifier="dtsRootCollectionId"
+          :root-collection-identifier="rootCollectionId"
+          :application-config="appConfig"
+          :collection-config="collConfig"
+          :toc="componentTOC"
+          :level="1"
+          :margin="0"
+        />
+        <CollectionCardWithToc
+          v-if="displayOpt === 'mixed'"
+          :is-doc-projectId-included="isDocProjectIdInc"
+          :display-option="displayOpt"
+          :current-collection="currCollection"
+          :dts-root-collection-identifier="dtsRootCollectionId"
+          :root-collection-identifier="rootCollectionId"
+          :application-config="appConfig"
+          :collection-config="collConfig"
+          :toc="componentTOC"
+          :level="1"
+          :margin="0"
+        />
 
-      <CollectionTOC
-        v-if="displayOpt !== 'list' && displayOpt !== 'mixed'"
-        :is-doc-projectId-included="isDocProjectIdInc"
-        :display-option="displayOpt"
-        :current-collection="currCollection"
-        :dts-root-collection-identifier="dtsRootCollectionId"
-        :root-collection-identifier="rootCollectionId"
-        :application-config="appConfig"
-        :collection-config="collConfig"
-        :toc="componentTOC"
-        :level="1"
-        :margin="0"
-      />
-      <CollectionCardWithToc
-        v-if="displayOpt === 'mixed'"
-        :is-doc-projectId-included="isDocProjectIdInc"
-        :display-option="displayOpt"
-        :current-collection="currCollection"
-        :dts-root-collection-identifier="dtsRootCollectionId"
-        :root-collection-identifier="rootCollectionId"
-        :application-config="appConfig"
-        :collection-config="collConfig"
-        :toc="componentTOC"
-        :level="1"
-        :margin="0"
-      />
+        <!-- RESOURCE LIST AS LIST OR TOC (conf: homePageSettings.listSection.displayMode = 'list' or 'toc' or unset) -->
+        <ResourcesList
+          v-else-if="displayOpt === 'list'"
+          :data="dataSource"
+          :columns-config="columns"
+          :page-size="pageSize"
+          :is-doc-project-id-included="isDocProjectIdInc"
+          :root-collection-identifier="rootCollectionId"
+          :is-table-loading="isTableLoading"
+          :counts="resultCount"
+        />
 
-      <!-- RESOURCE LIST AS LIST OR TOC (conf: homePageSettings.listSection.displayMode = 'list' or 'toc' or unset) -->
-      <ResourcesList
-        v-else-if="displayOpt === 'list'"
-        :data="dataSource"
-        :columns-config="columns"
-        :page-size="pageSize"
-        :is-doc-project-id-included="isDocProjectIdInc"
-        :root-collection-identifier="rootCollectionId"
-        :is-table-loading="isTableLoading"
-        :counts="resultCount"
-      />
-
+      </div>
     </div>
   </div>
 </template>
@@ -79,6 +100,14 @@ export default {
     isDocProjectIdIncluded: {
       type: Boolean,
       required: true
+    },
+    appState: {
+      type: String,
+      default: 'ready'
+    },
+    appError: {
+      type: Object,
+      default: null
     },
     dtsRootCollectionIdentifier: {
       type: String,
@@ -464,10 +493,14 @@ export default {
 //   },
 //   { immediate: true }
 // )
+    const isDev = import.meta.env.DEV
+    const reload = () => window.location.reload()
+
     watch(
   () => props.currentCollection,
   (newVal) => {
-    if (!newVal) return
+    // {} is the ref default and is truthy: guard on member, not on newVal.
+    if (!newVal?.member) return
     let result
     //componentTOC.value = []
 
@@ -592,6 +625,8 @@ export default {
     })
 
     return {
+      isDev,
+      reload,
       appRootUrl,
       normalisedBaseUrl,
       appConfig,

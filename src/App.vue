@@ -1,12 +1,30 @@
 <template>
+  <!-- Shown until the shell is mounted. -->
+<!--  <div-->
+<!--    v-if="appState === 'loading' && !(Object.keys(collConfig).length > 0 && collConfigReady)"-->
+<!--    class="app-state app-state&#45;&#45;loading"-->
+<!--  >-->
+<!--    <div-->
+<!--      class="app-state__illustration"-->
+<!--      aria-hidden="true"-->
+<!--    >-->
+<!--      📚-->
+<!--    </div>-->
+<!--    <p class="app-state__title">-->
+<!--      Chargement…-->
+<!--    </p>-->
+<!--  </div>-->
+
   <div
     v-if="Object.keys(collConfig).length > 0 && collConfigReady"
     class="layout-grid-container"
   >
     <app-navbar
       class="layout-navbar"
+      :key="currCollection"
       :class="routeNameCssClass"
-      :is-doc-projectId-included="isDocProjectIdInc"
+      :is-doc-project-id-included="isDocProjectIdInc"
+      :app-state="appState"
       :dts-root-collection-identifier="dtsRootCollectionId"
       :root-collection-identifier="rootCollectionIdentifier"
       :application-config="appConfig"
@@ -15,12 +33,14 @@
       :collection-config="collConfig"
       :collection-breadcrumb="breadCrumb"
       :collection-identifier="collectionId"
-      :key="currCollection"
     />
     <suspense>
       <router-view
+        :key="currCollection"
         class="layout-main"
-        :is-doc-projectId-included="isDocProjectIdInc"
+        :app-state="appState"
+        :app-error="appError"
+        :is-doc-project-id-included="isDocProjectIdInc"
         :dts-root-collection-identifier="dtsRootCollectionId"
         :root-collection-identifier="rootCollectionIdentifier"
         :application-config="appConfig"
@@ -28,7 +48,6 @@
         :collection-config="collConfig"
         :collection-identifier="collectionId"
         :current-collection="currCollection"
-        :key="currCollection"
       />
     </suspense>
     <div class="scroll-top-wrapper app-width-margin">
@@ -38,7 +57,11 @@
         :class="scrollTopIsVisible ? 'is-available' : ''"
         @click.prevent="scrollToTop"
       >
-        <button type="button" class="dots-button" aria-label="Retour en haut">
+        <button
+          type="button"
+          class="dots-button"
+          aria-label="Retour en haut"
+        >
           <DirectionArrows
             :size="40"
             :radius="4"
@@ -48,12 +71,12 @@
       </div>
     </div>
     <app-footer
+      :key="currCollection"
       class="layout-footer"
       :root-collection-identifier="rootCollectionIdentifier"
       :collection-identifier="collectionId"
       :footer-settings="collConfig.footerSettings"
       :current-collection="currCollection"
-      :key="currCollection"
     /><!--  v-bind="collConfig.footerSettings" not working : props missing -->
   </div>
 </template>
@@ -88,6 +111,11 @@ export default {
     const isInitializing = ref(true)
     const pendingCollectionId = ref(null)
     const collConfigReady = ref(false)
+
+    // 'loading' | 'ready' | 'error'. On 'error' the DTS service itself is
+    // unreachable, so redirecting to Home would hit the same failure.
+    const appState = ref('loading')
+    const appError = ref(null)
 
     const currCollection = ref({})
     const appCssConfig = ref({})
@@ -160,6 +188,42 @@ export default {
       })
     }
 
+    // Downstream code calls member/children unguarded. Empty but valid, with
+    // no placeholder title: a fake one would surface as content, not a fault.
+    const emptyMetadata = (identifier) => ({
+      identifier,
+      member: [],
+      children: [],
+      dublinCore: {},
+      totalParents: 0,
+      totalChildren: 0
+    })
+
+    // Config comes from local files, only data needs the API. Resolving it
+    // separately keeps navbar and footer up when the service is down.
+    const resolveConfigWithoutData = async (collId) => {
+      await mergeSettings(appConfig)
+
+      const generic = appConfig.value.genericConf
+      const overrides = appConfig.value.collectionsConf?.find(
+        coll => coll.collectionId === collId
+      ) || appConfig.value.collectionsConf?.find(
+        coll => coll.collectionId === 'rootCollection'
+      )
+
+      rootCollConfig.value = overrides
+        ? mergeConfig({}, generic, overrides)
+        : generic
+      projectCollConfig.value = rootCollConfig.value
+      collConfig.value = rootCollConfig.value
+      rootShortTitle.value =
+        rootCollConfig.value?.homePageSettings?.appNavBar?.collectionShortTitle ?? ''
+      // Views read currentCollection.member unguarded; the ref default {} is
+      // truthy and would crash them.
+      currCollection.value = emptyMetadata(collId)
+      collConfigReady.value = true
+    }
+
     const setCurrentCollectionContext = async (route) => {
       //console.log('App.vue setCurrentCollectionContext origin route', origin, route)
       console.log('this is where it fails')
@@ -169,10 +233,24 @@ export default {
       let defaultConf = appConfig.value.genericConf
       const matchedCollectionConf = appConfig.value.collectionsConf && appConfig.value.collectionsConf.filter(coll => coll.collectionId === collectionId.value).length > 0 ? appConfig.value.collectionsConf.find(coll => coll.collectionId === collectionId.value) : defaultConf
       console.log('App.vue setCurrentCollectionContext setUpCollectionId matchedCollectionConf', collectionId.value, matchedCollectionConf)
-      if (rootCollectionIdentifier.value === dtsRootCollectionId.value && rootCollectionIdentifier.value === collectionId.value) {
-        metadataResponse = await fetchMetadata('app.vue setCurrentCollectionContext fetchMetadata (no id)', null, 'Collection', matchedCollectionConf, route)
-      } else {
-        metadataResponse = await fetchMetadata('app.vue setCurrentCollectionContext fetchMetadata (with id)', collectionId.value, 'Collection', matchedCollectionConf, route)
+      try {
+        if (rootCollectionIdentifier.value === dtsRootCollectionId.value && rootCollectionIdentifier.value === collectionId.value) {
+          metadataResponse = await fetchMetadata('app.vue setCurrentCollectionContext fetchMetadata (no id)', null, 'Collection', matchedCollectionConf, route)
+        } else {
+          metadataResponse = await fetchMetadata('app.vue setCurrentCollectionContext fetchMetadata (with id)', collectionId.value, 'Collection', matchedCollectionConf, route)
+        }
+      } catch (error) {
+        // A status means the service answered: the id is wrong, so let the
+        // caller redirect to Home. Only a transport failure is an outage,
+        // and there the shell still renders -- config is local, data is not.
+        if (error.status) {
+          throw error
+        }
+
+        console.error('App.vue setCurrentCollectionContext fetchMetadata failed', error)
+        appError.value = error
+        appState.value = 'error'
+        metadataResponse = emptyMetadata(collectionId.value)
       }
 
       console.log('App.vue setCurrentCollectionContext collectionId.value ', collectionId.value)
@@ -317,6 +395,35 @@ export default {
       })
     }
 
+    // EXCLUDED COLLECTIONS
+    // A collection removed from the front (excludeCollectionIds setting)
+    // must not remain accessible through a direct URL.
+    // This check cannot live in the router: root collection is discovered through an API call
+    // (setDtsRootResponse), so it is unknown to beforeEach on the initial load.
+    // Here, rootCollConfig has been resolved and collConfigReady is still false,
+    // so nothing is rendered before the redirect.
+    //
+    // The comparison is case-insensitive as a precaution: the DoTS API is
+    // currently case-sensitive -- /encpos returns 400 and falls through to
+    // redirectHome() below -- but the exclusion should not depend on this
+    // server-side behavior to remain reliable.
+    const isExcludedCollection = (collId) => {
+      if (!collId) return false
+
+      const excluded = rootCollConfig.value?.excludeCollectionIds ?? []
+
+      return excluded.some(
+        id => String(id).toLowerCase() === String(collId).toLowerCase()
+      )
+    }
+
+    // Sans params : les réinjecter remettrait le collId fautif et bouclerait.
+    // replace et non push : l'URL écartée ne doit pas revenir au bouton retour.
+    const redirectHome = async (reason) => {
+      console.warn('App.vue redirect to Home:', reason)
+      await router.replace({ name: 'Home' })
+    }
+
     async function applyCollectionConfig(collectionIdFromStore) {
       collConfigReady.value = false
 
@@ -346,6 +453,11 @@ export default {
           rootCollConfig.value = rootCollectionOverrides
             ? mergeConfig({}, appConfig.value.genericConf, rootCollectionOverrides)
             : appConfig.value.genericConf
+
+          if (isExcludedCollection(route.params.collId)) {
+            await redirectHome(`collection "${route.params.collId}" is excluded`)
+            return
+          }
 
           rootShortTitle.value = rootCollConfig.value
             ? rootCollConfig.value.homePageSettings.appNavBar.collectionShortTitle
@@ -396,7 +508,24 @@ export default {
               || rootCollConfig.value?.homePageSettings?.appNavBar.collectionShortTitle
           }
 
+      } catch (error) {
+        // An unknown or incorrectly cased ID causes /collection?id=… to fail;
+        // without this catch, collConfig remains empty, and the page never renders
+        // as the template requires collConfig to be non-empty.
+        // Do not redirect from the home page itself: the root cannot be resolved
+        // either, which would result in a redirect loop.
+        if (route.params.collId) {
+          await redirectHome(
+            `cannot resolve collection "${route.params.collId}": ${error.message}`
+          )
+        } else {
+          console.error('App.vue applyCollectionConfig failed on root collection', error)
+        }
       } finally {
+        if (appState.value !== 'error') {
+          appState.value = 'ready'
+        }
+
         collConfigReady.value = true
       }
     }
@@ -514,6 +643,18 @@ export default {
           }
 
           collConfigReady.value = true
+        } catch (error) {
+          // Root collection unreachable: nowhere to redirect to. Fall back to
+          // local config so the shell still renders around the error banner.
+          console.error('App.vue route watcher failed', error)
+          appError.value = error
+          appState.value = 'error'
+
+          try {
+            await resolveConfigWithoutData(newParams?.collId)
+          } catch (configError) {
+            console.error('App.vue offline config resolution failed', configError)
+          }
         } finally {
           isInitializing.value = false
         }
@@ -565,6 +706,8 @@ export default {
       appCssConfig,
       route,
       collConfigReady,
+      appState,
+      appError,
       dtsRootCollectionId,
       rootCollectionIdentifier,
       projectCollId,
