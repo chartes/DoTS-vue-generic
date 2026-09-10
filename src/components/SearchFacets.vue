@@ -21,7 +21,7 @@
         @click="toggleOpen(facet.id)"
       >
         <span>
-          {{ facet.label }} {{ facet.values?.length ? `(${facet.values.length})` : '' }}
+          {{ facet.label }} {{ availableFacetCount(facet) ? `(${availableFacetCount(facet)})` : '' }}
         </span>
         <i
           class="arrow"
@@ -439,6 +439,18 @@ const orderedFacets = computed(()=>{
 //         ...available
 //     ]
 // }
+function selectedFacetKeys(facetId) {
+    return props.activeFacets
+        .filter(f => f.facetType === facetId)
+        .map(f => f.raw ?? f.facet_key ?? f.value ?? f.id)
+}
+
+// Header count is exactly what the list renders: same exclusions, same search
+// term. Any other source would drift from it.
+function availableFacetCount(facet) {
+    return filteredFacetValues(facet.id, facet.values ?? []).length
+}
+
 function filteredFacetValues(facetId, values) {
     const term =
         (facetFilters.value[facetId] || '')
@@ -447,23 +459,7 @@ function filteredFacetValues(facetId, values) {
 
     const showAll = getFacetShowAll(facetId)
 
-    const selectedKeys = props.activeFacets
-        .filter(f => f.facetType === facetId)
-        .map(f => f.raw ?? f.facet_key ?? f.value ?? f.id)
-
-    const selectedFromActive = selectedKeys.map(key => {
-        const existing = values.find(v =>
-            (v.facet_key ?? v.value ?? v.id) === key
-        )
-        if (existing) return existing
-        return {
-            facet_key: key,
-            value: key,
-            label: key,
-            count: 0,
-            selected: true
-        }
-    })
+    const selectedKeys = selectedFacetKeys(facetId)
 
     let available = values.filter(v => {
       const key = v.facet_key ?? v.value ?? v.id
@@ -493,10 +489,11 @@ function filteredFacetValues(facetId, values) {
         (a.label || a.value || '')
             .localeCompare((b.label || b.value || ''), 'fr', { sensitivity:'base' })
 
-    selectedFromActive.sort(sortAlpha)
     available.sort(sortAlpha)
 
-    return [...selectedFromActive, ...available]
+    // Selected values are dropped, not listed first: they already appear in
+    // ActiveSearchFilters, which is where they are removed.
+    return available
 }
 
 function isSelected(facetId, item){
