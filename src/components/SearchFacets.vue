@@ -484,11 +484,12 @@ watch(
   align-items:center;
   cursor:pointer;
   user-select:none;
-  margin:30px 0 0 0;
+  margin:34px 0 0 0;
   gap: .5rem;
 }
 
 .facet-box{
+  margin: 1px;
   border:1px solid #ddd;
 }
 
@@ -531,7 +532,7 @@ watch(
   font-family: "Barlow", sans-serif;
   font-size: .85rem;
   color: inherit;
-  background: #f0f0f0;
+  background: none;
   border: 1px solid #979797;
   border-radius: 6px;
   box-shadow: none;
