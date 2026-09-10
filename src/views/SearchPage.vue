@@ -86,7 +86,7 @@
                 </button>
                 <!-- MESSAGE ERROR -->
                 <p v-if="isInvalidQuery" class="search-error-message">
-                  Les recherches avec field: ne sont pas autorisées en mode plein texte
+                  {{ invalidQueryMessage }}
                 </p>
               </div>
 
@@ -1238,6 +1238,9 @@ export default {
 
 
     async function executeSearches() {
+      // Do not send invalid query via @keyup.enter calling this directly (even if submit button is disabled)
+      if (isInvalidQuery.value) return
+
       layout.rawSearchedTerm.value = inputTerm.value
 
       const t = inputTerm.value?.trim()
@@ -1395,9 +1398,51 @@ export default {
       }
     })
 
-    const isInvalidQuery = computed(() => {
+    const hasFieldSyntax = computed(() => {
       if (!isFulltextSearch.value) return false
       return /[a-zA-Z0-9_.-]+:/.test(inputTerm.value || '')
+    })
+
+    // Blocked when every unit is 2 characters or less, or when nothing is left
+    // but operators: such queries match almost everything and cost a lot.
+    // A quoted phrase is one unit.
+    const isTooShortQuery = computed(() => {
+      const raw = (inputTerm.value || '').trim()
+
+      if (!raw) return false
+
+      const units = []
+
+      const bare = raw.replace(/"([^"]*)"/g, (match, phrase) => {
+        units.push(phrase.trim())
+        return ' '
+      })
+
+      units.push(
+        ...bare
+          .replace(/[*?~^()+\-]/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean)
+      )
+
+      // No unit left means operators only ("*", "**"): nothing to search on.
+      return units.length === 0 || units.every(u => u.length <= 2)
+    })
+
+    const isInvalidQuery = computed(
+      () => hasFieldSyntax.value || isTooShortQuery.value
+    )
+
+    const invalidQueryMessage = computed(() => {
+      if (hasFieldSyntax.value) {
+        return 'Les recherches avec field: ne sont pas autorisées en mode plein texte'
+      }
+
+      if (isTooShortQuery.value) {
+        return 'Saisissez au moins 3 caractères'
+      }
+
+      return ''
     })
 
     const currentSearchLabel = computed(() => {
@@ -1671,6 +1716,7 @@ export default {
       isResultTableMode,
       inputTerm,
       isInvalidQuery,
+      invalidQueryMessage,
       deleteTerm,
       filters,
       updateFilter,
