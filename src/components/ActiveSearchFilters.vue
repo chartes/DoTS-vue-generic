@@ -211,9 +211,10 @@ function clearAll(){
 }
 
 .active-filters-header {
-  display:inline-flex;
-  align-items:center;
-  gap:1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  height: 29px;
 }
 
 .active-filters-title {

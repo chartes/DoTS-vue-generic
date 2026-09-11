@@ -649,7 +649,7 @@ name: 'CollectionTOC',
 
 .pagination {
   padding-bottom: 20px;
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .pagination-bottom {
@@ -679,11 +679,6 @@ name: 'CollectionTOC',
 .list-mode .tree {
   padding-bottom: 36px;
 }
-
-.list-header {
-  margin-bottom: 15px;
-}
-
 
 .list-mode li::before {
   display: none !important;

@@ -543,7 +543,7 @@ watch(
   align-items:center;
   cursor:pointer;
   user-select:none;
-  margin:34px 0 0 0;
+  margin: 0;
   gap: .5rem;
 }
 

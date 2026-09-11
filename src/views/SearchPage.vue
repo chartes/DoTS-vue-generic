@@ -141,8 +141,7 @@
     <div
       class="document-list list-mode"
       :class="openedFacets.length > 0 ? 'with-opened-facets' : ''"
-    ><!-- searchUI app-width-margin -->
-      <!-- <span>search {{ tableData }}</span> -->
+    >
       <ResourcesList
 
         :data="tableData"
@@ -1323,16 +1322,12 @@ export default {
   justify-content: center;
   flex-direction: column;
   width: 100%;
-  /* searchUI
-  margin-top: 60px;
-  padding-top: 25px;
-  */
-  margin-top: 0;
+  margin-top: 40px;
   padding-top: 0;
   padding-bottom: 25px;
 
   &.with-opened-facets {
-    margin-top: 0;
+    margin-top: 20px;
     padding-top: 0;
   }
 }
@@ -1611,6 +1606,7 @@ tr td.chevron-up a::before {
      (rayons de bordure complémentaires) ; un gap ici créait un espace visible
      entre le burger et le sélecteur "notices". */
   gap: 0;
+  margin-top: 12px;
 }
 .search-form > .search-bar-row > .burger-menu-button {
   flex: 0 0 auto;
@@ -1877,6 +1873,7 @@ tr td.chevron-up a::before {
 .search-submit {
   width: 44px;
   height: 44px !important;
+  margin-right: 12px;
   padding: 0;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -2594,8 +2591,7 @@ tr.row-details :deep(em),
   }
 }
 .search-facets {
-  /* searchUI padding: 40px; */
-  padding: 24px 24px 0 44px;
+  padding: 27px 24px 0 44px;
 }
 
 .active-filters {
