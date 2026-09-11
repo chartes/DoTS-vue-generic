@@ -963,19 +963,17 @@ a.noteref:focus {
         text-align: center;
     }
 
-    .layout-navbar:not(.document) {
-        position: fixed;
-        left:0;
-        top:0;
-        height: 70px;
-
-        width: 100vw;
-        z-index: 25;
-
-        & + .layout-main {
-            margin-top: var(--top-navbar-height);
-        }
-    }
+    /* La gestion "sticky" de la navbar mobile (position + z-index + relais
+       avec la barre de recherche sticky) est désormais entièrement gérée
+       dans le <style scoped> d'AppNavbar.vue (media query ≤768px, qui
+       couvre donc aussi ce breakpoint ≤640px).
+       L'ancienne règle ci-dessous (position: fixed + z-index: 25 sur
+       .layout-navbar, avec une marge de compensation sur .layout-main)
+       a été retirée car elle entrait en conflit avec le nouveau
+       comportement sticky : en position fixed l'élément sortait du flux,
+       d'où le besoin d'une margin-top de compensation ; en position
+       sticky il reste dans le flux, cette compensation créerait un vide
+       en trop sous la navbar. */
 }
 
 

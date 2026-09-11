@@ -2506,12 +2506,12 @@ tr.row-details :deep(em),
     left: 0;
     flex: none;
     width: 85vw;
-    max-width: 340px;
+    max-width: 440px;
     height: 100vh;
     max-height: 100vh;
     z-index: 40;
     box-shadow: 2px 0 16px rgba(0, 0, 0, .25);
-    overflow-y: auto;
+    overflow-y: none;
   }
 
   .sidebar-backdrop {
@@ -2520,6 +2520,10 @@ tr.row-details :deep(em),
     inset: 0;
     background: rgba(0, 0, 0, .45);
     z-index: 39;
+  }
+
+  .sticky-search-header{
+    padding : 0px;
   }
 
   /* Transitions Vue <Transition name="sidebar-slide"/"backdrop-fade"> :

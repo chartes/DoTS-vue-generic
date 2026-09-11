@@ -187,6 +187,19 @@ export default {
       isMenuOpened.value = false
     }
 
+    // Ferme le menu mobile déplié dès qu'on scrolle : une fois que la
+    // barre de recherche (sticky, z-index supérieur) a pris le relais
+    // visuel sur la navbar (sticky elle aussi, mais en dessous), le menu
+    // déplié n'a plus de place cohérente où s'afficher — il continuait
+    // sinon à dépasser par endroits, par-dessus le contenu de la page.
+    // Le fermer au scroll évite complètement le problème (comportement
+    // habituel des menus mobiles) plutôt que de chercher à le repositionner.
+    const closeMenuOnScroll = () => {
+      if (isMenuOpened.value) {
+        closeMenu()
+      }
+    }
+
     const openCollectionModal = (collId) => {
       store.commit('setCollectionModalId', collId)
       console.log('AppNavBar click below ProjectId open collection modal ', collId)
@@ -340,10 +353,12 @@ export default {
     // Lifecycle hooks
     onMounted(() => {
       document.body.addEventListener('click', closeMenu)
+      window.addEventListener('scroll', closeMenuOnScroll, { passive: true })
     })
 
     onBeforeUnmount(() => {
       document.body.removeEventListener('click', closeMenu)
+      window.removeEventListener('scroll', closeMenuOnScroll)
     })
 
     watch(collectionId, (newCollectionId) => {
@@ -551,6 +566,25 @@ ul.submenu a:hover {
   }
 }
 @media screen and (max-width: 768px) {
+  /* Le <section> racine du composant (qui englobe <nav> ET .mobile-button)
+     devient l'unité sticky, plutôt que <nav> seul : .mobile-button (le
+     bouton burger) est positionné en absolute PAR RAPPORT À CE <section>,
+     donc si seul <nav> était sticky, le burger resterait en arrière-plan et
+     défilerait hors champ pendant que la nav resterait collée en haut. En
+     rendant tout le <section> sticky, navbar + burger + menu déplié restent
+     affichés ensemble, tant qu'on n'a pas encore atteint la barre de
+     recherche.
+     z-index volontairement inférieur à celui de .sticky-search-header (22,
+     dans SearchPage.vue) : une fois que la barre de recherche, en
+     scrollant, atteint elle aussi top:0, elle passe par-dessus et « prend
+     le relais » visuellement sur la navbar (qui reste techniquement collée
+     dessous, mais n'est plus visible). */
+  section {
+    position: sticky !important;
+    top: 0;
+    z-index: 20;
+  }
+
   nav {
     display: flex;
     position : static !important;
@@ -595,9 +629,10 @@ ul.submenu a:hover {
   }
 }
 @media screen and (max-width: 640px) {
+  
   .level {
     display: flex;
-
+    position: static !important;
   }
   .level .level-item {
     flex-direction: row;
@@ -682,6 +717,7 @@ ul.submenu a:hover {
   .level.is-opened {
     height: 100%;
     overflow: unset;
+    position: static !important;
 
     & > a.level-item-external {
       &:not(:first-child) {
@@ -690,7 +726,16 @@ ul.submenu a:hover {
     }
 
     .level-right {
-      position: fixed;
+      /* Doit être position: absolute (et non static) pour que top/z-index
+         aient un effet : en static, ces deux propriétés sont ignorées par
+         le navigateur, et le menu déplié se retrouvait rendu en flux
+         normal, coincé "derrière" le contenu suivant (bannière, etc.)
+         faute d'être réellement surélevé. En absolute, il se positionne
+         par rapport au <section> (le plus proche ancêtre positionné,
+         sticky depuis le fix mobile), juste sous la barre du haut (top:
+         70px), et passe bien au-dessus du reste grâce à z-index: 23. */
+      position: absolute !important;
+      left: 0;
       right: 0;
       top: 70px;
       z-index: 23;
