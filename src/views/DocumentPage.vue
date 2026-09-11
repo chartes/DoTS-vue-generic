@@ -3,19 +3,6 @@
     class="is-flex is-flex-direction-column"
     :class="viewModeCssClass"
   >
-    <!--<CollectionModal
-      v-if="isLoading && isModalOpened"
-      class="modal-area"
-      :is-open="isModalOpened ? isModalOpened : false"
-      :is-doc-project-id-included="isDocProjectIdInc"
-      :dts-root-collection-identifier="dtsRootCollectionId"
-      :root-collection-identifier="rootCollectionId"
-      :collection-identifier="selectedCollectionId"
-      :collection-config="collConfig"
-      :current-item="selectedCollection"
-      :toc="flatTOC"
-      @change="closeModal"
-    />-->
     <div class="navigation-row-top-container" id="navigation-row-top-container">
       <div class="navigation-row-top app-width-margin">
         <div class="ariane-collection-top">
@@ -499,7 +486,6 @@
 import DocumentSource from '@/components/Document.vue'
 import DocumentMetadata from '@/components/DocumentMetadata.vue'
 import TOC from '@/components/TOC.vue'
-/* import CollectionModal from '@/components/CollectionModal.vue' */
 import CollectionTOC from '@/components/CollectionTOC.vue'
 import DirectionArrows from '@/assets/images/DirectionArrows.vue'
 import IconLetterT from '@/assets/images/IconLetterT.vue'
@@ -698,7 +684,6 @@ export default {
 
     const selectedCollectionId = ref('')
     const selectedCollection = ref({})
-    const isModalOpened = ref(false)
 
     // reading options bar
 
@@ -931,7 +916,6 @@ export default {
         document.title = currentItem.value.title
         console.log('init type : ', documentType.value)
         console.log('set currentItem.value : ', currentItem.value)
-        isModalOpened.value = false
 
         docProjectId.value = isDocProjectIdInc.value ? route.params.collId + '/' : ''
         console.log('docProjectId.value ', docProjectId.value)
@@ -1500,13 +1484,6 @@ export default {
       store.commit('setArianeDocument', arianeDocument.value.map(item => item.identifier))
       getNewRefId
     }
-    const closeModal = () => {
-      isModalOpened.value = false
-      selectedCollectionId.value = ''
-      Object.assign(selectedCollection.value, {})
-      store.commit('setCollectionModalId', false)
-      console.log(' Collection modal was closed : ', selectedCollectionId.value, selectedCollection.value)
-    }
 
     const itemSorted = (item) => {
       return [...item].sort(
@@ -1622,7 +1599,6 @@ export default {
     }
 
     function openObject(breadcrumbItem, index, event) {
-      isModalOpened.value = true
 
       // Case 1 : same breadcrumb then toggle off
       // console.log('arianeCollection test openObject ', activeBreadcrumb.value, index, breadcrumbItem.identifier)
@@ -1642,7 +1618,8 @@ export default {
       // Case 2 : new objet
       activeBreadcrumb.value = index
       activeObject.value = breadcrumbItem
-      activePanel.value = topTOCDisplayIndicator.value && topTOC.value.length > 1 ? 'summary' : 'meta'
+      activePanel.value = 'meta'
+      // if opening topTOC first, previous rule: activePanel.value = topTOCDisplayIndicator.value && topTOC.value.length > 1 ? 'summary' : 'meta'
 
       if (event && event.target) {
         // On clock, active element is positionned on left by scrolling Ariane block
@@ -2078,14 +2055,6 @@ export default {
         }
       }, { deep: true, immediate: true }
     )
-    watch(
-      () => store.state.collectionModalCollectionId, (newVal, oldVal) => {
-        if (newVal) {
-          openObject(newVal)
-        }
-        console.log('CollectionModal watch state isModalOpen.value : ')
-      }, { immediate: true }
-    )
 
     watch(hasValidTOC, (val) => {
       console.log('hasValidTOC changed:', val)
@@ -2278,8 +2247,6 @@ export default {
       lastRef,
       scrollTo,
       scrollCurrentTocItemIntoView,
-      isModalOpened,
-      closeModal,
       isControlsOpened,
       toggleControls,
       isNotesOpened,
@@ -2296,9 +2263,7 @@ export default {
 }
 </script>
 <style>
-.modal-area {
-  width: 100%;
-}
+
 .metadata-area {
   /*margin-top: 15px !important;
   margin-bottom: 15px !important;*/

@@ -47,15 +47,7 @@
             >
               {{ Object.values(item)[0] }}
             </router-link>
-            <!--<a
-              v-else
-              class="level-item-external"
-              @click.prevent="openCollectionModal(Object.keys(item)[0])"
-            >
-              {{ Object.values(item)[0] }}
-            </a>-->
           </template>
-          
           <!-- replaced by the above breadcrum to have sub-collections
           <router-link
             v-if="isDocProjectIdInc && collectionId && collectionId !== rootCollectionId"
@@ -101,7 +93,6 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BurgerButton from './Burger.vue'
 import { useRoute } from 'vue-router'
-import { useStore } from 'vuex'
 import defaultLogo from '@/assets/images/logo_dots_circle.svg'
 
 export default {
@@ -111,6 +102,10 @@ export default {
     isDocProjectIdIncluded: {
       type: Boolean,
       required: true
+    },
+    appState: {
+      type: String,
+      default: 'ready'
     },
     dtsRootCollectionIdentifier: {
       type: String,
@@ -147,7 +142,6 @@ export default {
   },
 
   setup (props) {
-    const store = useStore()
     const route = useRoute()
     const isMenuOpened = ref(false)
     const rootURL = ref(import.meta.env.VITE_APP_APP_ROOT_URL.length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_URL.slice(1, import.meta.env.VITE_APP_APP_ROOT_URL.length)}` : '')
@@ -198,11 +192,6 @@ export default {
       if (isMenuOpened.value) {
         closeMenu()
       }
-    }
-
-    const openCollectionModal = (collId) => {
-      store.commit('setCollectionModalId', collId)
-      console.log('AppNavBar click below ProjectId open collection modal ', collId)
     }
 
     const setImgUrl = () => {
@@ -362,9 +351,16 @@ export default {
     })
 
     watch(collectionId, (newCollectionId) => {
-      if (newCollectionId) {
-          setImgUrl(newCollectionId)
-          setApiImgUrl(newCollectionId)
+      // Degraded mode has no collection id, so fall back to what these two
+      // actually read -- they ignore the id they are passed. Nominal path
+      // keeps the original guard.
+      const ready = props.appState === 'error'
+        ? collConfig.value?.homePageSettings?.appNavBar
+        : newCollectionId
+
+      if (ready) {
+        setImgUrl()
+        setApiImgUrl()
       }
     }, { immediate: true })
 
@@ -398,7 +394,6 @@ export default {
       rootShortTitle,
       breadCrumb,
       collectionId,
-      openCollectionModal,
       burgerChanged,
       closeMenu,
       imgUrl,
@@ -566,28 +561,8 @@ ul.submenu a:hover {
   }
 }
 @media screen and (max-width: 768px) {
-  /* Le <section> racine du composant (qui englobe <nav> ET .mobile-button)
-     devient l'unité sticky, plutôt que <nav> seul : .mobile-button (le
-     bouton burger) est positionné en absolute PAR RAPPORT À CE <section>,
-     donc si seul <nav> était sticky, le burger resterait en arrière-plan et
-     défilerait hors champ pendant que la nav resterait collée en haut. En
-     rendant tout le <section> sticky, navbar + burger + menu déplié restent
-     affichés ensemble, tant qu'on n'a pas encore atteint la barre de
-     recherche.
-     z-index volontairement inférieur à celui de .sticky-search-header (22,
-     dans SearchPage.vue) : une fois que la barre de recherche, en
-     scrollant, atteint elle aussi top:0, elle passe par-dessus et « prend
-     le relais » visuellement sur la navbar (qui reste techniquement collée
-     dessous, mais n'est plus visible). */
-  section {
-    position: sticky !important;
-    top: 0;
-    z-index: 20;
-  }
-
   nav {
     display: flex;
-    position : static !important;
     margin-top: 0;
     z-index: 10; /* cf documentation menu */
     padding-left: 12px;
@@ -603,17 +578,9 @@ ul.submenu a:hover {
     max-width: unset;
     margin-right: 12px;
   }
-
-  .level-left {
-    width: 100%;
-    gap: 0px;
-    position : static !important;
-  }
-
   .level-left .level-item:not(:last-child),
   .level-right .level-item:not(:last-child) {
     margin-right: .5rem;
-
   }
   nav span.level-item:not(:last-child)::after {
     padding-left: .5rem;
@@ -629,10 +596,9 @@ ul.submenu a:hover {
   }
 }
 @media screen and (max-width: 640px) {
-  
   .level {
     display: flex;
-    position: static !important;
+    height: 100%;
   }
   .level .level-item {
     flex-direction: row;
@@ -717,7 +683,6 @@ ul.submenu a:hover {
   .level.is-opened {
     height: 100%;
     overflow: unset;
-    position: static !important;
 
     & > a.level-item-external {
       &:not(:first-child) {
@@ -726,16 +691,7 @@ ul.submenu a:hover {
     }
 
     .level-right {
-      /* Doit être position: absolute (et non static) pour que top/z-index
-         aient un effet : en static, ces deux propriétés sont ignorées par
-         le navigateur, et le menu déplié se retrouvait rendu en flux
-         normal, coincé "derrière" le contenu suivant (bannière, etc.)
-         faute d'être réellement surélevé. En absolute, il se positionne
-         par rapport au <section> (le plus proche ancêtre positionné,
-         sticky depuis le fix mobile), juste sous la barre du haut (top:
-         70px), et passe bien au-dessus du reste grâce à z-index: 23. */
-      position: absolute !important;
-      left: 0;
+      position: fixed;
       right: 0;
       top: 70px;
       z-index: 23;

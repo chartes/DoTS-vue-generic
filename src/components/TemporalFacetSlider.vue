@@ -23,6 +23,7 @@
           class="year"
           v-model.number="inputMin"
           @blur="checkMin"
+          @keyup.enter="checkMin"
         />
         <span>et</span>
         <input
@@ -30,6 +31,7 @@
           class="year"
           v-model.number="inputMax"
           @blur="checkMax"
+          @keyup.enter="checkMax"
         />
       </div>
       <VueSlider

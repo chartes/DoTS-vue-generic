@@ -4,12 +4,11 @@
       class="filters-header-title"
       @click="toggleAllFacets"
     >
-      Filtres
-          <i
-            class="arrow"
-            :class="{ opened: allOpened }
-            "
-          />
+      <span>Filtres</span>
+      <i
+        class="arrow"
+        :class="{ opened: allOpened }"
+      />
     </div>
 
     <div
@@ -22,7 +21,7 @@
         @click="toggleOpen(facet.id)"
       >
         <span class="facet-header-label">
-          {{ facet.label }} {{ facet.values?.length ? `(${facet.values.length})` : '' }}
+          {{ facet.label }} {{ availableFacetCount(facet) ? `(${availableFacetCount(facet)})` : '' }}
           <i
             class="arrow"
             :class="{ opened: isOpen(facet.id) }"
@@ -50,11 +49,10 @@
             type="button"
             class="facet-tag-remove"
             aria-label="Retirer ce filtre"
-            @click="console.log('[debug] clic croix facette (terms)', tag); $emit('remove-facet-value', tag)"
+            @click="$emit('remove-facet-value', tag)"
           >×</button>
         </span>
       </div>
-
       <div
         v-else-if="facet.type === 'temporal' && temporalRangeFor(facet)"
         class="facet-active-tags"
@@ -65,13 +63,13 @@
             type="button"
             class="facet-tag-remove"
             aria-label="Retirer ce filtre"
-            @click="console.log('[debug] clic croix facette (temporal)', facet.temporal.key); $emit('reset-range', facet.temporal.key)"
+            @click="resetFacet(facet)"
           >×</button>
         </span>
       </div>
 
       <div
-        v-show="isOpen(facet.id)"
+        v-show="isOpen(facet.id) && (facet.type === 'temporal' || hasFacetCandidates(facet))"
         class="facet-body"
       >
         <!-- ===================== -->
@@ -89,56 +87,44 @@
         <!-- Facette terms -->
         <!-- ===================== -->
 
+        <!-- Autocomplétion : les valeurs n'apparaissent que dans le menu
+             déroulant, ouvert quand le champ a le focus -->
         <template v-else>
-          <!-- Parcours alphabétique (ex. Auteurs) : recherche + A-Z + cases à cocher -->
-          <template v-if="isAlphabetFacet(facet.id)">
-            <AlphabetFacetPicker
-              :items="mergeSelected(facet.id, facet.values)"
-              :selected-keys="selectedKeysFor(facet.id)"
-              :label="facet.label"
-              :placeholder="`Rechercher ${facet.label}`"
-              @toggle="(item) => toggleFacet(facet.id, item)"
-            />
-          </template>
-
-          <!-- Rendu par défaut : autocomplétion + candidats cliquables -->
-          <template v-else>
-            <div
-              class="facet-search"
-              :ref="el => setFacetSearchRef(facet.id, el)"
+          <div
+            :ref="el => setFacetSearchRef(facet.id, el)"
+            class="facet-search"
+          >
+            <input
+              class="facet-input"
+              type="text"
+              :value="facetFilters[facet.id] || ''"
+              :placeholder="`Filtrer ${facet.label}`"
+              @input="setFacetFilter(
+                facet.id,
+                $event.target.value
+              ); openFacetDropdown(facet.id)"
+              @focus="openFacetDropdown(facet.id)"
+              @click="openFacetDropdown(facet.id)"
+              @keydown.escape="closeFacetDropdown(facet.id)"
             >
-              <input
-                class="facet-input"
-                type="text"
-                :value="facetFilters[facet.id] || ''"
-                @input="setFacetFilter(
-                  facet.id,
-                  $event.target.value
-                )"
-                @focus="openFacetDropdown(facet.id)"
-                @keydown.escape="closeFacetDropdown(facet.id)"
-                :placeholder="facetPlaceholder(facet)"
-              >
 
-
+            <div
+              v-if="isFacetDropdownOpen(facet.id) && filteredFacetValues(facet.id, facet.values).length"
+              class="facet-dropdown"
+            >
               <div
-                v-if="isFacetDropdownOpen(facet.id) && candidateFacetValues(facet.id, facet.values).length"
-                class="facet-dropdown"
+                v-for="item in filteredFacetValues(facet.id, facet.values)"
+                :key="item.facet_key || item.value"
+                class="facet-item facet-candidate"
+                role="option"
+                @mousedown.prevent
+                @click="selectFacetCandidate(facet.id, item)"
               >
-                <div
-                  v-for="item in candidateFacetValues(facet.id, facet.values)"
-                  :key="item.facet_key || item.value"
-                  class="facet-item facet-candidate"
-                  role="option"
-                  @mousedown.prevent
-                  @click="selectFacetCandidate(facet.id, item)"
-                >
-                  {{ item.label || item.value }}
-                  ({{ item.count }})
-                </div>
+                {{ item.label || item.value }}
+                ({{ item.count }})
               </div>
             </div>
-          </template>
+          </div>
         </template>
       </div>
     </div>
@@ -149,7 +135,6 @@
 
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import TemporalFacetSlider from './TemporalFacetSlider.vue'
-import AlphabetFacetPicker from './AlphabetFacetPicker.vue'
 
 const props = defineProps({
 
@@ -180,17 +165,20 @@ const props = defineProps({
     config:{
         type: Object,
         default: () => ( {} )
-    },
-
-    // Clés canoniques (facet.key, ex. "dublinCore.contributor") des facettes
-    // "terms" à afficher avec le parcours alphabétique
-    // (recherche + index A-Z + cases à cocher) plutôt que le rendu par défaut.
-    alphabetFacetIds:{
-        type: Array,
-        default: () => ['dublinCore.contributor']
     }
 
 })
+
+const emit = defineEmits([
+    'toggle-facet',
+    'facet-open',
+    'facet-close',
+    'change-range',
+    'reset-range',
+    'reset-facet',
+    'remove-facet-value'
+])//'apply-collections'
+
 watch(
   () => props.ranges,
   ranges => {
@@ -215,18 +203,9 @@ watch(
   }
 )
 
-const emit = defineEmits([
-    'toggle-facet',
-    'facet-open',
-    'facet-close',
-    'change-range',
-    'reset-range',
-    'reset-facet',
-    'remove-facet-value'
-])//'apply-collections'
+
 
 const facetFilters = ref({})
-const facetShowAll = ref({})
 const facetDropdownOpen = ref({})
 
 function isFacetDropdownOpen(facetId) {
@@ -259,10 +238,15 @@ function setFacetSearchRef(facetId, el) {
 }
 
 function handleClickOutsideFacetDropdowns(event) {
+    // composedPath() is frozen at dispatch time: a clicked candidate is
+    // removed from the list (re-render) before this listener runs, so
+    // container.contains(event.target) would wrongly report an outside click.
+    const path = event.composedPath()
+
     Object.keys(facetDropdownOpen.value).forEach(facetId => {
         if (!facetDropdownOpen.value[facetId]) return
         const container = facetSearchRefs[facetId]
-        if (container && !container.contains(event.target)) {
+        if (container && !path.includes(container)) {
             closeFacetDropdown(facetId)
         }
     })
@@ -277,19 +261,18 @@ onBeforeUnmount(() => {
 })
 
 // Sélection d'un candidat depuis le menu déroulant : on l'ajoute aux
-// filtres actifs, on vide le champ de recherche et on referme le menu.
+// filtres actifs, on vide le champ, on referme le menu et on retire le focus
+// du champ. Pour une sélection complémentaire, l'utilisateur revient dans le
+// champ (clic ou clavier), ce qui rouvre le menu (@focus / @click).
 function selectFacetCandidate(facetId, item) {
     toggleFacet(facetId, item)
     setFacetFilter(facetId, '')
     closeFacetDropdown(facetId)
+    facetSearchRefs[facetId]?.querySelector('.facet-input')?.blur()
 }
 
 function isOpen(facetId){
     return props.openedFacets.includes(facetId)
-}
-
-function isAlphabetFacet(facetId){
-    return props.alphabetFacetIds.includes(facetId)
 }
 
 const allOpened = computed(() => {
@@ -321,22 +304,6 @@ function toggleOpen(facetId){
 
 function setFacetFilter(facetId, value) {
     facetFilters.value[facetId] = value
-}
-
-function getFacetShowAll(facetId) {
-
-    if (facetShowAll.value[facetId] === undefined) {
-        facetShowAll.value[facetId] = false
-    }
-
-    return facetShowAll.value[facetId]
-}
-
-function toggleFacetShowAll(facetId) {
-    facetShowAll.value[facetId] = !getFacetShowAll(facetId)
-    if (facetShowAll.value[facetId]) {
-        openFacetDropdown(facetId)
-    }
 }
 
 const orderedFacets = computed(()=>{
@@ -380,28 +347,14 @@ const orderedFacets = computed(()=>{
     )
 })
 
-// Texte affiché comme placeholder dans le champ de recherche de facette :
-// simplement le label de la facette (plus de suggestion animée de valeurs).
-function facetPlaceholder(facet) {
-    return `Filtrer ${facet.label}`
-}
-
-// Clé d'identification d'une valeur de facette (constante quel que soit le
-// nom de champ utilisé selon la provenance de la donnée).
-function facetValueKey(item){
-    return item.facet_key ?? item.value ?? item.id
-}
-
-// Clés actuellement sélectionnées pour une facette donnée, à partir de
-// activeFacets (source de vérité côté recherche).
-function selectedKeysFor(facetId){
+function selectedFacetKeys(facetId) {
     return props.activeFacets
         .filter(f => f.facetType === facetId)
         .map(f => f.raw ?? f.facet_key ?? f.value ?? f.id)
 }
 
 // Tags (objets complets {facetType, id, label, raw}) à afficher sous le
-// header d'une facette donnée. Même source que selectedKeysFor, mais on
+// header d'une facette donnée. Même source que selectedFacetKeys, mais on
 // garde l'objet entier : le raw est nécessaire pour retirer le bon filtre
 // (cf. SearchPage.vue removeActiveFacet, qui utilise tag.raw).
 function tagsForFacet(facetId){
@@ -409,9 +362,8 @@ function tagsForFacet(facetId){
 }
 
 // Plage actuellement active pour une facette temporelle donnée, si elle
-// existe (props.ranges est keyed par la clé canonique facet.temporal.key -
-// même clé que celle utilisée par resetFacet() plus bas pour la
-// réinitialiser ; facet.temporal.field est le chemin ES, pas la clé).
+// existe (props.ranges est keyed par la clé canonique facet.temporal.key,
+// la même que celle utilisée par resetFacet() pour la réinitialiser).
 function temporalRangeFor(facet){
     return props.ranges?.[facet.temporal.key] || null
 }
@@ -423,50 +375,57 @@ function formatRange(range){
     return `${range.gte ?? '∞'} - ${range.lte ?? '∞'}`
 }
 
-// Fusionne les valeurs venant d'Elasticsearch avec les valeurs sélectionnées
-// que l'agrégation ne renvoie plus (ex. une fois le filtre appliqué, ES peut
-// ne plus inclure ce terme dans ses buckets) : on les reconstruit à minima
-// pour que la case reste cochée et visible.
-function mergeSelected(facetId, values){
+// A terms facet only offers its input while some value is left to select:
+// not already selected, and with results in the current search. The typed
+// term is ignored, so the input never vanishes while the user is typing.
+function hasFacetCandidates(facet) {
+    const selectedKeys = selectedFacetKeys(facet.id)
 
-    const list = values || []
-    const selectedKeys = selectedKeysFor(facetId)
-
-    const selectedFromActive = selectedKeys.map(key => {
-        const existing = list.find(v => facetValueKey(v) === key)
-        if (existing) return existing
-        return {
-            facet_key: key,
-            value: key,
-            label: key,
-            count: 0,
-            selected: true
-        }
-    })
-
-    const rest = list.filter(v => !selectedKeys.includes(facetValueKey(v)))
-
-    return [...selectedFromActive, ...rest]
+    return (facet.values ?? []).some(v =>
+        (isCollectionsFacet(facet.id) || (v.count ?? 0) > 0) &&
+        !selectedKeys.includes(v.facet_key ?? v.value ?? v.id)
+    )
 }
 
-const sortAlpha = (a,b) =>
-    (a.label || a.value || '')
-        .localeCompare((b.label || b.value || ''), 'fr', { sensitivity:'base' })
+// The collections facet (e.g. annual volumes) keeps offering every other
+// collection after a selection, whatever its current count, even 0.
+function isCollectionsFacet(facetId) {
+    return facetId === 'collections'
+}
 
-// Candidats (non sélectionnés) proposés dans le menu déroulant
-// d'autocomplétion, sous le champ de saisie.
-function candidateFacetValues(facetId, values) {
+// A facet running out of candidates hides its input, which loses focus:
+// close its dropdown so it does not pop up by itself when the input is back.
+watch(
+  () => orderedFacets.value
+      .filter(f => f.type === 'terms' && !hasFacetCandidates(f))
+      .map(f => f.id),
+  ids => ids.forEach(closeFacetDropdown)
+)
+
+// Header count is exactly what the dropdown renders: same exclusions, same
+// search term. Any other source would drift from it.
+// Exception: once collections are selected, the collections header counts
+// them, since its dropdown lists every other collection anyway.
+function availableFacetCount(facet) {
+    const selectedCount = selectedFacetKeys(facet.id).length
+
+    if (isCollectionsFacet(facet.id) && selectedCount) {
+        return selectedCount
+    }
+
+    return filteredFacetValues(facet.id, facet.values ?? []).length
+}
+
+function filteredFacetValues(facetId, values) {
     const term =
         (facetFilters.value[facetId] || '')
             .trim()
             .toLowerCase()
 
-    const showAll = getFacetShowAll(facetId)
-
-    const selectedKeys = selectedKeysFor(facetId)
+    const selectedKeys = selectedFacetKeys(facetId)
 
     let available = values.filter(v => {
-      const key = facetValueKey(v)
+      const key = v.facet_key ?? v.value ?? v.id
       const matchesTerm =
           !term ||
           (v.label || v.value || '').toLowerCase().includes(term)
@@ -475,7 +434,7 @@ function candidateFacetValues(facetId, values) {
           !selectedKeys.includes(key) &&
           (
               hasCount ||
-              showAll ||
+              isCollectionsFacet(facetId) ||
               (term && matchesTerm)
           )
       )
@@ -487,29 +446,26 @@ function candidateFacetValues(facetId, values) {
         )
     }
 
-    return available.sort(sortAlpha)
-}
+    const sortAlpha = (a,b) =>
+        (a.label || a.value || '')
+            .localeCompare((b.label || b.value || ''), 'fr', { sensitivity:'base' })
 
-function isSelected(facetId, item){
+    available.sort(sortAlpha)
 
-    const value = facetValueKey(item)
-
-    return props.activeFacets.some(f =>
-        f.facetType === facetId &&
-        (
-            f.raw === value ||
-            f.id === value ||
-            f.value === value ||
-            f.facet_key === value
-        )
-    )
+    // Selected values are dropped, not listed first: they already appear in
+    // ActiveSearchFilters (and as tags under the facet header), which is where
+    // they are removed.
+    return available
 }
 
 function toggleFacet(facetId, item) {
 
     emit('toggle-facet', {
         facetType: facetId,
-        facetKey: facetValueKey(item),
+        facetKey:
+            item.facet_key ??
+            item.value ??
+            item.id,
         isCollection: facetId === 'collections'
 
     })
@@ -568,14 +524,14 @@ watch(
 )
 </script>
 <style scoped>
-.search-facets{
-  display:flex;
-  flex-direction:column;
-  gap:1rem;
+.search-facets {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   padding: 0 1rem;
   font-family: "Barlow", sans-serif;
-
 }
+
 
 .filters-header-title{
   font-size : 24px;
@@ -591,7 +547,7 @@ watch(
   gap: .5rem;
 }
 
-.facet-box{
+.facet-box {
   margin: 1px;
   border:1px solid #ddd;
 }
@@ -682,29 +638,7 @@ watch(
 .facet-input:focus{
   outline: none !important;
   box-shadow: none !important;
-  border-color: #ffffff;
-}
-
-/* Bouton "Show all/Hide" harmonisé avec les boutons de la barre de recherche */
-.facet-eye-btn{
-  flex: 0 0 auto;
-  height: 36px;
-  padding: 0 12px;
-  font-family: "Barlow", sans-serif;
-  font-size: .78rem;
-  font-weight: 600;
-  color: var(--fill-color);
-  background: #fff;
-  border: 1px solid #979797;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color .15s ease, color .15s ease;
-}
-
-.facet-eye-btn:hover{
-  background: var(--fill-color);
-  border-color: var(--fill-color);
-  color: #fff;
+  border-color: #979797;
 }
 
 .facet-dropdown{
@@ -744,27 +678,6 @@ watch(
 .facet-item:focus-visible{
   outline: 2px solid var(--fill-color, #333);
   outline-offset: 1px;
-}
-
-.facet-item.is-selected{
-  font-weight:600;
-  color: var(--fill-color);
-  background: var(--meta-area-fill-color, #eee);
-}
-.facet-reset-btn {
-  flex: 0 0 auto;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-
-  font-size: 18px;
-  line-height: 1;
-  padding: 2px 4px;
-  color: #666;
-}
-
-.facet-reset-btn:hover {
-  color: var(--fill-color, #000);
 }
 
 .arrow {

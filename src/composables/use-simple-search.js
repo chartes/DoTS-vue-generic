@@ -293,7 +293,9 @@ export default function useSimpleSearch() {
           after_key: _res.after_key ?? _res['after-key'] ?? null,
           facets: _res.facets ?? _res['facets'] ?? {},
           highlight_patterns: _res.highlight_patterns ?? [],
-          temporal: _res.temporal ?? {}
+          temporal: _res.temporal ?? {},
+          // null when search is missing collection id
+          collection_indexed: _res.collection_indexed ?? null
         }
       } else {
         res = {
@@ -304,7 +306,9 @@ export default function useSimpleSearch() {
           after_key: _res.after_key ?? _res['after-key'] ?? null,
           facets: _res.facets ?? _res['facets'] ?? {},
           highlight_patterns: _res.highlight_patterns ?? [],
-          temporal: _res.temporal ?? {}
+          temporal: _res.temporal ?? {},
+          // null when search is missing collection id
+          collection_indexed: _res.collection_indexed ?? null
         }
       }
 
@@ -340,6 +344,8 @@ export default function useSimpleSearch() {
     initialTemporal: computed(() => searchState.value?.initialTemporal ?? {}),
     totalCount: computed(() => searchState.value?.totalCount || 0),
     bucketCount: computed(() => searchState.value?.bucketCount || null),
+    // below `?? null` instead of `|| null`: false has a meaning in this case
+    collectionIndexed: computed(() => searchState.value?.collectionIndexed ?? null),
     loading: computed(() => searchState.value?.loading || false),
 
     isFulltextSearch: computed(() => searchState.value?.isFulltextSearch ?? true),

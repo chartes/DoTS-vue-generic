@@ -8,29 +8,29 @@
       :root-collection-identifier="rootCollectionId"
       :show-about="false"
     />
-  <div class = "sticky-search-header app-width-margin">
-    <div class = "search-bar-row">
-          <div class="tile is-child search-form">
-            <div class="search-bar-row">
-                  <button
-                  class="button is-medium burger-menu-button"
-                  @click="toggleSidebar"
-                  :title="sidebarOpen ? 'Fermer les filtres' : 'Ouvrir les filtres'"
-                  :aria-label="sidebarOpen ? 'Fermer les filtres' : 'Ouvrir les filtres'"
-                >
-                  <span class="burger-icon" :class="{ 'is-active': sidebarOpen }">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </span>
-                </button>
-              <!-- Fulltext or Metadata search selector -->
-              <div class="search-mode-wrapper">
-                <!-- SELECT BUTTON -->
-                <div class="search-mode-trigger" @click="toggleModeDropdown">
-                  <span>{{ currentSearchLabel }}</span>
-                  <i class="arrow"></i>
-                </div>
+    <div class = "sticky-search-header app-width-margin">
+      <div class = "search-bar-row">
+        <div class="tile is-child search-form">
+          <div class="search-bar-row">
+            <button
+              class="button is-medium burger-menu-button"
+              @click="toggleSidebar"
+              :title="sidebarOpen ? 'Fermer les filtres' : 'Ouvrir les filtres'"
+              :aria-label="sidebarOpen ? 'Fermer les filtres' : 'Ouvrir les filtres'"
+            >
+              <span class="burger-icon" :class="{ 'is-active': sidebarOpen }">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </button>
+            <!-- Fulltext or Metadata search selector -->
+            <div class="search-mode-wrapper">
+              <!-- SELECT BUTTON -->
+              <div class="search-mode-trigger" @click="toggleModeDropdown">
+                <span>{{ currentSearchLabel }}</span>
+                <i class="arrow"></i>
+              </div>
 
                 <!-- DROPDOWN -->
                 <div v-if="isModeOpen" class="search-mode-dropdown">
@@ -47,7 +47,6 @@
               </div>
               <!-- input -->
               <div class="search-input-wrapper">
-    
                 <input
                   class="input is-medium"
                   :class="isInvalidQuery ? 'input-error' : ''"
@@ -67,7 +66,7 @@
                 </button>
                 <!-- MESSAGE ERROR -->
                 <p v-if="isInvalidQuery" class="search-error-message">
-                  Les recherches avec field: ne sont pas autorisées en mode plein texte
+                  {{ invalidQueryMessage }}
                 </p>
               </div>
 
@@ -77,9 +76,7 @@
                 :disabled="isInvalidQuery || search.loading.value"
                 @click="executeSearches"
               />
-
             </div>
-
             <div class="active-filters-and-sliders">
               <ActiveSearchFilters
               v-show="!filtersHidden"
@@ -91,71 +88,47 @@
               @remove-range="removeActiveRange"
               @clear-all="clearAllFilters"
             />
-
-
-  </div>
-
-         
-            <div class="is-flex sliders">
-
             </div>
-
-
-            <!-- Minimized version -->
-            <div class="minimized-controls">
-              <button
-                class="button is-light is-medium search"
-                @click="expandSearchForm"
-              />
-              <button
-                class="button is-light is-medium expand-form-button"
-                @click="expandSearchForm"
-              />
-            </div>
-          </div>
+        </div>
+      </div>
     </div>
-    
-  </div>
-          <div class="page-body app-width-margin" :class="{ 'sidebar-open': sidebarOpen }">
-
-            <!-- Fond assombri : uniquement visible en mobile (cf. media query
-                 max-width:768px) pendant que la sidebar des filtres est ouverte
-                 en superposition. Cliquer dessus referme les filtres. -->
-            <Transition name="backdrop-fade">
-              <div
-                v-if="sidebarOpen"
-                class="sidebar-backdrop"
-                @click="toggleSidebar"
-              ></div>
-            </Transition>
-
-            <Transition name="sidebar-slide">
-              <aside class="facets-sidebar" v-if="sidebarOpen">
-                <div class="facets-sidebar-header">
-
-                </div>
-
-                <SearchFacets
-                  class="search-facets"
-                  :opened-facets="openedFacets"
-                  :facets="visibleFacets"
-                  :temporal-facets="visibleTemporal"
-                  :active-facets="activeFacetTags"
-                  :ranges="ranges"
-                  @facet-open="openFacet"
-                  @facet-close="closeFacet"
-                  @toggleFacet="onToggleFacet"
-                  @change-range="onTemporalChange"
-                  @apply-collections="executeSearches()"
-                  @reset-range="resetRange"
-                  @reset-facet="resetFacet"
-                  @remove-facet-value="removeActiveFacet"
-                />
-              </aside>
-            </Transition>
-
-            <div class="page-main">
-
+    <div
+      class="page-body app-width-margin"
+      :class="{ 'sidebar-open': sidebarOpen }"
+    >
+      <!-- Fond assombri : uniquement visible en mobile (cf. media query
+           max-width:768px) pendant que la sidebar des filtres est ouverte
+           en superposition. Cliquer dessus referme les filtres. -->
+      <Transition name="backdrop-fade">
+        <div
+          v-if="sidebarOpen"
+          class="sidebar-backdrop"
+          @click="toggleSidebar"
+        />
+      </Transition>
+      <Transition name="sidebar-slide">
+        <aside class="facets-sidebar" v-if="sidebarOpen">
+          <div class="facets-sidebar-header">
+          </div>
+            <SearchFacets
+              class="search-facets"
+              :opened-facets="openedFacets"
+              :facets="visibleFacets"
+              :temporal-facets="visibleTemporal"
+              :active-facets="activeFacetTags"
+              :ranges="ranges"
+              @facet-open="openFacet"
+              @facet-close="closeFacet"
+              @toggleFacet="onToggleFacet"
+              @change-range="onTemporalChange"
+              @apply-collections="executeSearches()"
+              @reset-range="resetRange"
+              @reset-facet="resetFacet"
+              @remove-facet-value="removeActiveFacet"
+            />
+          </aside>
+        </Transition>
+      <div class="page-main">
     <div>
       <div class="tile is-vertical">
         <div
@@ -163,37 +136,12 @@
           :class="searchMinimizedCssClass"
         >
         </div>
-        <div class="tile is-parent is-vertical">
-          <!-- Table toogle + pagination -->
-          <div class="is-flex toggle-list-and-pagination" v-if="search.totalCount.value">
-            <div v-if="isFulltextSearch === true" class="is-inline-block">
-              <div class="field is-inline-block px-1">
-                <div class="control">
-                  <Toggle
-                    id="ToggleTableau"
-                    on-label="Tableau"
-                    off-label="Déplié"
-                    v-model="isResultTableMode"
-                    :width="120"
-                  />
-                </div>
-              </div>
-              <div
-                v-if="!isResultTableMode && isFulltextSearch"
-                class="field is-inline-block px-1"
-              >
-
-              </div>
-            </div>
-
-          </div>
-        </div>
       </div>
     </div>
     <div
       class="document-list list-mode"
       :class="openedFacets.length > 0 ? 'with-opened-facets' : ''"
-    >
+    ><!-- searchUI app-width-margin -->
       <!-- <span>search {{ tableData }}</span> -->
       <ResourcesList
 
@@ -209,12 +157,13 @@
         :total-buckets="search.bucketCount.value"
         :is-with-highlights="!!(isFulltextSearch && inputTerm.trim() && inputTerm.trim().length > 0)"
         :filters="filters"
+        :collection-indexed="search.collectionIndexed.value"
         @filter-change="updateFilter"
         @sort-change="updateSort"
       /><!--v-if="tableData.length > 0"-->
     </div>
-    </div><!-- ferme .page-main -->
-  </div><!-- ferme .page-body -->
+      </div><!-- ferme .page-main -->
+    </div><!-- ferme .page-body -->
   </div>
 </template>
 
@@ -454,9 +403,7 @@ export default {
           key: 'collections',
           label: collectionsConfig?.label || 'Collections',
           values: collections,
-          order: 0,
-          alphabetScroller: collectionsConfig?.alphabetScroller === true,
-          letterHeaders: collectionsConfig?.letterHeaders !== false
+          order: 0
         })
       }
 
@@ -486,11 +433,7 @@ export default {
             values,
 
             order:
-              config?.order ?? 999,
-            alphabetScroller:
-              config?.alphabetScroller === true,
-            letterHeaders:
-              config?.letterHeaders !== false
+              config?.order ?? 999
 
           })
 
@@ -663,12 +606,9 @@ export default {
           }))
       }
 
-      // fallback minimal (ancien comportement)
+      // Minimal fallback on title only as in default.conf.json (namespaced metadata key)
       return [
-        { key: 'title', label: 'Title', type: 'text' },
-        { key: 'creator', label: 'Creator', type: 'text' },
-        { key: 'date', label: 'Date', type: 'text' },
-        { key: 'coverage', label: 'Coverage', type: 'text' }
+        { key: 'dublinCore.title', label: 'Title', type: 'text' }
       ]
     })
 
@@ -741,7 +681,6 @@ export default {
     }
 
     function removeActiveFacet(tag) {
-      console.log('[debug] removeActiveFacet appelé avec', tag)
       store.commit('search/removeFacet', {
         facetType: tag.facetType,
         facetKey: tag.raw
@@ -803,7 +742,7 @@ export default {
     }
 
     function resetRange(rangeKey) {
-      console.log('[debug] resetRange appelé avec', rangeKey)
+
       store.commit('search/removeSearchRange', rangeKey)
       executeSearches()
     }
@@ -823,27 +762,16 @@ export default {
     }
 
     // SORT
-    const toElasticSortField = key => {
-      if (!key) return null
 
-      const parts = key.split('.')
+    // The API resolves metadata keys to their indexed sort fields:
+    // `dublinCore.title` → `resource_metadata.dublincore.title.sort`
 
-      const field = [
-        'resource_metadata',
-        ...parts
-      ]
-        .map((part, index) => {
-          // Seuls les champs issus de dublinCore sont normalisés en lowercase
-          if (parts[0] === 'dublinCore') {
-            return part.toLowerCase()
-          }
-
-          return part
-        })
-        .join('.')
-
-      return `${field}.keyword`
-    }
+    // Temporal properties bounds are normalized in the indexes:
+    // `dublinCore.created` → `temporal.dublincore.created_start` / `_end`
+    //
+    // The .sort sub-field orders accented letters with their base letter
+    // Temporal property sorts on their normalised numeric bound rather, not the raw value
+    // Unparseable dates, excluded from results (`getRowValue`), should not affect sorting either
 
     const updateSort = ({ key, direction }) => {
       if (!key || direction === 'none') {
@@ -851,15 +779,14 @@ export default {
         return
       }
 
-      const elasticField = toElasticSortField(key)
-
-      inputSort.value = direction === 'desc'
-        ? `-${elasticField}`
-        : elasticField
+      inputSort.value = direction === 'desc' ? `-${key}` : key
     }
 
 
     async function executeSearches() {
+      // Do not send invalid query via @keyup.enter calling this directly (even if submit button is disabled)
+      if (isInvalidQuery.value) return
+
       layout.rawSearchedTerm.value = inputTerm.value
 
       const t = inputTerm.value?.trim()
@@ -1017,9 +944,51 @@ export default {
       }
     })
 
-    const isInvalidQuery = computed(() => {
+    const hasFieldSyntax = computed(() => {
       if (!isFulltextSearch.value) return false
       return /[a-zA-Z0-9_.-]+:/.test(inputTerm.value || '')
+    })
+
+    // Blocked when every unit is 2 characters or less, or when nothing is left
+    // but operators: such queries match almost everything and cost a lot.
+    // A quoted phrase is one unit.
+    const isTooShortQuery = computed(() => {
+      const raw = (inputTerm.value || '').trim()
+
+      if (!raw) return false
+
+      const units = []
+
+      const bare = raw.replace(/"([^"]*)"/g, (match, phrase) => {
+        units.push(phrase.trim())
+        return ' '
+      })
+
+      units.push(
+        ...bare
+          .replace(/[*?~^()+\-]/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean)
+      )
+
+      // No unit left means operators only ("*", "**"): nothing to search on.
+      return units.length === 0 || units.every(u => u.length <= 2)
+    })
+
+    const isInvalidQuery = computed(
+      () => hasFieldSyntax.value || isTooShortQuery.value
+    )
+
+    const invalidQueryMessage = computed(() => {
+      if (hasFieldSyntax.value) {
+        return 'Les recherches avec field: ne sont pas autorisées en mode plein texte'
+      }
+
+      if (isTooShortQuery.value) {
+        return 'Saisissez au moins 3 caractères'
+      }
+
+      return ''
     })
 
     const currentSearchLabel = computed(() => {
@@ -1154,6 +1123,7 @@ export default {
         !inputTerm.value ||
         inputTerm.value.length === 0
       )
+      /* searchUI */
       if (v) {
         isResultTableMode.value = false
       }
@@ -1296,6 +1266,7 @@ export default {
       isResultTableMode,
       inputTerm,
       isInvalidQuery,
+      invalidQueryMessage,
       deleteTerm,
       filters,
       updateFilter,
@@ -1352,6 +1323,10 @@ export default {
   justify-content: center;
   flex-direction: column;
   width: 100%;
+  /* searchUI
+  margin-top: 60px;
+  padding-top: 25px;
+  */
   margin-top: 0;
   padding-top: 0;
   padding-bottom: 25px;
@@ -1533,6 +1508,7 @@ tr td.chevron-up a::before {
   /*gap: 20px;*/
   padding-bottom: 50px !important;
   border-bottom: solid 1px #b8b8b8;
+  /* search UI margin-bottom: 24px !important; */
   margin-bottom: 2px !important;
 }
 .search-form {
@@ -1544,15 +1520,24 @@ tr td.chevron-up a::before {
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
 }
-
 .search-form > *:first-child {
+  /*searchUI
+  display: flex;
+  align-items: center;
+  background-color: #868686;*/
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
+  /*searchUI
+  padding: 32px 24px 34px 28px;
+   */
   padding: 32px 0 34px 0;
   margin-bottom: 0;
 }
 
 .search-form > *:not(:first-child) {
+  /*searchUI
+    background-color: #e4e4e4;
+   */
   margin-bottom: 0;
 }
 .search-form > *.search-form-footer {
@@ -1641,10 +1626,14 @@ tr td.chevron-up a::before {
   display: flex;
   align-items: stretch;
   width: 100%;
+  /* searchUI new */
   overflow-x: hidden;
   overflow-y: visible;
+  /* searchUI
+  gap: 0;
+   */
 
-  /* Marge de sécurité en bas : garantit que le footer démarre toujours
+  /* searchUI new Marge de sécurité en bas : garantit que le footer démarre toujours
      assez bas pour laisser la place à un dropdown de suggestions ouvert
      sur la dernière facette visible. .facet-dropdown (SearchFacets.vue) a
      max-height: 240px + ~4px de marge/bordure, donc ~244px de hauteur max
@@ -1788,7 +1777,6 @@ tr td.chevron-up a::before {
   padding-top: 6px;
   border-color: #979797;
 }
-
 .search-form .input:focus {
   outline: none !important;
   box-shadow: none !important;
@@ -1815,12 +1803,15 @@ tr td.chevron-up a::before {
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
+
   width: 22px;
   height: 22px;
   padding: 0;
+
   border: none;
   background: transparent;
   cursor: pointer;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1875,11 +1866,13 @@ tr td.chevron-up a::before {
   cursor: pointer;
   color: var(--fill-color);
 }
+
 .hide-filters-button .filter-icon {
   width: 20px;
   height: 20px;
   display: block;
 }
+
 /* SEARCH BUTTON */
 .search-submit {
   width: 44px;
@@ -2160,7 +2153,8 @@ input[type="number"]::-webkit-inner-spin-button {
 .table-container {
   font-family: "Barlow Semi Condensed", sans-serif;
   margin-top: 24px;
-  /* overflow-y: auto retiré : dès que le contenu dépassait, même de très
+  /* searchUI
+  overflow-y: auto retiré : dès que le contenu dépassait, même de très
      peu, la hauteur min de 600px ci-dessous, ça créait une scrollbar
      interne fine sur toute la hauteur du conteneur - indépendante du
      scroll de la page. On garde le min-height (pour ne pas avoir une zone
@@ -2270,7 +2264,6 @@ tr.row-details :deep(li) {
   line-height: 26px;
   color: #000000;
   margin-bottom: 10px;
-
 }
 .text-results .table > a .position-author {
   font-size: 16px;
@@ -2601,6 +2594,7 @@ tr.row-details :deep(em),
   }
 }
 .search-facets {
+  /* searchUI padding: 40px; */
   padding: 24px 24px 0 44px;
 }
 

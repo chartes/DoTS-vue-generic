@@ -699,7 +699,6 @@ export default {
     gap: 0;
   }
 
-
   .collection-header.app-width-margin {
     padding: 0;
     gap: 0 !important;

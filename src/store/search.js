@@ -14,6 +14,8 @@ function createEmptySearchState() {
 
     result: [],
     bucketCount: null,
+    // below true / false after search is executed, null when unknown or when search not scoped by a collection (irrelevant)
+    collectionIndexed: null,
     afterKey: null,
     afterKeys: [
       null // page 1
@@ -348,6 +350,8 @@ export default {
       s.result = payload.data || []
       s.totalCount = payload.total_count || 0
       s.bucketCount = payload.bucket_count || null
+      // below `?? null` instead of `|| null`: false has a meaning in this case
+      s.collectionIndexed = payload.collection_indexed ?? null
       s.afterKey = payload.after_key || null
 
       if (payload.after_key) {

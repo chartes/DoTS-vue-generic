@@ -6,6 +6,32 @@ import store from '@/store'
 const _baseApiURL = `${import.meta.env.VITE_APP_DTS_ENDPOINT_URL}`
 const rootCollectionId = __APP_ROOT_DTS_COLLECTION_ID__
 
+// fetch has no timeout: a server that accepts but never answers would hang
+// the loading state forever.
+const REQUEST_TIMEOUT_MS = 15000
+
+function requestOptions (url, options = {}) {
+  return {
+    mode: 'cors',
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    ...options
+  }
+}
+
+function describeFetchFailure (url, error) {
+  if (error.name === 'TimeoutError') {
+    const timeoutError = new Error(
+      `DTS request timed out after ${REQUEST_TIMEOUT_MS} ms on ${url}`
+    )
+    timeoutError.name = 'TimeoutError'
+    timeoutError.url = url
+    return timeoutError
+  }
+
+  error.url = error.url ?? url
+  return error
+}
+
 // --- Cache for getMetadataFromApi ---
 const metadataCache = new Map()
 const metadataPromiseCache = new Map()
@@ -61,8 +87,21 @@ async function getMetadataFromApi (id, collConfig= null, route = null,  options 
     fetchUrl = `${_baseApiURL}/collection?id=${id}`
   }
 
-  const fetchPromise = fetch(fetchUrl, { mode: 'cors', ...options })
-    .then(res => res.json())
+  const fetchPromise = fetch(fetchUrl, requestOptions(fetchUrl, options))
+    .then(async res => {
+      // Errors come back as plain text, so res.json() would throw a
+      // SyntaxError naming a stray character instead of the cause.
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        const error = new Error(
+          `DTS ${res.status} on ${fetchUrl}${body ? `: ${body.slice(0, 200)}` : ''}`
+        )
+        error.status = res.status
+        throw error
+      }
+
+      return res.json()
+    })
     .then(async metadata => {
       if (!id) {
         dtsRootCollectionId = metadata['@id']
@@ -130,7 +169,7 @@ async function getMetadataFromApi (id, collConfig= null, route = null,  options 
     })
     .catch(error => {
       metadataPromiseCache.delete(key)
-      throw error
+      throw describeFetchFailure(fetchUrl, error)
     })
 
   metadataPromiseCache.set(key, fetchPromise)

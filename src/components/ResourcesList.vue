@@ -243,6 +243,23 @@
           </li>
         </template>
 
+        <li v-if="showNotIndexed" class="empty-row empty-row--not-indexed">
+          <div class="li container row">
+            <div class="cell">
+              Cette collection ne semble pas avoir été indexée : la recherche sera
+              disponible une fois l'indexation effectuée.
+            </div>
+          </div>
+        </li>
+
+        <li v-else-if="showNoResults" class="empty-row">
+          <div class="li container row">
+            <div class="cell">
+              Aucun résultat pour cette recherche.
+            </div>
+          </div>
+        </li>
+
       </template>
     </ul>
   </div>
@@ -287,7 +304,9 @@ name: 'CollectionTOC',
     isElasticSearch: Boolean,
     totalBuckets: { type: Number },
     isTableLoading: Boolean,
-    isWithHighlights: Boolean
+    isWithHighlights: Boolean,
+    // true / false after search is executed ; null when irrelevant (outside search mode or search missing scope collection)
+    collectionIndexed: { type: Boolean, default: null }
   },
   emits: [
     'sort-change'
@@ -359,6 +378,20 @@ name: 'CollectionTOC',
     const totalResults = computed(() => table.totalResults.value)
     const getValue = computed(() => table.getValue)
     const paginated = computed(() => table.paginated.value)
+
+    // NO RESULTS HANDLING (not -properly- indexed yet, or no results)
+    const hasNoRows = computed(
+      () => !isTableLoading.value && (paginated.value?.length ?? 0) === 0
+    )
+
+    const showNotIndexed = computed(
+      () => isElasticSearch.value && hasNoRows.value && props.collectionIndexed === false
+    )
+
+    const showNoResults = computed(
+      () => hasNoRows.value && !showNotIndexed.value
+    )
+
 
     const getRowValue = (row, key) => {
 
@@ -584,6 +617,8 @@ name: 'CollectionTOC',
       dataSource,
       resultsCounts,
       bucketsCount,
+      showNotIndexed,
+      showNoResults,
       isHighlights,
       openRows,
       toggle,
@@ -657,6 +692,23 @@ name: 'CollectionTOC',
 /* HEADER + ROWS */
 .list-mode .container {
   max-width: none !important;
+}
+
+/* Grid is calculated from number of columns, however a state display (no results, error) has a full-width unique cell */
+.empty-row .li.container {
+  grid-template-columns: 1fr !important;
+  cursor: default;
+}
+
+.empty-row .cell {
+  padding: 1.5rem 0;
+  font-style: italic;
+  color: #555;
+}
+
+.empty-row--not-indexed .cell {
+  font-style: normal;
+  color: #8a5a00;
 }
 
 .list-mode .li.container {
