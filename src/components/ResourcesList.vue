@@ -467,7 +467,7 @@ name: 'CollectionTOC',
       const docs = documentCount.value
       const passages = passageCount.value
 
-      const docLabel = docs > 1 ? 'ressources' : 'ressource'
+      const docLabel = docs > 1 ? 'documents' : 'document'
 
       // Cas simple : pas de highlights OU aucun passage
       if (!isHighlights.value || passages === null) {
