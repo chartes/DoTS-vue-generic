@@ -29,6 +29,47 @@
           />
         </span>
       </div>
+
+      <!-- Valeurs actuellement sélectionnées pour CETTE facette, affichées
+           sous son header - visible même repliée, en plus de la barre
+           sticky du haut qui liste tout confondu.
+           Deux cas : facette à valeurs (Auteur, Langage...) -> un tag par
+           valeur sélectionnée ; facette temporelle (Date du colloque...)
+           -> un seul tag pour la plage en cours, s'il y en a une. -->
+      <div
+        v-if="facet.type !== 'temporal' && tagsForFacet(facet.id).length"
+        class="facet-active-tags"
+      >
+        <span
+          v-for="tag in tagsForFacet(facet.id)"
+          :key="tag.raw"
+          class="facet-tag"
+        >
+          {{ tag.label }}
+          <button
+            type="button"
+            class="facet-tag-remove"
+            aria-label="Retirer ce filtre"
+            @click="console.log('[debug] clic croix facette (terms)', tag); $emit('remove-facet-value', tag)"
+          >×</button>
+        </span>
+      </div>
+
+      <div
+        v-else-if="facet.type === 'temporal' && temporalRangeFor(facet)"
+        class="facet-active-tags"
+      >
+        <span class="facet-tag">
+          {{ formatRange(temporalRangeFor(facet)) }}
+          <button
+            type="button"
+            class="facet-tag-remove"
+            aria-label="Retirer ce filtre"
+            @click="console.log('[debug] clic croix facette (temporal)', facet.temporal.field); $emit('reset-range', facet.temporal.field)"
+          >×</button>
+        </span>
+      </div>
+
       <div
         v-show="isOpen(facet.id)"
         class="facet-body"
@@ -62,7 +103,10 @@
 
           <!-- Rendu par défaut : autocomplétion + candidats cliquables -->
           <template v-else>
-            <div class="facet-search">
+            <div
+              class="facet-search"
+              :ref="el => setFacetSearchRef(facet.id, el)"
+            >
               <input
                 class="facet-input"
                 type="text"
@@ -72,7 +116,6 @@
                   $event.target.value
                 )"
                 @focus="openFacetDropdown(facet.id)"
-                @blur="closeFacetDropdown(facet.id)"
                 @keydown.escape="closeFacetDropdown(facet.id)"
                 :placeholder="facetPlaceholder(facet)"
               >
@@ -104,7 +147,7 @@
 
 <script setup>
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import TemporalFacetSlider from './TemporalFacetSlider.vue'
 import AlphabetFacetPicker from './AlphabetFacetPicker.vue'
 
@@ -177,7 +220,8 @@ const emit = defineEmits([
     'facet-close',
     'change-range',
     'reset-range',
-    'reset-facet'
+    'reset-facet',
+    'remove-facet-value'
 ])//'apply-collections'
 
 const facetFilters = ref({})
@@ -195,6 +239,41 @@ function openFacetDropdown(facetId) {
 function closeFacetDropdown(facetId) {
     facetDropdownOpen.value[facetId] = false
 }
+
+// Fermeture du dropdown de suggestions : on ne se base plus sur @blur du
+// champ. Sur mobile, scroller la sidebar pour atteindre le dropdown fait
+// perdre le focus au champ (le navigateur masque le clavier virtuel dès
+// que la page défile), ce qui déclenchait un blur -> fermeture immédiate
+// du dropdown avant même d'avoir pu le voir en scrollant.
+// On détecte donc la fermeture "clic/tap en dehors" nous-mêmes, ce qui ne
+// se déclenche pas pendant un simple scroll tactile.
+const facetSearchRefs = {}
+
+function setFacetSearchRef(facetId, el) {
+    if (el) {
+        facetSearchRefs[facetId] = el
+    } else {
+        delete facetSearchRefs[facetId]
+    }
+}
+
+function handleClickOutsideFacetDropdowns(event) {
+    Object.keys(facetDropdownOpen.value).forEach(facetId => {
+        if (!facetDropdownOpen.value[facetId]) return
+        const container = facetSearchRefs[facetId]
+        if (container && !container.contains(event.target)) {
+            closeFacetDropdown(facetId)
+        }
+    })
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutsideFacetDropdowns)
+})
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutsideFacetDropdowns)
+})
 
 // Sélection d'un candidat depuis le menu déroulant : on l'ajoute aux
 // filtres actifs, on vide le champ de recherche et on referme le menu.
@@ -318,6 +397,28 @@ function selectedKeysFor(facetId){
     return props.activeFacets
         .filter(f => f.facetType === facetId)
         .map(f => f.raw ?? f.facet_key ?? f.value ?? f.id)
+}
+
+// Tags (objets complets {facetType, id, label, raw}) à afficher sous le
+// header d'une facette donnée. Même source que selectedKeysFor, mais on
+// garde l'objet entier : le raw est nécessaire pour retirer le bon filtre
+// (cf. SearchPage.vue removeActiveFacet, qui utilise tag.raw).
+function tagsForFacet(facetId){
+    return props.activeFacets.filter(f => f.facetType === facetId)
+}
+
+// Plage actuellement active pour une facette temporelle donnée, si elle
+// existe (props.ranges est keyed par facet.temporal.field - même clé que
+// celle déjà utilisée par resetFacet() plus bas pour la réinitialiser).
+function temporalRangeFor(facet){
+    return props.ranges?.[facet.temporal.field] || null
+}
+
+// Formatage identique à ActiveSearchFilters.vue (formatRange), pour un
+// rendu cohérent entre la barre sticky du haut et le tag sous la facette.
+function formatRange(range){
+    if (!range) return ''
+    return `${range.gte ?? '∞'} - ${range.lte ?? '∞'}`
 }
 
 // Fusionne les valeurs venant d'Elasticsearch avec les valeurs sélectionnées
@@ -508,6 +609,44 @@ watch(
   display: flex;
   align-items: center;
   gap: .4rem;
+}
+
+/* Valeurs sélectionnées de cette facette, sous son header (visible même
+   repliée). */
+.facet-active-tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  padding: .6rem .75rem;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.facet-tag{
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .5rem;
+  font-size: .78rem;
+  font-family: "Barlow", sans-serif;
+  color: var(--fill-color);
+  background: var(--meta-area-fill-color, #f0f0f0);
+  border-radius: 12px;
+}
+
+.facet-tag-remove{
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  font-size: 1rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.facet-tag-remove:hover{
+  color: #000;
 }
 
 .facet-body{

@@ -149,6 +149,7 @@
                   @apply-collections="executeSearches()"
                   @reset-range="resetRange"
                   @reset-facet="resetFacet"
+                  @remove-facet-value="removeActiveFacet"
                 />
               </aside>
             </Transition>
@@ -740,6 +741,7 @@ export default {
     }
 
     function removeActiveFacet(tag) {
+      console.log('[debug] removeActiveFacet appelé avec', tag)
       store.commit('search/removeFacet', {
         facetType: tag.facetType,
         facetKey: tag.raw
@@ -801,7 +803,7 @@ export default {
     }
 
     function resetRange(rangeKey) {
-
+      console.log('[debug] resetRange appelé avec', rangeKey)
       store.commit('search/removeSearchRange', rangeKey)
       executeSearches()
     }
@@ -1637,27 +1639,51 @@ tr td.chevron-up a::before {
 /* Sidebar des facettes (burger) */
 .page-body {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   width: 100%;
-  max-height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
+
+  /* Marge de sécurité en bas : garantit que le footer démarre toujours
+     assez bas pour laisser la place à un dropdown de suggestions ouvert
+     sur la dernière facette visible. .facet-dropdown (SearchFacets.vue) a
+     max-height: 240px + ~4px de marge/bordure, donc ~244px de hauteur max
+     ajoutée sous un champ de facette ; on prend une marge large (300px)
+     pour absorber ça sans calcul dynamique fragile. Revers : un espace
+     blanc fixe apparaît désormais toujours avant le footer, dropdown
+     ouvert ou non. */
+  padding-bottom: 250px;
 
   /* .app-width-margin n'est plus neutralisée : même inset gauche/droite que
      .sticky-search-header et que .wrapper.collection-header au-dessus, donc
      sidebar + résultats s'alignent sur la largeur du bandeau, dépliés ou
-     repliés (l'inset ne dépend pas de sidebarOpen). */
+     repliés (l'inset ne dépend pas de sidebarOpen).
+
+     max-height: 100% + overflow: hidden retirés : ils rognaient tout ce qui
+     dépassait la hauteur de .page-body, notamment le dropdown de
+     suggestions d'une facette ouvert en bas de la sidebar (desktop) - il se
+     retrouvait coupé/invisible pile à l'endroit où le footer du site
+     commence, donnant l'impression qu'il passait "derrière" le footer.
+     Seul overflow-x reste masqué, en garde-fou contre un débordement
+     horizontal ; la page continue de s'appuyer sur le scroll naturel de la
+     fenêtre (pas de scroll interne ici).
+
+     align-items: flex-start -> stretch : avec flex-start, .facets-sidebar
+     se dimensionnait sur son seul contenu (souvent plus court que la liste
+     de résultats), donc son fond blanc s'arrêtait avant la fin de
+     .page-main, laissant une bande grise avant le footer. En stretch
+     (comportement par défaut de flexbox), les deux colonnes s'étirent pour
+     matcher la plus haute des deux : le fond blanc de la sidebar va donc
+     naturellement jusqu'au même point que la colonne de résultats, sans
+     qu'on ait besoin de fixer une hauteur en dur ni de scroll séparé. */
 }
 
 .facets-sidebar {
-  position: flex;
-  max-height: 100%;
-  overflow-y: 0%;
   flex: 0 0 33.333%;
   max-width: 33.333%;
   box-sizing: border-box;
   padding: 0 0 0 0 !important;
   background: #fff;
-  min-height: 100%;
 }
 
 /* Fond assombri derrière la sidebar mobile : masqué par défaut (desktop),
@@ -2134,7 +2160,14 @@ input[type="number"]::-webkit-inner-spin-button {
 .table-container {
   font-family: "Barlow Semi Condensed", sans-serif;
   margin-top: 24px;
-  overflow-y: auto;
+  /* overflow-y: auto retiré : dès que le contenu dépassait, même de très
+     peu, la hauteur min de 600px ci-dessous, ça créait une scrollbar
+     interne fine sur toute la hauteur du conteneur - indépendante du
+     scroll de la page. On garde le min-height (pour ne pas avoir une zone
+     trop courte visuellement quand il y a peu de résultats), mais le
+     contenu qui dépasse s'affiche simplement en flux normal désormais, et
+     c'est le scroll naturel de la fenêtre qui prend le relais, jusqu'au
+     footer. */
   min-height: 600px;
 }
 .table {
@@ -2511,7 +2544,13 @@ tr.row-details :deep(em),
     max-height: 100vh;
     z-index: 40;
     box-shadow: 2px 0 16px rgba(0, 0, 0, .25);
-    overflow-y: none;
+    overflow-y: auto;
+  }
+
+  .sticky-search-header{
+    margin : none ;
+    padding-left: 1px !important;
+    padding-right: 1px !important;
   }
 
   .sidebar-backdrop {
@@ -2520,10 +2559,6 @@ tr.row-details :deep(em),
     inset: 0;
     background: rgba(0, 0, 0, .45);
     z-index: 39;
-  }
-
-  .sticky-search-header{
-    padding : 0px;
   }
 
   /* Transitions Vue <Transition name="sidebar-slide"/"backdrop-fade"> :
