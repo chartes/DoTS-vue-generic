@@ -32,54 +32,53 @@
                 <i class="arrow"></i>
               </div>
 
-                <!-- DROPDOWN -->
-                <div v-if="isModeOpen" class="search-mode-dropdown">
-                  <div
-                    v-for="opt in searchTypeOptions"
-                    :key="opt.value"
-                    class="search-mode-option"
-                    :class="{ active: searchType === opt.value }"
-                    @click="selectSearchType(opt.value)"
-                  >
-                    {{ opt.text }}
-                  </div>
+              <!-- DROPDOWN -->
+              <div v-if="isModeOpen" class="search-mode-dropdown">
+                <div
+                  v-for="opt in searchTypeOptions"
+                  :key="opt.value"
+                  class="search-mode-option"
+                  :class="{ active: searchType === opt.value }"
+                  @click="selectSearchType(opt.value)"
+                >
+                  {{ opt.text }}
                 </div>
               </div>
-              <!-- input -->
-              <div class="search-input-wrapper">
-                <input
-                  class="input is-medium"
-                  :class="isInvalidQuery ? 'input-error' : ''"
-                  type="text"
-                  placeholder="Recherche"
-                  v-model="inputTerm"
-                  @keyup.enter="executeSearches"
-                  @click="$event.preventDefault()"
-                /><!-- live debounced search : @keyup.enter="executeSearches" -->
-                <button
-                  v-if="inputTerm"
-                  class="search-clear"
-                  title="Clear search"
-                  @click.prevent="deleteTerm"
-                >
-                  <span aria-hidden="true"></span>
-                </button>
-                <!-- MESSAGE ERROR -->
-                <p v-if="isInvalidQuery" class="search-error-message">
-                  {{ invalidQueryMessage }}
-                </p>
-              </div>
-
-              <!-- button -->
-              <button
-                class="search-submit"
-                :disabled="isInvalidQuery || search.loading.value"
-                @click="executeSearches"
-              />
             </div>
-            <div class="active-filters-and-sliders">
-              <ActiveSearchFilters
-              v-show="!filtersHidden"
+            <!-- input -->
+            <div class="search-input-wrapper">
+              <input
+                class="input is-medium"
+                :class="isInvalidQuery ? 'input-error' : ''"
+                type="text"
+                placeholder="Recherche"
+                v-model="inputTerm"
+                @keyup.enter="executeSearches"
+                @click="$event.preventDefault()"
+              /><!-- live debounced search : @keyup.enter="executeSearches" -->
+              <button
+                v-if="inputTerm"
+                class="search-clear"
+                title="Clear search"
+                @click.prevent="deleteTerm"
+              >
+                <span aria-hidden="true"></span>
+              </button>
+              <!-- MESSAGE ERROR -->
+              <p v-if="isInvalidQuery" class="search-error-message">
+                {{ invalidQueryMessage }}
+              </p>
+            </div>
+
+            <!-- button -->
+            <button
+              class="search-submit"
+              :disabled="isInvalidQuery || search.loading.value"
+              @click="executeSearches"
+            />
+          </div>
+          <div class="active-filters-and-sliders">
+            <ActiveSearchFilters
               :facets="activeFacetTags"
               :facets-config="visibleFacets"
               :ranges="ranges"
@@ -88,7 +87,7 @@
               @remove-range="removeActiveRange"
               @clear-all="clearAllFilters"
             />
-            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -110,57 +109,47 @@
         <aside class="facets-sidebar" v-if="sidebarOpen">
           <div class="facets-sidebar-header">
           </div>
-            <SearchFacets
-              class="search-facets"
-              :opened-facets="openedFacets"
-              :facets="visibleFacets"
-              :temporal-facets="visibleTemporal"
-              :active-facets="activeFacetTags"
-              :ranges="ranges"
-              @facet-open="openFacet"
-              @facet-close="closeFacet"
-              @toggleFacet="onToggleFacet"
-              @change-range="onTemporalChange"
-              @apply-collections="executeSearches()"
-              @reset-range="resetRange"
-              @reset-facet="resetFacet"
-              @remove-facet-value="removeActiveFacet"
-            />
-          </aside>
-        </Transition>
+          <SearchFacets
+            class="search-facets"
+            :opened-facets="openedFacets"
+            :facets="visibleFacets"
+            :temporal-facets="visibleTemporal"
+            :active-facets="activeFacetTags"
+            :ranges="ranges"
+            @facet-open="openFacet"
+            @facet-close="closeFacet"
+            @toggleFacet="onToggleFacet"
+            @change-range="onTemporalChange"
+            @apply-collections="executeSearches()"
+            @reset-range="resetRange"
+            @reset-facet="resetFacet"
+            @remove-facet-value="removeActiveFacet"
+          />
+        </aside>
+      </Transition>
       <div class="page-main">
-    <div>
-      <div class="tile is-vertical">
         <div
-          class="tile is-parent search-form-and-carousel"
-          :class="searchMinimizedCssClass"
+          class="document-list list-mode"
+          :class="openedFacets.length > 0 ? 'with-opened-facets' : ''"
         >
+          <ResourcesList
+            :data="tableData"
+            :columns-config="columns"
+            :page-size="pageSize"
+            :current-page="page"
+            :is-doc-project-id-included="isDocProjectIdInc"
+            :root-collection-identifier="rootCollectionId"
+            :is-table-loading="search.loading.value"
+            :counts="search.totalCount.value"
+            :is-elastic-search="true"
+            :total-buckets="search.bucketCount.value"
+            :is-with-highlights="!!(isFulltextSearch && inputTerm.trim() && inputTerm.trim().length > 0)"
+            :filters="filters"
+            :collection-indexed="search.collectionIndexed.value"
+            @filter-change="updateFilter"
+            @sort-change="updateSort"
+          /><!--v-if="tableData.length > 0"-->
         </div>
-      </div>
-    </div>
-    <div
-      class="document-list list-mode"
-      :class="openedFacets.length > 0 ? 'with-opened-facets' : ''"
-    >
-      <ResourcesList
-
-        :data="tableData"
-        :columns-config="columns"
-        :page-size="pageSize"
-        :current-page="page"
-        :is-doc-project-id-included="isDocProjectIdInc"
-        :root-collection-identifier="rootCollectionId"
-        :is-table-loading="search.loading.value"
-        :counts="search.totalCount.value"
-        :is-elastic-search="true"
-        :total-buckets="search.bucketCount.value"
-        :is-with-highlights="!!(isFulltextSearch && inputTerm.trim() && inputTerm.trim().length > 0)"
-        :filters="filters"
-        :collection-indexed="search.collectionIndexed.value"
-        @filter-change="updateFilter"
-        @sort-change="updateSort"
-      /><!--v-if="tableData.length > 0"-->
-    </div>
       </div><!-- ferme .page-main -->
     </div><!-- ferme .page-body -->
   </div>
@@ -169,28 +158,21 @@
 <script>
 import { computed, inject, isRef, onMounted, ref, watch } from 'vue'
 
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import useSimpleSearch from '@/composables/use-simple-search'
-import { router } from '@/router'
 
 import CollectionHeader from '@/components/CollectionHeader.vue'
 import ResourcesList from '@/components/ResourcesList.vue'
-import SearchResultsList from '@/components/SearchResultsList.vue'
-import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
-import TemporalFacetSlider from '@/components/TemporalFacetSlider.vue'
-import ActiveSearchFilters from '@/components/ActiveSearchFilters.vue'
 import SearchFacets from '@/components/SearchFacets.vue'
-import store from "@/store";
-
+import ActiveSearchFilters from '@/components/ActiveSearchFilters.vue'
 
 export default {
   name: 'SearchPage',
   components: {
     SearchFacets,
-    TemporalFacetSlider,
     ActiveSearchFilters,
     CollectionHeader,
-    SearchResultsList,
     ResourcesList
   },
   props: {
@@ -228,7 +210,6 @@ export default {
     const router = useRouter()
 
     const isDocProjectIdInc = computed(() => props.isDocProjectIdIncluded)
-    const dtsRootCollectionId = computed(() => props.dtsRootCollectionIdentifier)
     const rootCollectionId = computed(() => props.rootCollectionIdentifier)
     const collectionId = computed(() => props.collectionIdentifier)
     const appConfig = computed(() => props.applicationConfig)
@@ -238,11 +219,6 @@ export default {
     const pageSize = computed(() =>
         `${import.meta.env.VITE_SEARCH_RESULT_PER_PAGE}`
     )
-    const filtersHidden = ref(false)
-
-    function hideFilters() {
-      filtersHidden.value = !filtersHidden.value
-    }
 
     const sidebarOpen = ref(false)
 
@@ -250,10 +226,7 @@ export default {
       sidebarOpen.value = !sidebarOpen.value
     }
 
-    // ⚠️ compat API existante (on garde "search.xxx")
     const search = useSimpleSearch()
-
-    const { initialTemporal, temporal, ranges, setRange, execute } = useSimpleSearch()
 
     const page = search.pageNum
     watch(page, value => {
@@ -265,7 +238,7 @@ export default {
     function onTemporalChange({key, range}){
       // `ranges` is keyed by the canonical key; the Elasticsearch paths
       // travel inside `range` as startField / endField.
-      setRange(
+      search.setRange(
         key,
         range
       )
@@ -315,11 +288,11 @@ export default {
       // temporal.value a la même structure/clés que initialTemporal.value
       // on suppose un accès par id, ex: temporal.value trouvé via .find ou déjà en Map/objet
       const availableMap = new Map(
-        (Array.isArray(temporal.value) ? temporal.value : Object.values(temporal.value || {}))
+        (Array.isArray(search.temporal.value) ? search.temporal.value : Object.values(search.temporal.value || {}))
           .map(f => [f.key, f])
       )
 
-      return initialTemporal.value
+      return search.initialTemporal.value
         .map((facet, index) => {
           const c = configMap.get(facet.key)
           const available = availableMap.get(facet.key)
@@ -363,25 +336,12 @@ export default {
     })
 
     const visibleFacets = computed(() => {
-
       const result = []
+      const available = search.facets.value?.available || {}
+      const initialAvailable = search.initialFacets.value?.available || {}
+      const configFacets = collConfig.value?.searchConfig?.facets || []
+      const collectionsConfig = configFacets.find(f => f.key === 'collections')
 
-      const available =
-        search.facets.value?.available || {}
-
-      const initialAvailable =
-        search.initialFacets.value?.available || {}
-
-
-      const configFacets =
-        collConfig.value?.searchConfig?.facets || []
-
-      const collectionsConfig =
-        configFacets.find(
-          f => f.key === 'collections'
-        )
-
-      //
       if (available.collections  && collectionsConfig?.enabled !== false) {
 
         const currentCollections = Object.fromEntries(
@@ -406,7 +366,6 @@ export default {
         })
       }
 
-
       Object.entries(available)
         .filter(([id]) => id !== 'collections')
         .forEach(([id,values]) => {
@@ -416,47 +375,34 @@ export default {
               f => f.key === id
             )
 
-
           if(config?.enabled === false)
             return
 
-
           result.push({
-
             key: id,
-
             label:
               config?.label ||
               id,
-
             values,
-
             order:
               config?.order ?? 999
-
           })
-
         })
-
 
       return result.sort(
         (a,b)=>a.order-b.order
       )
-
     })
 
     const buildPassageUrl = (resId, hit, tocSettings, collId, resCollId, isDocProjectIdIncluded) => {
       if (!hit) return null
 
       const passageTocSettings = appConfig.value?.collectionsConf?.find(c => c.collectionId === resCollId)?.tableOfContentsSettings ?? tocSettings
-
       const { ancestors = [], passageId } = hit
       //console.log('searchPage debug ancestors, passageId, tocSettings?.editByCiteType', resId, hit, passageId, ancestors, passageTocSettings, resCollId)
-
       let refId = null
 
       // --- priorité : editByCiteType ---
-
       if (passageTocSettings?.editByCiteType?.length) {
         // Passage is itself a match
         if (
@@ -470,7 +416,6 @@ export default {
             a.citeType &&
             passageTocSettings.editByCiteType.includes(a.citeType.toLowerCase())
           )
-
           if (match) {
             //console.log('searchPage debug matching refId by editByCiteType', passageTocSettings, match.id)
             refId = match.id
@@ -536,13 +481,11 @@ export default {
 
     const tocSettings = collConfig.value?.tableOfContentsSettings
 
-
     const tableData = computed(() => {
       const result = search.result.value
-
       if (!result) return []
 
-      // Cas groupé (buckets)
+      // Grouped case (buckets)
       if (Array.isArray(result.buckets)) {
         console.log('searchPage buckets', result.buckets)
         return result.buckets.map(bucket => ({
@@ -576,7 +519,7 @@ export default {
         }))
       }
 
-      // Cas tableau direct
+      // Straight table case
       if (Array.isArray(result)) {
         return result.map(item => ({
           ...item,
@@ -596,7 +539,7 @@ export default {
 
       if (configCols?.length > 0) {
         return configCols
-          .filter(col => col && col.key) // security null + lodash
+          .filter(col => col && col.key)
           .map(col => ({
             key: col.key,
             label: col.label || col.key,
@@ -612,42 +555,6 @@ export default {
     })
 
     const layout = inject('variable-layout')
-
-    const isSearchMinimized = ref(false)
-
-    const inputFacet = ref('')
-    const facetType = 'collections'
-
-
-    const availableFacets = computed(() =>
-      search.facets.value?.available?.[facetType] || []
-    )
-
-    const showFacetSuggestions = computed(() =>
-      facetSuggestions.value.length > 0
-    )
-
-    const facetSuggestions = computed(() => {
-      const term = inputFacet.value.toLowerCase().trim()
-
-      const facets = availableFacets.value
-
-      if (!term) return facets.slice(0, 8)
-
-      return facets
-        .filter(f => f.label.toLowerCase().includes(term))
-        .slice(0, 8)
-    })
-
-    const applyFacet = (facet) => {
-      inputFacet.value = ''
-      search.setFacet({
-        facetType,
-        value: facet.facet_key
-      })
-
-      executeSearches()
-    }
 
     const activeFacetTags = computed(() => {
       const selected = search.facets.value?.selected || {}
@@ -666,21 +573,8 @@ export default {
       })
     })
 
-    const removeFacet = (tag) => {
-      store.commit('search/removeFacet', {
-        facetType: tag.facetType,
-        facetKey: tag.raw
-      })
-      executeSearches()
-    }
-
-    const removeAllFacets = () => {
-      store.commit('search/clearFacets')
-      executeSearches()
-    }
-
     function removeActiveFacet(tag) {
-      store.commit('search/removeFacet', {
+      search.removeFacet({
         facetType: tag.facetType,
         facetKey: tag.raw
       })
@@ -689,66 +583,52 @@ export default {
 
 
     function removeActiveRange(field){
-      setRange(field, null)
+      search.setRange(field, null)
       executeSearches()
     }
 
 
     function clearAllFilters(){
-
-      store.commit('search/clearFacets')
-
-      Object.keys(ranges.value)
+      search.clearFacets()
+      Object.keys(search.ranges.value)
         .forEach(field => {
-          setRange(field, null)
+          search.setRange(field, null)
         })
-
       executeSearches()
-
     }
+
     function onToggleFacet({ facetType, facetKey }) {
-
-      const selected =
-        search.facets.value.selected?.[facetType] || []
-
+      const selected = search.facets.value.selected?.[facetType] || []
       if (selected.includes(facetKey)) {
-
-        store.commit('search/removeFacet', {
+        search.removeFacet({
           facetType,
           facetKey
         })
-
       } else {
-
-        store.commit('search/setFacet', {
+        search.setFacet({
           facetType,
           value: facetKey
         })
-
       }
       executeSearches()
     }
 
     function openFacet(id){
-
-      store.commit('search/setFacetOpened', id)
+      search.setFacetOpened(id)
     }
 
 
     function closeFacet(id){
-
-      store.commit('search/setFacetClosed', id)
+      search.setFacetClosed(id)
     }
 
     function resetRange(rangeKey) {
-
-      store.commit('search/removeSearchRange', rangeKey)
+      search.removeRange(rangeKey)
       executeSearches()
     }
 
     function resetFacet(facetType) {
-
-      store.commit('search/removeFacetType', facetType)
+      search.removeFacetType(facetType)
       executeSearches()
     }
 
@@ -777,7 +657,6 @@ export default {
         inputSort.value = null
         return
       }
-
       inputSort.value = direction === 'desc' ? `-${key}` : key
     }
 
@@ -787,15 +666,13 @@ export default {
       if (isInvalidQuery.value) return
 
       layout.rawSearchedTerm.value = inputTerm.value
-
       const t = inputTerm.value?.trim()
-
-      console.log('SearchPage executeSearches:', {
-        isFulltextSearch: isFulltextSearch.value,
-        term: t,
-        collectionId: collectionId.value,
-        activeCollectionId: activeCollectionId.value
-      })
+      // console.log('SearchPage executeSearches:', {
+      //   isFulltextSearch: isFulltextSearch.value,
+      //   term: t,
+      //   collectionId: collectionId.value,
+      //   activeCollectionId: activeCollectionId.value
+      // })
 
       if (t && t.length > 0) {
         // --- FULLTEXT ---
@@ -806,108 +683,10 @@ export default {
         search.setTerm('')
         search.setCollectionId(collectionId.value)
       }
-      store.commit('search/setSearchPage', 1)
+      search.setPageNum(1)
 
       await search.execute()
     }
-
-    const minimizeSearchForm = () => {
-      isSearchMinimized.value = true
-    }
-
-    const expandSearchForm = () => {
-      isSearchMinimized.value = false
-    }
-
-    const searchMinimizedCssClass = computed(() =>
-        isSearchMinimized.value ? 'search-minimized' : ''
-    )
-
-    // const minPromotionYear = 1849
-    // const minTopicYear = -500
-    // const currentYear = new Date().getFullYear()
-
-
-    // function getInitialState() {
-    //   // initial values
-    //   const initialTerm = ''
-    //   // const initialTopicRange = [minTopicYear, currentYear]
-    //   // const initialPromotionYearRange = [minPromotionYear, currentYear]
-    //
-    //   const temporal = search.temporal.value
-    //   const initialPromotionYearRange = [
-    //       temporal.promotion.min,
-    //       temporal.promotion.max
-    //   ]
-    //   const initialTopicRange = [
-    //       temporal.coverage.min,
-    //       temporal.coverage.max
-    //   ]
-    //
-    //   //
-    //   // let topicRange = [minTopicYear, currentYear]
-    //   //
-    //   // if (search.allDocs && search.allDocs.length > 0) {
-    //   //   const allTopics = search.allDocs
-    //   //     .map(doc => doc.resource_metadata?.extensions?.['dct:coverage'])
-    //   //     .filter(Boolean)
-    //   //     .map(cov => cov.split('/').map(Number)) // "1200/1499" -> [1200,1499]
-    //   //
-    //   //   if (allTopics.length > 0) {
-    //   //     const starts = allTopics.map(c => c[0])
-    //   //     const ends = allTopics.map(c => c[1])
-    //   //     topicRange = [Math.min(...starts), Math.max(...ends)]
-    //   //   }
-    //   // }
-    //   const promotionRange =
-    //     search.ranges.value['resource_metadata.dublincore.date']
-    //
-    //   const promotionYearRange = promotionRange
-    //     ? [promotionRange.gte, promotionRange.lte]
-    //     : initialPromotionYearRange
-    //
-    //   // Coverage
-    //   const coverageRange =
-    //     search.ranges.value['resource_metadata.extensions.dct:coverage']
-    //
-    //   const topicRange = coverageRange
-    //     ? [coverageRange.gte, coverageRange.lte]
-    //     : initialTopicRange
-    //
-    //   // --- Promotion Year Range ---
-    //   const promotionYearValue = search.ranges['resource_metadata.dublincore.created']
-    //
-    //   // let promotionYearRange
-    //   // if (promotionYearValue) {
-    //   //   if (Array.isArray(promotionYearValue)) {
-    //   //     // cas d’un tableau [min, max]
-    //   //     promotionYearRange = promotionYearValue.map(Number)
-    //   //   } else {
-    //   //     // cas d’un nombre ou string simple
-    //   //     const num = Number(promotionYearValue)
-    //   //     promotionYearRange = [num, num]
-    //   //   }
-    //   // } else {
-    //   //   promotionYearRange = initialPromotionYearRange
-    //   // }
-    //
-    //
-    //   // try to restore else get the initial values
-    //   return {
-    //     term: layout.rawSearchedTerm.value || initialTerm,
-    //     isFulltextSearch: search.isFulltextSearch.value,
-    //     isResultTableMode: search.isResultTableMode.value,
-    //     topicRange,
-    //     sort: search.sorts?.value,
-    //     promotionYearRange,
-    //     activeCollectionId: search.activeCollectionId
-    //   }
-    // }
-
-    // const initialState = getInitialState()
-
-
-
 
     const initialState = {
       term: layout.rawSearchedTerm.value || '',
@@ -922,7 +701,6 @@ export default {
 
     const inputTerm = ref(initialState.term)
     const inputSort = ref(initialState.sort)
-    const onrollActive = ref([])
 
     const isFulltextSearch = computed({
       get: () => search.isFulltextSearch.value,
@@ -953,23 +731,19 @@ export default {
     // A quoted phrase is one unit.
     const isTooShortQuery = computed(() => {
       const raw = (inputTerm.value || '').trim()
-
       if (!raw) return false
 
       const units = []
-
       const bare = raw.replace(/"([^"]*)"/g, (match, phrase) => {
         units.push(phrase.trim())
         return ' '
       })
-
       units.push(
         ...bare
           .replace(/[*?~^()+\-]/g, ' ')
           .split(/\s+/)
           .filter(Boolean)
       )
-
       // No unit left means operators only ("*", "**"): nothing to search on.
       return units.length === 0 || units.every(u => u.length <= 2)
     })
@@ -986,7 +760,6 @@ export default {
       if (isTooShortQuery.value) {
         return 'Saisissez au moins 3 caractères'
       }
-
       return ''
     })
 
@@ -1001,18 +774,8 @@ export default {
     function selectSearchType(val) {
       searchType.value = val
       isModeOpen.value = false
-
       executeSearches()
     }
-
-    const displayedCount = computed(() => {
-      if (!isFulltextSearch.value || !inputTerm.value?.length) {
-        return search.totalCount.value
-      }
-
-      return search.bucketCount.value ?? search.totalCount.value
-    })
-
 
     const isResultTableMode = computed({
       get: () => search.isResultTableMode.value,
@@ -1022,18 +785,10 @@ export default {
       }
     })
 
-    // Promotion Range : input v-model and validation
-
-    //const inputPromotionYearRange = ref(initialState.promotionYearRange)
-
-
-
-
     const deleteTerm = () => {
       inputTerm.value = ''
       executeSearches()
     }
-
     console.log('searchPage inputTerm.value', inputTerm.value)
 
     search.setNoHighlight(
@@ -1044,63 +799,17 @@ export default {
 
     const noHighlight = computed(() => {
       const projectId = store.state.search.activeProjectId
-
       return store.state.search.byProject?.[projectId]?.noHighlight
     })
 
     const activeCollectionId = computed(() => {
       const projectId = store.state.search.activeProjectId
-
       return store.state.search.byProject?.[projectId]?.activeCollectionId
     })
     console.log('searchPage activeCollectionId', activeCollectionId.value)
-
     console.log('searchPage noHighlight', noHighlight.value)
+
     search.setTerm(inputTerm.value)
-
-    // search.setRange(
-    //     'resource_metadata.dublincore.created',
-    //     `gte:${inputPromotionYearRange.value[0]},lte:${inputPromotionYearRange.value[1]}`
-    // )
-    // if (
-    //   inputPromotionYearRange.value[0] != null &&
-    //   inputPromotionYearRange.value[1] != null
-    // ) {
-    //   search.setRange(
-    //     'temporal.dublincore.created',
-    //     {
-    //       gte: inputPromotionYearRange.value[0],
-    //       lte: inputPromotionYearRange.value[1]
-    //     }
-    //   )
-    // }
-
-    // if (inputTopicRange.value[0] !== initialState.topicRange[0]) {
-    //   search.setRange(
-    //       'resource_metadata.extensions.dct:coverage',
-    //       'gte:' + inputTopicRange.value[0]
-    //   )
-    // }
-    //
-    // if (inputTopicRange.value[1] !== initialState.topicRange[1]) {
-    //   search.setRange(
-    //       'resource_metadata.extensions.dct:coverage',
-    //       'lte:' + inputTopicRange.value[1]
-    //   )
-    // }
-    // if (
-    //   inputTopicRange.value[0] != null ||
-    //   inputTopicRange.value[1] != null
-    // ) {
-    //   search.setRange(
-    //     'temporal.extensions.dct:coverage',
-    //     {
-    //       gte: inputTopicRange.value[0],
-    //       lte: inputTopicRange.value[1]
-    //     }
-    //   )
-    // }
-
     search.setSorts(inputSort.value)
     search.setIsFulltextSearch(isFulltextSearch.value)
 
@@ -1130,55 +839,6 @@ export default {
       executeSearches()
        */
     })
-
-
-    // watcher pour Promotion Year basé sur dublincore.created
-    // watch(inputPromotionYearRange, ([gte, lte]) => {
-    //
-    //   const field = promotionField.value
-    //
-    //   if (!field) return
-    //
-    //   search.setRange(
-    //     field,
-    //     { gte, lte }
-    //   )
-    //
-    //   search.setPageNum(1)
-    //   executeSearches()
-    // })
-    //
-    // // watcher pour Topic Range basé sur extensions.dct:coverage
-    // watch(inputTopicRange, ([gte, lte]) => {
-    //
-    //   const minField =
-    //     coverageMinField
-    //
-    //   const maxField =
-    //     coverageMaxField
-    //
-    //   if (!minField || !maxField) return
-    //
-    //   if (gte == null && lte == null) return
-    //
-    //   search.setRange(
-    //     minField,
-    //     {
-    //       lte
-    //     }
-    //   )
-    //
-    //   search.setRange(
-    //     maxField,
-    //     {
-    //       gte
-    //     }
-    //   )
-    //
-    //   search.setPageNum(1)
-    //   executeSearches()
-    //
-    // }, { deep: true })
 
     watch(inputSort, () => {
       search.setSorts(inputSort.value)
@@ -1232,86 +892,44 @@ export default {
       isDocProjectIdInc,
       collConfig,
       appConfig,
-      dtsRootCollectionId,
       rootCollectionId,
       collectionId,
       currCollection,
       columns,
       page,
       pageSize,
-      layout,
       search,
       tableData,
       executeSearches,
-      minimizeSearchForm,
-      expandSearchForm,
-      facetSuggestions,
-      inputFacet,
-      applyFacet,
       activeFacetTags,
-      removeFacet,
-      removeAllFacets,
       removeActiveFacet,
       removeActiveRange,
       clearAllFilters,
-      searchMinimizedCssClass,
       isFulltextSearch,
       toggleModeDropdown,
       currentSearchLabel,
       isModeOpen,
       searchTypeOptions,
       selectSearchType,
-      displayedCount,
-      isResultTableMode,
       inputTerm,
       isInvalidQuery,
       invalidQueryMessage,
       deleteTerm,
       filters,
       updateFilter,
-      inputSort,
       updateSort,
-      onrollActive,
       openedFacets,
       onTemporalChange,
-      initialTemporal,
       visibleTemporal,
-      disabledTemporalFacetIds,
-      disabledFacetIds,
       visibleFacets,
-      temporal,
-      ranges,
-      setRange,
+      ranges: search.ranges,
       onToggleFacet,
       openFacet,
       closeFacet,
       resetRange,
       resetFacet,
-      filtersHidden,
-      hideFilters,
       sidebarOpen,
       toggleSidebar,
-    }
-  },
-  methods: {
-    rollActive: function (event, id) {
-      event.preventDefault()
-      if (this.onrollActive.includes(id) === false) {
-        this.onrollActive.push(id)
-      } else {
-        const index = this.onrollActive.indexOf(id)
-        if (index > -1) {
-          this.onrollActive.splice(index, 1)
-        }
-      }
-    },
-    positionCssClass: function (position) {
-      return this.onrollActive.includes(position.id) &&
-        this.isFulltextSearch &&
-        this.isResultTableMode &&
-        position.highlight !== null
-        ? 'is-selected'
-        : ''
     }
   }
 }
@@ -1424,14 +1042,10 @@ tr td.chevron-up a::before {
 .description {
   text-align: center;
 }
-.tiles {
-}
+
 .tiles-section {
   background-color: #ffffff;
   padding-bottom: 100px;
-}
-.tile.is-parent {
-  padding: 0;
 }
 .toggle-list-and-pagination {
   justify-content: space-between;
@@ -1459,32 +1073,6 @@ tr td.chevron-up a::before {
   margin-right: 10px;
 }
 
-.carousel-parent h2 {
-  font-family: "Noto Serif", serif;
-  font-size: 24px;
-  text-align: center;
-  font-weight: 700;
-  font-style: italic;
-  color: #5b5b5b;
-}
-.carousel-parent article .title,
-.carousel-parent article .subtitle {
-  font-family: "Noto Serif", serif;
-}
-.carousel-parent article .title {
-  font-size: 35px;
-  font-style: normal;
-  line-height: 47px;
-  font-weight: 400;
-  color: #b9192f;
-  margin-bottom: 0;
-  text-align: left;
-  text-indent: 0;
-}
-.carousel-parent article .subtitle {
-  font-size: 25px;
-  line-height: 32px;
-}
 .enc-logo {
   height: 64px;
   border-radius: 3px;
@@ -1496,15 +1084,6 @@ tr td.chevron-up a::before {
 .search {
   border: 1px solid #e4e5df;
   border-radius: 3px;
-}
-.search-form-and-carousel {
-  width: 100%;
-  flex-basis: unset;
-  /*gap: 20px;*/
-  padding-bottom: 50px !important;
-  border-bottom: solid 1px #b8b8b8;
-  /* search UI margin-bottom: 24px !important; */
-  margin-bottom: 2px !important;
 }
 .search-form {
   /* Un seul gris (foncé) sur tout le bloc : avant, .search-form (le
@@ -1538,37 +1117,10 @@ tr td.chevron-up a::before {
 .search-form > *.search-form-footer {
   padding: 24px !important;
 }
-.search-form > div.minimized-controls {
-  display: none;
-}
-.search-minimized .search-form > div.minimized-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  height: 100%;
-  background: none;
-}
-.search-minimized .search-form {
-  flex: 44px 0 0;
-  background: none;
-}
-
 .search-control {
-  margin-right: 0px !important;
+  margin-right: 0 !important;
 }
 
-.search-minimized .search-form > div:not(.minimized-controls) {
-  display: none !important;
-}
-.search-minimized .search-form > div.minimized-controls .search.button {
-  flex: 44px 0 0;
-}
-.search-minimized .search-form > div.minimized-controls .expand-form-button.button {
-  flex: calc(100% - 49px) 0 0;
-}
-.search-minimized .search-form > div.minimized-controls button.search.button.is-light {
-  margin-left: 0;
-}
 .sticky-search-header {
   position: sticky;
   top: 0;
@@ -1576,8 +1128,8 @@ tr td.chevron-up a::before {
   /* même gris que .search-form (voir plus bas) : évite tout liseré plus
      clair visible autour du bloc de recherche */
   background-color: #ffffff;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 
   /* .app-width-margin (classe partagée avec .wrapper.collection-header dans
      CollectionHeader.vue) n'est PLUS neutralisée ici : en la laissant agir
@@ -1590,7 +1142,7 @@ tr td.chevron-up a::before {
   align-items: center;
   width: 100%;
   margin : 2px 0 0 0;
-  padding: 0px 0px 0 0;
+  padding: 0 0 0 0;
 }
 
 /* La ligne qui contient le burger + le sélecteur de mode + l'input doit
@@ -1747,8 +1299,8 @@ tr td.chevron-up a::before {
   gap: 0;
 }
 .active-filters-and-sliders{
-  width: flex;
-  position:sticky
+  /*width: flex;*/
+  position: sticky
 }
 
 /* SELECT */
@@ -2082,68 +1634,11 @@ input[type="number"]::-webkit-inner-spin-button {
   box-shadow: 0 0 0 5px rgba(185, 25, 47, 0.2);
 }
 
-/* carousel */
-.carousel-parent {
-  flex: 355px 0 0;
-  background-color: #f6f2ed;
-  border-radius: 6px;
-  padding: 10px;
-}
-.carousel-parent h2 {
-  padding-top: 0;
-}
-.search-minimized .carousel-parent {
-  flex: calc(100% - 64px) 0 0;
-  padding-left: 10px;
-}
-.search-minimized .carousel-parent article {
-}
-.search-minimized .carousel-parent .content {
-  padding-left: 30%;
-}
-.search-minimized .carousel-parent h2 {
-  text-align: left;
-  margin: 0;
-  padding-left: 0;
-}
-.carousel-parent article {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-.carousel-parent article .title {
-  font-size: 24px;
-  text-align: center;
-  vertical-align: top;
-  font-weight: 700 !important;
-  font-style: italic;
-  text-transform: none;
-  color: #5b5b5b;
-  margin: 0;
-}
 .active-filters-and-sliders {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-.carousel-parent article .subtitle {
-  font-size: 20px;
-  line-height: 32px;
-  text-align: center;
-  margin: 0;
-}
-.carousel-parent article .content {
-  flex: auto 3 1;
-}
-.carousel-parent article .content > div {
-  height: 100%;
-}
-.carousel-parent article :deep(canvas) {
-  max-width: 100%;
-}
-.carousel-parent article :deep(.carousel) {
-  height: 100%;
 }
 
 /* search table */
@@ -2200,6 +1695,7 @@ tr.row-infos > td:nth-child(1) {
 tr.row-infos > td:nth-child(2) {
   /* font-weight: 600; */
 }
+
 tr.row-infos > td:nth-child(3) {
   color: #000000;
 }
@@ -2491,29 +1987,6 @@ tr.row-details :deep(em),
   }
 }
 @media screen and (max-width: 768px) {
-  .carousel-parent {
-    margin-top: 20px !important;
-  }
-  .search-minimized .carousel-parent .content {
-    padding-left: 0 !important;
-  }
-  .search-minimized .carousel-parent h2 {
-    text-align: center !important;
-  }
-
-  .search-minimized .search-form > div.minimized-controls {
-    display: none !important;
-  }
-  .search-minimized .search-form > div.minimized-controls {
-    display: none;
-  }
-  .search-minimized .search-form > div:not(.minimized-controls) {
-    display: flex !important;
-  }
-  .search-minimized .search-form {
-    flex: unset;
-  }
-
   /* ===================================================================
      Sidebar des filtres en superposition sur mobile : au lieu de pousser
      .page-main sur le côté (comportement desktop, flex-basis 33.333%),
@@ -2538,7 +2011,7 @@ tr.row-details :deep(em),
   }
 
   .sticky-search-header{
-    margin : none ;
+    margin : 0;
     padding-left: 1px !important;
     padding-right: 1px !important;
   }
@@ -2594,23 +2067,4 @@ tr.row-details :deep(em),
   padding: 27px 24px 0 44px;
 }
 
-.active-filters {
-  position: sticky;
-  width: flex;
-  top: 0;
-  z-index: 20;
-  padding-left: 44px;
-  border: 0px solid #f9f9f9;
-  
-}
-
-.active-filters-header {
-  display:inline-flex;
-  align-items:center;
-  gap:1rem;
-}
-
-.active-filters-title {
-  font-weight:600;
-}
 </style>

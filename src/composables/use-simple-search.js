@@ -1,4 +1,4 @@
-import {computed, watch, watchEffect} from 'vue'
+import { computed, watch } from 'vue'
 import { debounce } from 'lodash'
 import { useStore } from 'vuex'
 import useApi from '@/composables/use-api'
@@ -36,12 +36,6 @@ export default function useSimpleSearch() {
     return s.term?.trim() ? 10000 : 0
   })
 
-  const pageCount = computed(() => {
-    const s = searchState.value
-    if (!s) return 0
-    return Math.ceil((s.totalCount || 0) / (s.pageSize || 1))
-  })
-
   // ----------------------
   // MUTATIONS
   // ----------------------
@@ -50,10 +44,10 @@ export default function useSimpleSearch() {
   const setTerm = v => store.commit('search/setSearchTerm', v)
   const setSearchFilter = ({ key, value }) => store.commit('search/setSearchFilter', { key, value })
   const setRange = (k, v) => store.commit('search/setSearchRange', { key: k, value: v })
+  const removeRange = k => store.commit('search/removeSearchRange', k)
   const setSorts = v => store.commit('search/setSearchSorts', v)
   const setPageNum = v => store.commit('search/setSearchPage', v)
   const setCollectionId = v => store.commit('search/setSearchActiveCollection', v)
-  const setProject = v => store.commit('search/setSearchProject', v)
   const setIsFulltextSearch = v => store.commit('search/setSearchIsFulltextSearch', v)
   const setExcludedTemporalFacets = v => store.commit('search/setSearchExcludedTemporalFacets', v)
   const setExcludedFacets = v => store.commit('search/setSearchExcludedFacets', v)
@@ -62,6 +56,15 @@ export default function useSimpleSearch() {
       facetType,
       value
   })
+  const removeFacet = ({ facetType, facetKey }) =>
+    store.commit('search/removeFacet', {
+      facetType,
+      facetKey
+    })
+  const removeFacetType = facetType => store.commit('search/removeFacetType', facetType)
+  const clearFacets = () => store.commit('search/clearFacets')
+  const setFacetOpened = facetId => store.commit('search/setFacetOpened', facetId)
+  const setFacetClosed = facetId => store.commit('search/setFacetClosed', facetId)
 
   const saveSnapshot = () => store.commit('search/saveSearchSnapshot')
   const restoreSnapshot = dir => store.commit('search/restoreSearchSnapshot', dir)
@@ -351,18 +354,22 @@ export default function useSimpleSearch() {
     isFulltextSearch: computed(() => searchState.value?.isFulltextSearch ?? true),
     isResultTableMode: computed(() => searchState.value?.isResultTableMode ?? true),
 
-    pageCount,
     setNoHighlight,
     setTerm,
     setSearchFilter,
     setRange,
+    removeRange,
     setSorts,
     setPageNum,
     setSearchCollectionId,
     setCollectionId,
-    setProject,
     setIsFulltextSearch,
     setFacet,
+    removeFacet,
+    removeFacetType,
+    clearFacets,
+    setFacetOpened,
+    setFacetClosed,
     setExcludedTemporalFacets,
     setExcludedFacets,
 
