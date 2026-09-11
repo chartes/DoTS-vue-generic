@@ -50,17 +50,17 @@
 
       <!-- Ranges -->
       <span
-        v-for="(range, field) in ranges"
-        :key="`range-${field}`"
+        v-for="(range, rangeKey) in ranges"
+        :key="`range-${rangeKey}`"
         class="filter-tag"
       >
-        {{ getRangeLabel(field) }} :
+        {{ getRangeLabel(rangeKey) }} :
         {{ range ? formatRange(range) : '' }}
 
         <svg
           class="clear-icon"
           viewBox="0 0 24 24"
-          @click.stop="removeRange(field)"
+          @click.stop="removeRange(rangeKey)"
         >
           <circle cx="12" cy="12" r="10"/>
           <line x1="15" y1="9" x2="9" y2="15"/>
@@ -92,8 +92,8 @@ const props = defineProps({
   },
   // Config des facettes "terms" (mêmes objets que ceux passés à
   // SearchFacets en :facets) : sert uniquement à retrouver le label
-  // "maison" défini en config (ex. "Auteur") à partir de la clé technique
-  // (facet.facetType, ex. "dct:contributor" / une propriété Dublin Core).
+  // "maison" défini en config (ex. "Auteur") à partir de la clé canonique
+  // (facet.facetType, ex. "dublinCore.contributor").
   facetsConfig:{
     type:Array,
     default:()=>[]
@@ -125,33 +125,30 @@ const hasActiveFilters = computed(() => {
 // NB : les facettes temporelles sont indexées par leur "key" canonique
 // (ex. "dublinCore.created", voir le commentaire dans SearchPage.vue sur
 // disabledTemporalFacetIds) - c'est aussi cette clé que setRange()/ranges
-// utilisent. On mappe donc sur f.key en priorité ; on garde f.field en repli
-// au cas où une facette n'exposerait que ce champ.
+// utilisent. f.field est le chemin ES ("temporal.dublincore.created") et
+// n'identifie pas la facette.
 const temporalLabels = computed(() => {
 
   return Object.fromEntries(
-    props.temporalFacets.flatMap(f => {
-      const entries = []
-      if (f.key) entries.push([f.key, f.label])
-      if (f.field && f.field !== f.key) entries.push([f.field, f.label])
-      return entries
-    })
+    props.temporalFacets.map(f => [
+      f.key,
+      f.label
+    ])
   )
 
 })
 
-function getRangeLabel(field){
-  return temporalLabels.value[field] || field
+function getRangeLabel(rangeKey){
+  return temporalLabels.value[rangeKey] || rangeKey
 }
 
 // Labels "maison" des facettes terms, définis en config (ex. "Auteur")
-// plutôt que la clé technique brute (ex. une propriété Dublin Core comme
-// "dct:contributor"). Indexés par f.key en priorité, f.id en repli, comme
-// pour temporalLabels ci-dessus.
+// plutôt que la clé canonique brute (ex. "dublinCore.contributor").
+// Indexés par f.key, comme pour temporalLabels ci-dessus.
 const facetConfigLabels = computed(() => {
 
   return Object.fromEntries(
-    props.facetsConfig.map(f => [f.key ?? f.id, f.label])
+    props.facetsConfig.map(f => [f.key, f.label])
   )
 
 })
@@ -177,10 +174,10 @@ function removeFacet(facet){
   )
 }
 
-function removeRange(field){
+function removeRange(rangeKey){
   emit(
     'remove-range',
-    field
+    rangeKey
   )
 }
 

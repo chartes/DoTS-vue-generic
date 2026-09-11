@@ -65,7 +65,7 @@
             type="button"
             class="facet-tag-remove"
             aria-label="Retirer ce filtre"
-            @click="console.log('[debug] clic croix facette (temporal)', facet.temporal.field); $emit('reset-range', facet.temporal.field)"
+            @click="console.log('[debug] clic croix facette (temporal)', facet.temporal.key); $emit('reset-range', facet.temporal.key)"
           >×</button>
         </span>
       </div>
@@ -182,11 +182,12 @@ const props = defineProps({
         default: () => ( {} )
     },
 
-    // Ids de facettes "terms" à afficher avec le parcours alphabétique
+    // Clés canoniques (facet.key, ex. "dublinCore.contributor") des facettes
+    // "terms" à afficher avec le parcours alphabétique
     // (recherche + index A-Z + cases à cocher) plutôt que le rendu par défaut.
     alphabetFacetIds:{
         type: Array,
-        default: () => ['dct:contributor']
+        default: () => ['dublinCore.contributor']
     }
 
 })
@@ -349,7 +350,7 @@ const orderedFacets = computed(()=>{
     props.temporalFacets.forEach(f=>{
 
         result.push({
-            id: f.field,
+            id: f.key,
             label: f.label,
             type: 'temporal',
             temporal: f,
@@ -365,7 +366,7 @@ const orderedFacets = computed(()=>{
     props.facets.forEach(f=>{
 
         result.push({
-            id: f.key ?? f.id,
+            id: f.key,
             label: f.label,
             values: f.values,
             type: 'terms',
@@ -408,10 +409,11 @@ function tagsForFacet(facetId){
 }
 
 // Plage actuellement active pour une facette temporelle donnée, si elle
-// existe (props.ranges est keyed par facet.temporal.field - même clé que
-// celle déjà utilisée par resetFacet() plus bas pour la réinitialiser).
+// existe (props.ranges est keyed par la clé canonique facet.temporal.key -
+// même clé que celle utilisée par resetFacet() plus bas pour la
+// réinitialiser ; facet.temporal.field est le chemin ES, pas la clé).
 function temporalRangeFor(facet){
-    return props.ranges?.[facet.temporal.field] || null
+    return props.ranges?.[facet.temporal.key] || null
 }
 
 // Formatage identique à ActiveSearchFilters.vue (formatRange), pour un
@@ -517,7 +519,7 @@ function toggleFacet(facetId, item) {
 function resetFacet(facet) {
 
     if (facet.type === 'temporal') {
-        emit('reset-range', facet.temporal.field)
+        emit('reset-range', facet.temporal.key)
         return
     }
     emit('reset-facet', facet.id)
