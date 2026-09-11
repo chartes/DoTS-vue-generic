@@ -699,7 +699,7 @@ export default {
   padding-top: 25px;
   padding-bottom: 25px;
 }
-.collection-toc-area, .modal-wrapper {
+.collection-toc-area {
   .tree {
     padding-top: 0;
     padding-bottom: 0;

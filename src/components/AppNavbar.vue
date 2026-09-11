@@ -47,13 +47,6 @@
             >
               {{ Object.values(item)[0] }}
             </router-link>
-            <!--<a
-              v-else
-              class="level-item-external"
-              @click.prevent="openCollectionModal(Object.keys(item)[0])"
-            >
-              {{ Object.values(item)[0] }}
-            </a>-->
           </template>
           <!-- replaced by the above breadcrum to have sub-collections
           <router-link
@@ -100,7 +93,6 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BurgerButton from './Burger.vue'
 import { useRoute } from 'vue-router'
-import { useStore } from 'vuex'
 import defaultLogo from '@/assets/images/logo_dots_circle.svg'
 
 export default {
@@ -150,7 +142,6 @@ export default {
   },
 
   setup (props) {
-    const store = useStore()
     const route = useRoute()
     const isMenuOpened = ref(false)
     const rootURL = ref(import.meta.env.VITE_APP_APP_ROOT_URL.length > 0 ? `${import.meta.env.VITE_APP_APP_ROOT_URL.slice(1, import.meta.env.VITE_APP_APP_ROOT_URL.length)}` : '')
@@ -188,11 +179,6 @@ export default {
 
     const closeMenu = () => {
       isMenuOpened.value = false
-    }
-
-    const openCollectionModal = (collId) => {
-      store.commit('setCollectionModalId', collId)
-      console.log('AppNavBar click below ProjectId open collection modal ', collId)
     }
 
     const setImgUrl = () => {
@@ -393,7 +379,6 @@ export default {
       rootShortTitle,
       breadCrumb,
       collectionId,
-      openCollectionModal,
       burgerChanged,
       closeMenu,
       imgUrl,

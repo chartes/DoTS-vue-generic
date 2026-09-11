@@ -23,8 +23,7 @@ export default createStore({
     resourceId: undefined,
     currentItem: {},
     TOC: [],
-    arianeDocument: undefined,
-    collectionModalCollectionId: false
+    arianeDocument: undefined
   },
 
   mutations: {
@@ -60,10 +59,6 @@ export default createStore({
 
     setArianeDocument(state, list) {
       state.arianeDocument = list
-    },
-
-    setCollectionModalId(state, id) {
-      state.collectionModalCollectionId = id
     }
   },
   plugins: [searchProjectSync]
