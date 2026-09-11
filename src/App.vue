@@ -152,7 +152,8 @@ export default {
     const collectionId = ref('')
 
     const routeNameCssClass = computed( () => {
-      return route.name.toLowerCase();
+      const routeDisplayName = route?.name.toLowerCase() === 'custompage' ? route?.params?.customPage.toLowerCase() : route.name.toLowerCase()
+      return routeDisplayName
     })
 
     const appConfig = ref({})

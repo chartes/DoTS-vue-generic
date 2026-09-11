@@ -48,14 +48,6 @@
               {{ Object.values(item)[0] }}
             </router-link>
           </template>
-          <!-- replaced by the above breadcrum to have sub-collections
-          <router-link
-            v-if="isDocProjectIdInc && collectionId && collectionId !== rootCollectionId"
-            class="level-item-external"
-            active-class="active"
-            :to="{ name: 'Home', params: {collId: collectionId} }"
-            >{{ collShortTitle ? collShortTitle : collectionId }}
-          </router-link> -->
         </span>
       </div>
       <div class="level-right">
