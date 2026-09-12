@@ -1,38 +1,5 @@
 <template>
-  <div
-    class="document-metadata"
-    :class="metaDataCssClass"
-  >
-    <div
-      v-if="!isPopUp && hasHeader"
-      class="document-metadata-header"
-    >
-      <div
-        class="resource"
-        @click="toggleContent"
-      >
-        <span class="metadata-header-title resource">
-          {{ metadata['dts:title'] }}
-        </span>
-        <span class="metadata-header-label resource">Métadonnées</span>
-      </div>
-      <a
-        href="#"
-        class="toggle-btn"
-        @click="toggleContent"
-      />
-    </div>
-    <div
-      v-else-if="hasHeader"
-      class="document-metadata-header"
-    >
-      <div class="collection" @click="toggleContent">
-        <span class="metadata-header-label collection">Métadonnées</span>
-        <span class="metadata-header-title collection">{{ metadata['dts:title'] }}</span>
-      </div>
-      <a href="#" class="toggle-btn" @click="toggleContent" />
-    </div>
-
+  <div class="document-metadata">
     <aside class="menu">
       <div class="is-flex is-justify-content-center">
         <table class="table is-fullwidth">
@@ -187,9 +154,7 @@
 </template>
 
 <script>
-import { computed, ref, toRaw, watch } from 'vue'
-import md5 from 'md5'
-import * as $rdf from 'rdflib'
+import { ref, toRaw, watch } from 'vue'
 
 import { buildDisplayModel } from '@/composables/useMetadataProcessor'
 
@@ -199,43 +164,20 @@ export default {
   components: {},
 
   props: {
-    ispopup: { required: true, default: false, type: Boolean },
     collectionConfig: {
       type: Object,
       required: false
     },
-    metadataprop: { required: true, default: () => {}, type: Object },
-    hasheader: { required: false, default: true, type: Boolean }
+    metadataProp: {
+      type: Object,
+      required: true,
+      default: () => {}
+    }
   },
 
   setup (props) {
-    const hasHeader = ref(props.hasheader)
-    const state = ref({
-      isOpened: !hasHeader.value
-    })
-    const isPopUp = ref(props.ispopup)
-    const isNew = ref(true)
     const metadata = ref({})
-    const authorThumbnailUrl = ref(null)
 
-
-    const getValue = (data) => {
-      function getLink (string) {
-        if (string.includes('http')) {
-          return `<a target="_blank" href="${string}">${string}</a>`
-        } else {
-          return string
-        }
-      }
-      console.log('data', data)
-      if (Array.isArray(data)) {
-        return getLink(data[0])
-      } else if (typeof (data) === 'object') {
-        return getLink(Object.values(data)[0])
-      } else {
-        return getLink(data)
-      }
-    }
     const ImgUrl = (source) => {
       const defaultLogos = import.meta.glob(
         '../assets/images/logo_*.svg',
@@ -261,9 +203,9 @@ export default {
       const logo = Object.entries(logos).find(([path]) =>
         path.endsWith(`/logo_${source}.svg`) || path.endsWith(`/logo_${source}.png`)
       )
-      console.log('ImgUrl source logo', source, Object.entries(logos))
+      console.log('DocumentMetadata ImgUrl source logo: ', source, Object.entries(logos))
       if (logo) {
-        console.log('ImgUrl / found svg for:', source, logo[0])
+        console.log('DocumentMetadata ImgUrl / found svg for: ', source, logo[0])
         return logo[1]
       }
 
@@ -273,116 +215,22 @@ export default {
       ).href
     }
 
-    console.log('DocumentMetadata metadata.value : ', metadata.value)
-
-    const fetchAuthorThumbnailUrl = async (options = {}) => {
-      if (metadata.value.wikidata) {
-        let wikidataId = metadata.value.wikidata.split('/')
-        wikidataId = wikidataId[wikidataId.length - 1]
-
-        console.log('fetchAuthorThumbnailUrl')
-
-        const response = await fetch(
-          `https://www.wikidata.org/w/api.php?action=wbgetclaims&property=P18&entity=${wikidataId}&format=json&origin=*`,
-          { method: 'GET', ...options }
-        )
-        const document = await response.json()
-        console.log('check AuthorThumbnailUrl response', document)
-
-        if (document.claims.P18) {
-          let wikidataLink = document.claims.P18[0].mainsnak.datavalue.value.replaceAll(' ', '_')
-
-          const _sum = md5(wikidataLink)
-          wikidataLink = `https://upload.wikimedia.org/wikipedia/commons/${_sum[0]}/${_sum[0]}${_sum[1]}/${encodeURI(wikidataLink)}`
-          authorThumbnailUrl.value = wikidataLink
-
-          console.log('author url', authorThumbnailUrl.value)
-        } else {
-          authorThumbnailUrl.value = null
-        }
-      } else {
-        authorThumbnailUrl.value = null
-      }
-    }
-
-    const fetchBiblioData = async () => {
-      if (metadata.value.data_bnf) {
-        const httpsUrl = metadata.value.data_bnf.replace('http:', 'https:')
-        // console.log("extra metadata:", httpsUrl);
-        console.log(decodeURIComponent(`${httpsUrl}`))
-        const redirectUrl = await fetch(`${httpsUrl}`, {
-          method: 'GET',
-          redirect: 'follow',
-          mode: 'cors'
-        })
-        console.log('redirectUrl.url after redirect : ', redirectUrl.url)
-        const httpsUrlJson = redirectUrl.url.replace('/fr', '') + '.json' // .slice(0, -1)
-        console.log('biblio json URL', httpsUrlJson)
-        const biblioResponse = await fetch(`${httpsUrlJson}`, {
-          method: 'GET',
-          mode: 'cors'
-        }).then((response) => {
-          return response.json()
-        }).catch(() => {
-          console.error('Error while loading databnf data')
-        })
-        console.log('fetch biblio data', biblioResponse)
-      }
-    }
-
-    const metaDataCssClass = computed(() => {
-      return state.value.isOpened ? 'is-opened' : ''
-    })
-
-    const toggleContent = function (event) {
-      event.preventDefault()
-      state.value.isOpened = !state.value.isOpened
-    }
-
-    const toggleNew = function (event) {
-      event.preventDefault()
-      isNew.value = !isNew.value
-    }
-
-    // const $rdf = require('rdflib')
-    const fetchRDF = async () => {
-      console.log('metadata.value.idref : ', metadata.value.idref)
-      if (metadata.value.idref) {
-        console.log('metadata.value.idref : ', metadata.value.idref)
-        const store = $rdf.graph()
-        const me = store.sym(metadata.value.idref)
-        console.log('me : ', me)
-      }
-    }
-
     watch(
-      () => [props.metadataprop, props.collectionConfig],
+      () => [props.metadataProp, props.collectionConfig],
       async ([source, config]) => {
         if (!source) { metadata.value = {}; return }
-        console.log('watch metadata source', source)
+        console.log('DocumentMetadata watch metadataProp source: ', source)
 
-        if (!source) { metadata.value = {}; return }
         const rawSource = JSON.parse(JSON.stringify(toRaw(source)))
         const rawConfig = config ? JSON.parse(JSON.stringify(toRaw(config))) : {}
         metadata.value = await buildDisplayModel(rawSource, rawConfig)
-
-        await fetchAuthorThumbnailUrl()
-        await fetchBiblioData()
-        await fetchRDF()
+        console.log('DocumentMetadata watch built metadata.value: ', metadata.value)
       },
       { immediate: true, deep: true }
     )
 
     return {
-      metaDataCssClass,
-      isPopUp,
-      isNew,
-      hasHeader,
-      toggleContent,
-      toggleNew,
-      authorThumbnailUrl,
       metadata,
-      getValue,
       ImgUrl
     }
   }
@@ -392,83 +240,6 @@ export default {
 <style scoped>
 .document-metadata {
   width: 100%;
-}
-.document-metadata-header {
-  display: flex;
-  width: 100%;
-  padding: 20px;
-  background-color: #e4e4e4;
-  border-radius: 6px;
-  position: relative;
-
-  font-family: var(--font-primary), sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 22px;
-  text-decoration: none;
-  border: none;
-
-  & > div.resource {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    /* align-items: baseline; */
-    width: 100%;
-  }
-}
-.is-opened .document-metadata-header {
-  border-radius: 6px 6px 0 0;
-}
-.document-metadata-header span.metadata-header-label.collection{
-  margin-right: 40px;
-  font-family: var(--font-secondary), sans-serif !important;
-  font-weight: 500;
-  color: #4a4a4a;
-}
-.document-metadata-header span.metadata-header-label.resource {
-  margin-right: 47px;
-  margin-left: auto;
-  text-align: left;
-  font-family: var(--font-secondary), sans-serif !important;
-  font-weight: 500;
-  color: #4a4a4a;
-}
-.document-metadata-header span.metadata-header-title.collection {
-  margin-right: 40px;
-  color: #4a4a4a;
-}
-.document-metadata-header span.metadata-header-title.resource {
-  margin-right: 40px;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-.document-metadata-header span.metadata-header-author {
-  color: #929292;
-}
-/* toogle */
-.toggle-btn {
-  position: absolute;
-  right: 20px;
-  width: 20px;
-  height: 27px;
-  background: url(../assets/images/chevron_rouge.svg) center top -8px / cover no-repeat;
-  border: none;
-  text-decoration: none;
-}
-.is-opened .toggle-btn {
-  background: url(../assets/images/croix.svg) center / cover no-repeat;
-}
-.document-metadata-header > a {
-  text-decoration: none;
-  border: none;
-  max-width: calc(100% - 40px);
-}
-.document-metadata .menu {
-  display: none;
-}
-.document-metadata.is-opened .menu {
-  display: block;
 }
 ol,
 ul {
@@ -568,14 +339,6 @@ figure.image img{
   aside.menu > .columns > .column:nth-child(1) {
     width: 50% !important;
   }
-  .document-metadata-header > a {
-    max-width: calc(100% - 30px);
-  }
-  .document-metadata-header span.metadata-header-title,
-  .document-metadata-header span.metadata-header-author {
-    display: block;
-  }
-
   .tab-content {
     & .table td {
       padding: 5px 5px;
@@ -594,41 +357,6 @@ figure.image img{
   }
 }
 @media screen and (max-width: 640px) {
-  .toggle-btn {
-    position: absolute;
-    bottom: 10px;
-    right: 15px;
-    width: 20px;
-  }
-  .document-metadata-header > .resource {
-    padding-bottom: 40px;
-  }
-  .document-metadata-header span.metadata-header-label.resource {
-    position: absolute;
-    left: 20px;
-    bottom: 15px;
-    margin-right: 0;
-  }
-  .document-metadata-header {
-    position: relative;
-    & > div.resource {
-      justify-content: space-between;
-    }
-    &::after {
-      content: "";
-      display: block;
-      width: 100%;
-      position: absolute;
-      bottom:45px;
-      left: 0;
-      border-top: 1px solid #CECECE;
-    }
-  }
-  .document-metadata-header span.metadata-header-author {
-    color: #929292;
-    text-align: right;
-  }
-
   figure.image img{
     height: 24px;
     width: auto;

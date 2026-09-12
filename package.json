@@ -12,10 +12,8 @@
   },
   "dependencies": {
     "jsonld": "9.0.0",
-    "md5": "2.3.0",
     "mirador": "3.4.3",
     "mirador-image-tools": "0.11.0",
-    "rdflib": "2.3.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-image": "4.1.0",

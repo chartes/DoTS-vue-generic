@@ -135,10 +135,8 @@
               >
                 <div v-if="selectedCollectionId.length > 0">
                   <document-metadata
-                    :ispopup="false"
                     :collection-config="collConfig"
-                    :metadataprop="selectedCollection"
-                    :hasheader="false"
+                    :metadata-prop="selectedCollection"
                     class="metadata-area"
                   />
                 </div>
