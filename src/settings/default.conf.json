@@ -64,7 +64,7 @@
       "dts":    "https://dtsapi.org/v1.0#",
       "dct":    "http://purl.org/dc/terms/",
       "schema": "https://schema.org/",
-      "dots":   "https://github.com/chartes/dots/"
+      "dots":   "https://github.com/dots-suite/dots/"
     },
     "topBreadcrumbButtonLabel": [
       "title"

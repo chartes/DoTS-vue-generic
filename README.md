@@ -1,21 +1,21 @@
 # dots-vue-generic
 
-Frontend application to browse a DoTS endpoint ([DoTS](https://github.com/chartes/dots)).
+Frontend application to browse a DoTS endpoint ([DoTS](https://github.com/dots-suite/dots)).
 
 >:warning: Install / Launch first the DTS API (or ensure to point to deployed service):  
-> See the [API Readme](https://github.com/chartes/dots)
+> See the [API Readme](https://github.com/dots-suite/dots)
 
 **Master dependencies**:
 
 [![Node](https://img.shields.io/badge/node-22_to_24-blue?style=for-the-badge&logo=Node.js)](https://nodejs.org)
 
-[![package - vue](https://img.shields.io/github/package-json/dependency-version/chartes/DoTS-vue-generic/vue/dev?logo=vue.js&logoColor=white)](https://www.npmjs.com/package/vue)
-[![package - vite](https://img.shields.io/github/package-json/dependency-version/chartes/DoTS-vue-generic/dev/vite/dev?logo=vite&logoColor=white)](https://www.npmjs.com/package/vite)
-[![package - eslint](https://img.shields.io/github/package-json/dependency-version/chartes/DoTS-vue-generic/dev/eslint/dev?logo=eslint&logoColor=white)](https://www.npmjs.com/package/eslint)
+[![package - vue](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/vue/dev?logo=vue.js&logoColor=white)](https://www.npmjs.com/package/vue)
+[![package - vite](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/dev/vite/dev?logo=vite&logoColor=white)](https://www.npmjs.com/package/vite)
+[![package - eslint](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/dev/eslint/dev?logo=eslint&logoColor=white)](https://www.npmjs.com/package/eslint)
 
 
-[![package - Bulma](https://img.shields.io/github/package-json/dependency-version/chartes/DoTS-vue-generic/bulma/dev?logo=bulma&logoColor=white)](https://www.npmjs.com/package/bulma)
-[![package - Mirador](https://img.shields.io/github/package-json/dependency-version/chartes/DoTS-vue-generic/mirador/dev)](https://www.npmjs.com/package/mirador)
+[![package - Bulma](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/bulma/dev?logo=bulma&logoColor=white)](https://www.npmjs.com/package/bulma)
+[![package - Mirador](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/mirador/dev)](https://www.npmjs.com/package/mirador)
 
 
 
@@ -23,7 +23,7 @@ Frontend application to browse a DoTS endpoint ([DoTS](https://github.com/charte
 ### Clone the GitHub repository:  
 in a local folder dedicated to the project
   ```bash
-  git clone https://github.com/chartes/dots-vue.git
+  git clone https://github.com/dots-suite/dots-vue.git
   ```
 
 From the app folder (`cd path/to/dots-vue`)
@@ -39,7 +39,7 @@ yarn
 projects_folder/					# Folder where your apps are deployed
 	dots-vue/						# This cloned project
 	dots-vue-my-custom-settings/	# OPTIONAL. Configuration files for a given deployed dots-vue
-		configurations_files    	# See an example at [dots-vue-demo-settings](https://github.com/chartes/dots-vue-demo-settings)
+		configurations_files    	# See an example at [dots-vue-demo-settings](https://github.com/dots-suite/dots-vue-demo-settings)
 ```
 > in this case CUSTOM_SETTINGS_PATH=../dots-vue-my-custom-settings
 
