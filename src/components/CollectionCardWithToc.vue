@@ -699,75 +699,6 @@ export default {
   padding-top: 25px;
   padding-bottom: 25px;
 }
-.collection-toc-area {
-  .tree {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .tree li {
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 22px;
-    padding: 0;
-    margin-bottom: 4px;
-
-    &::before {
-      display: none;
-    }
-
-    & > .li.container {
-      display: flex;
-      align-items: center;
-      margin: 0;
-
-      & > button {
-        margin-left: 10px;
-      }
-
-      & > a {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 0.1rem;
-        width: 100%;
-        padding: 13px 30px 11px;
-        border-bottom: none;
-
-        &.is-current {
-          font-weight: bolder !important;
-          color: var(--text-color) !important;
-        }
-      }
-    }
-
-    &.more {
-      padding-left: 0 !important;
-
-      & > .li.container > a, span {
-        &.is-current {
-          font-weight: bold !important;
-          color: var(--text-color) !important;
-        }
-      }
-
-      & > .li.container > a {
-        position: relative;
-      }
-
-      & > .li.container > a::before {
-        content: "";
-        display: block;
-        width: 30px;
-        height: 100%;
-        background-color: red;
-      }
-
-      &::before {
-        content: none !important;
-      }
-    }
-  }
-}
 
 button.toc-toggle {
   /* remove default button behavior */
@@ -798,10 +729,6 @@ button.toc-toggle {
   }
 }
 
-.is-current {
-  color: var(--text-color) !important;
-}
-
 .resources-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -811,12 +738,6 @@ button.toc-toggle {
 .mixed-mode.resources-grid {
   display: flex;
   flex-direction: column;
-}
-.collection-icon {
-  color: var(--text-color);
-}
-.resource-icon {
-  color: var(--text-color);
 }
 
 /* Card */
@@ -910,23 +831,13 @@ button.toc-toggle {
   cursor: default;
 }
 
-.mixed-mode .toc-header {
-  padding-left: 9px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
 .mixed-mode .collection-toc-area-header {
   display: block;
   padding: 30px 30px 0;
   margin-bottom: 10px;
   background: none;
-  font-family: var(--font-primary), sans-serif;
-  font-weight: 700;
-  font-size: 28px;
-  color: var(--text-color)
 }
+
 .mixed-mode .expanded.menu {
   background: none;
   border-radius: 0;
@@ -960,7 +871,6 @@ input[type=number] {
 
   .mixed-mode .collection-toc-area-header {
     padding: 30px var(--mobile-margin) 0;
-    font-size: 18px;
   }
 
   .mixed-mode.resources-grid {

@@ -205,7 +205,7 @@ function clearAll(){
   z-index: 20;
   background: #ffffff00;
   padding: .75rem 1rem;
-  border-bottom: 0px solid #e2e2e2;
+  border-bottom: 0 solid #e2e2e2;
   box-shadow: none;
   font-family: "Barlow", sans-serif !important;
 }

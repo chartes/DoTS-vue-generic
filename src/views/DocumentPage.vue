@@ -2697,38 +2697,6 @@ div.remove-bottom-padding #article {
   margin-right: 3px;
 }
 
-
-/*
-
-#article section.div h2.head {
-  color: var(--text-color);
-  border-bottom: none;
-  padding: 1em 0 0 0;
-  margin: 35px 0 43px 0;
-  text-align: center;
-  font-variant: small-caps;
-}
-
-#article section.div h3.head {
-  color: #222222;
-  margin: 35px 0 28px 0;
-  border-bottom: 0 dotted;
-  text-align: center;
-  padding: 1em 0 0 1ex;
-  font-weight: bold;
-  text-transform: none;
-}
-
-#article section.div h4.head {
-  text-align: center;
-  color: #999;
-  font-size: 15px;
-  font-weight: bold;
-  padding: 1em 0 1ex 2ex;
-}
-
-*/
-
 #article {
   .availability, .editionStmt, figcaption, .footnotes, li.bibl, .marginalia, .note, #noterefover, .publicationStmt, .sourceDesc, .speaker, .stage {
     font-family: var(--font-primary), sans-serif;
@@ -2938,17 +2906,10 @@ div.remove-bottom-padding #article {
       margin-right: 20px;
       text-align: center;
       align-content: center;
-      color: var(--text-color);
-
-      &.is-opened {
-        color: white;
-      }
 
       &.disabled {
         pointer-events: none;
         opacity: 0.2;
-        color: #aeaeae;
-        border-color: #aeaeae;
       }
     }
   }
@@ -3502,7 +3463,7 @@ a.pb {
 
   &:focus,
   &:hover {
-    color: var(--text-color);
+    color: var(--fill-color);
   }
 
 }

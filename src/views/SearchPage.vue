@@ -24,50 +24,53 @@
                 <span></span>
               </span>
             </button>
-            <!-- Fulltext or Metadata search selector -->
-            <div class="search-mode-wrapper">
-              <!-- SELECT BUTTON -->
-              <div class="search-mode-trigger" @click="toggleModeDropdown">
-                <span>{{ currentSearchLabel }}</span>
-                <i class="arrow"></i>
-              </div>
 
-              <!-- DROPDOWN -->
-              <div v-if="isModeOpen" class="search-mode-dropdown">
-                <div
-                  v-for="opt in searchTypeOptions"
-                  :key="opt.value"
-                  class="search-mode-option"
-                  :class="{ active: searchType === opt.value }"
-                  @click="selectSearchType(opt.value)"
-                >
-                  {{ opt.text }}
+            <div class="search-input-wrapper">
+              <!-- Fulltext or Metadata search selector -->
+              <div class="search-mode-wrapper">
+                <!-- SELECT BUTTON -->
+                <div class="search-mode-trigger" @click="toggleModeDropdown">
+                  <span>{{ currentSearchLabel }}</span>
+                  <i class="arrow"></i>
+                </div>
+
+                <!-- DROPDOWN -->
+                <div v-if="isModeOpen" class="search-mode-dropdown">
+                  <div
+                    v-for="opt in searchTypeOptions"
+                    :key="opt.value"
+                    class="search-mode-option"
+                    :class="{ active: searchType === opt.value }"
+                    @click="selectSearchType(opt.value)"
+                  >
+                    {{ opt.text }}
+                  </div>
                 </div>
               </div>
-            </div>
-            <!-- input -->
-            <div class="search-input-wrapper">
-              <input
-                class="input is-medium"
-                :class="isInvalidQuery ? 'input-error' : ''"
-                type="text"
-                placeholder="Recherche"
-                v-model="inputTerm"
-                @keyup.enter="executeSearches"
-                @click="$event.preventDefault()"
-              /><!-- live debounced search : @keyup.enter="executeSearches" -->
-              <button
-                v-if="inputTerm"
-                class="search-clear"
-                title="Clear search"
-                @click.prevent="deleteTerm"
-              >
-                <span aria-hidden="true"></span>
-              </button>
+              <!-- input -->
+              <div class="search-input-field">
+                <input
+                  class="input is-medium"
+                  :class="isInvalidQuery ? 'input-error' : ''"
+                  type="text"
+                  placeholder="Recherche"
+                  v-model="inputTerm"
+                  @keyup.enter="executeSearches"
+                  @click="$event.preventDefault()"
+                /><!-- live debounced search : @keyup.enter="executeSearches" -->
+                <button
+                  v-if="inputTerm"
+                  class="search-clear"
+                  title="Clear search"
+                  @click.prevent="deleteTerm"
+                >
+                  <span aria-hidden="true"></span>
+                </button>
+              </div>
               <!-- MESSAGE ERROR -->
-              <p v-if="isInvalidQuery" class="search-error-message">
+              <div v-if="isInvalidQuery" class="search-error-message" role="alert">
                 {{ invalidQueryMessage }}
-              </p>
+              </div>
             </div>
 
             <!-- button -->
@@ -95,9 +98,6 @@
       class="page-body app-width-margin"
       :class="{ 'sidebar-open': sidebarOpen }"
     >
-      <!-- Fond assombri : uniquement visible en mobile (cf. media query
-           max-width:768px) pendant que la sidebar des filtres est ouverte
-           en superposition. Cliquer dessus referme les filtres. -->
       <Transition name="backdrop-fade">
         <div
           v-if="sidebarOpen"
@@ -150,8 +150,8 @@
             @sort-change="updateSort"
           /><!--v-if="tableData.length > 0"-->
         </div>
-      </div><!-- ferme .page-main -->
-    </div><!-- ferme .page-body -->
+      </div>
+    </div>
   </div>
 </template>
 
@@ -285,8 +285,6 @@ export default {
         config.map(c => [c.key, c])
       )
 
-      // temporal.value a la même structure/clés que initialTemporal.value
-      // on suppose un accès par id, ex: temporal.value trouvé via .find ou déjà en Map/objet
       const availableMap = new Map(
         (Array.isArray(search.temporal.value) ? search.temporal.value : Object.values(search.temporal.value || {}))
           .map(f => [f.key, f])
@@ -402,7 +400,7 @@ export default {
       //console.log('searchPage debug ancestors, passageId, tocSettings?.editByCiteType', resId, hit, passageId, ancestors, passageTocSettings, resCollId)
       let refId = null
 
-      // --- priorité : editByCiteType ---
+      // Priority: editByCiteType
       if (passageTocSettings?.editByCiteType?.length) {
         // Passage is itself a match
         if (
@@ -435,13 +433,13 @@ export default {
         }
       }
 
-      // --- fallback ultime ---
+      // --- Last resort fallback (deprecated) ---
       /*if (!refId && ancestors.length) {
         console.log('searchPage debug matching fallback ancestors ', ancestors, ancestors[ancestors.length - 1].id)
         refId = ancestors[ancestors.length - 1].id
       }*/
 
-      // construction params AVEC collId si nécessaire
+      // construction params WITH collId if necessary
       const params = isDocProjectIdIncluded
         ? { collId, id: resId }
         : { id: resId }
@@ -581,12 +579,10 @@ export default {
       executeSearches()
     }
 
-
     function removeActiveRange(field){
       search.setRange(field, null)
       executeSearches()
     }
-
 
     function clearAllFilters(){
       search.clearFacets()
@@ -616,7 +612,6 @@ export default {
     function openFacet(id){
       search.setFacetOpened(id)
     }
-
 
     function closeFacet(id){
       search.setFacetClosed(id)
@@ -660,7 +655,6 @@ export default {
       inputSort.value = direction === 'desc' ? `-${key}` : key
     }
 
-
     async function executeSearches() {
       // Do not send invalid query via @keyup.enter calling this directly (even if submit button is disabled)
       if (isInvalidQuery.value) return
@@ -697,7 +691,6 @@ export default {
       activeCollectionId: search.activeCollectionId
     }
     console.log('searchPage initialState', initialState)
-
 
     const inputTerm = ref(initialState.term)
     const inputSort = ref(initialState.sort)
@@ -754,7 +747,7 @@ export default {
 
     const invalidQueryMessage = computed(() => {
       if (hasFieldSyntax.value) {
-        return 'Les recherches avec field: ne sont pas autorisées en mode plein texte'
+        return 'Recherches "field: " non supportées en plein texte'
       }
 
       if (isTooShortQuery.value) {
@@ -1086,32 +1079,18 @@ tr td.chevron-up a::before {
   border-radius: 3px;
 }
 .search-form {
-  /* Un seul gris (foncé) sur tout le bloc : avant, .search-form (le
-     conteneur) était en #f0f0f0 (clair) pendant que ses enfants étaient en
-     #e4e4e4 (plus foncé), ce qui laissait apparaître un liseré plus clair
-     autour du bloc de recherche. */
   background-color: #f0f0f0 !important;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
 }
 .search-form > *:first-child {
-  /*searchUI
-  display: flex;
-  align-items: center;
-  background-color: #868686;*/
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
-  /*searchUI
-  padding: 32px 24px 34px 28px;
-   */
   padding: 32px 0 34px 0;
   margin-bottom: 0;
 }
 
 .search-form > *:not(:first-child) {
-  /*searchUI
-    background-color: #e4e4e4;
-   */
   margin-bottom: 0;
 }
 .search-form > *.search-form-footer {
@@ -1125,17 +1104,9 @@ tr td.chevron-up a::before {
   position: sticky;
   top: 0;
   z-index: 22;
-  /* même gris que .search-form (voir plus bas) : évite tout liseré plus
-     clair visible autour du bloc de recherche */
   background-color: #ffffff;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-
-  /* .app-width-margin (classe partagée avec .wrapper.collection-header dans
-     CollectionHeader.vue) n'est PLUS neutralisée ici : en la laissant agir
-     normalement, cette barre reçoit exactement le même inset gauche/droite
-     que le titre/l'image du bandeau au-dessus, donc s'aligne dessus par
-     construction - que la sidebar des filtres soit dépliée ou repliée. */
 }
 .sticky-search-header .search-bar-row {
   display: flex;
@@ -1145,23 +1116,17 @@ tr td.chevron-up a::before {
   padding: 0 0 0 0;
 }
 
-/* La ligne qui contient le burger + le sélecteur de mode + l'input doit
-   rester une ligne horizontale (burger à gauche), quoi qu'il arrive :
-   @flex !important pour ne jamais retomber en colonne (ex. si une règle
-   externe/globale plus tenace repasse cette ligne en display:block). */
 .search-form > .search-bar-row {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  align-items: center !important;
-  /* gap à 0 : le sélecteur/l'input/le bouton sont conçus pour se toucher
-     (rayons de bordure complémentaires) ; un gap ici créait un espace visible
-     entre le burger et le sélecteur "notices". */
+  align-items: flex-start !important;
   gap: 0;
   margin-top: 12px;
 }
 .search-form > .search-bar-row > .burger-menu-button {
   flex: 0 0 auto;
+  height: 44px;
 }
 
 .hide-filters-button {
@@ -1174,45 +1139,8 @@ tr td.chevron-up a::before {
   display: flex;
   align-items: stretch;
   width: 100%;
-  /* searchUI new */
   overflow-x: hidden;
   overflow-y: visible;
-  /* searchUI
-  gap: 0;
-   */
-
-  /* searchUI new Marge de sécurité en bas : garantit que le footer démarre toujours
-     assez bas pour laisser la place à un dropdown de suggestions ouvert
-     sur la dernière facette visible. .facet-dropdown (SearchFacets.vue) a
-     max-height: 240px + ~4px de marge/bordure, donc ~244px de hauteur max
-     ajoutée sous un champ de facette ; on prend une marge large (300px)
-     pour absorber ça sans calcul dynamique fragile. Revers : un espace
-     blanc fixe apparaît désormais toujours avant le footer, dropdown
-     ouvert ou non. */
-  padding-bottom: 250px;
-
-  /* .app-width-margin n'est plus neutralisée : même inset gauche/droite que
-     .sticky-search-header et que .wrapper.collection-header au-dessus, donc
-     sidebar + résultats s'alignent sur la largeur du bandeau, dépliés ou
-     repliés (l'inset ne dépend pas de sidebarOpen).
-
-     max-height: 100% + overflow: hidden retirés : ils rognaient tout ce qui
-     dépassait la hauteur de .page-body, notamment le dropdown de
-     suggestions d'une facette ouvert en bas de la sidebar (desktop) - il se
-     retrouvait coupé/invisible pile à l'endroit où le footer du site
-     commence, donnant l'impression qu'il passait "derrière" le footer.
-     Seul overflow-x reste masqué, en garde-fou contre un débordement
-     horizontal ; la page continue de s'appuyer sur le scroll naturel de la
-     fenêtre (pas de scroll interne ici).
-
-     align-items: flex-start -> stretch : avec flex-start, .facets-sidebar
-     se dimensionnait sur son seul contenu (souvent plus court que la liste
-     de résultats), donc son fond blanc s'arrêtait avant la fin de
-     .page-main, laissant une bande grise avant le footer. En stretch
-     (comportement par défaut de flexbox), les deux colonnes s'étirent pour
-     matcher la plus haute des deux : le fond blanc de la sidebar va donc
-     naturellement jusqu'au même point que la colonne de résultats, sans
-     qu'on ait besoin de fixer une hauteur en dur ni de scroll séparé. */
 }
 
 .facets-sidebar {
@@ -1223,9 +1151,6 @@ tr td.chevron-up a::before {
   background: #fff;
 }
 
-/* Fond assombri derrière la sidebar mobile : masqué par défaut (desktop),
-   activé uniquement dans la media query mobile ci-dessous pour ne jamais
-   perturber la mise en page flex de .page-body en desktop. */
 .sidebar-backdrop {
   display: none;
 }
@@ -1251,11 +1176,6 @@ tr td.chevron-up a::before {
   flex: 1 1 0;
   min-width: 0;
   max-width: 100%;
-  /* Pas de padding gauche/droite ici : .page-body reçoit maintenant le même
-     inset app-width-margin que le bandeau, donc pour que "X ressources"/le
-     tableau aille jusqu'au même bord droit que l'image du bandeau (comme la
-     sidebar va jusqu'au même bord gauche), .page-main ne doit pas rajouter
-     sa propre marge par-dessus. */
   box-sizing: border-box;
 }
 
@@ -1310,8 +1230,16 @@ tr td.chevron-up a::before {
 
 /* INPUT */
 .search-input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.search-input-field {
   position: relative;
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
 }
@@ -1337,12 +1265,11 @@ tr td.chevron-up a::before {
   box-shadow: 0 0 0 1px red !important;
 }
 .search-error-message {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  flex: 0 0 100%;
+  margin-top: 4px;
+  text-align: center;
   font-size: 12px;
   color: #d33;
-  white-space: nowrap;
 }
 
 /* CLEAR SEARCH ICON */
@@ -1608,30 +1535,11 @@ input[type="number"]::-webkit-inner-spin-button {
 .slider-control label {
   display: block;
 }
-.vue-slider.vue-slider-ltr {
-  margin-top: 15px !important;
-  padding: 0 10px !important;
-  height: 3px !important;
-}
-.vue-slider :deep(.vue-slider-dot) {
-  width: 18px !important;
-  height: 18px !important;
-}
-.vue-slider:hover :deep(.vue-slider-rail),
-.vue-slider :deep(.vue-slider-rail) {
-  background-color: #ffffff;
-}
-.vue-slider :deep(.vue-slider:hover .vue-slider-process),
-.vue-slider :deep(.vue-slider-process) {
-  background-color: #b9192f !important;
-}
-.vue-slider :deep(.vue-slider-dot-handle:hover),
-.vue-slider :deep(.vue-slider-dot-handle-focus),
-.vue-slider :deep(.vue-slider-dot-handle) {
-  border-color: #b9192f !important;
-}
-.vue-slider :deep(.vue-slider-dot-handle-focus) {
-  box-shadow: 0 0 0 5px rgba(185, 25, 47, 0.2);
+
+.search-facets {
+  /* padding bottom : prevent last facet touches the footer
+     note : padding under an opened overlay remains 24px. */
+  padding: 27px 24px 24px 1rem;
 }
 
 .active-filters-and-sliders {
@@ -1639,21 +1547,13 @@ input[type="number"]::-webkit-inner-spin-button {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  border-bottom: solid 2px #ffffff;
 }
 
 /* search table */
 .table-container {
   font-family: "Barlow Semi Condensed", sans-serif;
   margin-top: 24px;
-  /* searchUI
-  overflow-y: auto retiré : dès que le contenu dépassait, même de très
-     peu, la hauteur min de 600px ci-dessous, ça créait une scrollbar
-     interne fine sur toute la hauteur du conteneur - indépendante du
-     scroll de la page. On garde le min-height (pour ne pas avoir une zone
-     trop courte visuellement quand il y a peu de résultats), mais le
-     contenu qui dépasse s'affiche simplement en flux normal désormais, et
-     c'est le scroll naturel de la fenêtre qui prend le relais, jusqu'au
-     footer. */
   min-height: 600px;
 }
 .table {
@@ -1988,13 +1888,7 @@ tr.row-details :deep(em),
 }
 @media screen and (max-width: 768px) {
   /* ===================================================================
-     Sidebar des filtres en superposition sur mobile : au lieu de pousser
-     .page-main sur le côté (comportement desktop, flex-basis 33.333%),
-     elle sort du flux (position: fixed) et se cale par-dessus la liste de
-     documents, avec un fond assombri cliquable pour la refermer. Comme
-     elle n'occupe plus de place dans .page-body (display:flex), .page-main
-     reprend naturellement toute la largeur disponible : les documents ne
-     sont donc jamais décalés, qu'elle soit ouverte ou fermée.
+     Filter SIDEBAR
      =================================================================== */
   .facets-sidebar {
     position: fixed;
@@ -2024,10 +1918,6 @@ tr.row-details :deep(em),
     z-index: 39;
   }
 
-  /* Transitions Vue <Transition name="sidebar-slide"/"backdrop-fade"> :
-     définies uniquement ici pour ne pas introduire d'animation d'ouverture
-     des filtres en desktop, où le comportement actuel (apparition immédiate,
-     sidebar qui pousse le contenu) reste inchangé. */
   .sidebar-slide-enter-active,
   .sidebar-slide-leave-active {
     transition: transform .25s ease;
@@ -2044,6 +1934,9 @@ tr.row-details :deep(em),
   .backdrop-fade-enter-from,
   .backdrop-fade-leave-to {
     opacity: 0;
+  }
+  .search-facets {
+    padding: 10px 24px 24px 24px;
   }
 }
 @media screen and (max-width: 640px) {
@@ -2062,9 +1955,6 @@ tr.row-details :deep(em),
   tr.row-infos > td:nth-child(8) {
     right: 0;
   }
-}
-.search-facets {
-  padding: 27px 24px 0 44px;
 }
 
 </style>

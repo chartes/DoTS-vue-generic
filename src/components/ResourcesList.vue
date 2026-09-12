@@ -5,10 +5,11 @@
     :total-pages="totalPages"
     :is-table-loading="isTableLoading"
     :documents-count-text="resultsSummaryText"
+    :class="tableVariant"
   />
   <div
     class="list-mode-wrapper"
-    :class="totalPages > 1 ? 'with-bottom-pagination' : 'without-bottom-pagination'"
+    :class="[totalPages > 1 ? 'with-bottom-pagination' : 'without-bottom-pagination', tableVariant]"
   >
     <ul
       class="tree list-mode"
@@ -16,7 +17,10 @@
     >
       <!-- HEADER -->
       <li class="list-header">
-        <div class="li container header">
+        <div
+          class="li container header"
+          :class="{ 'search-header': isElasticSearch }"
+        >
           <!-- ============================= -->
           <!-- ELASTIC SEARCH / HIGHLIGHTS   -->
           <!-- ============================= -->
@@ -201,8 +205,21 @@
                       v-for="hit in item.hits"
                       :key="hit.passageId"
                     >
-                      <router-link :to="hit.passageUrl">
-                        {{ buildBreadcrumb(hit) }}
+                      <router-link
+                        :to="hit.passageUrl"
+                        class="hit-breadcrumb"
+                      >
+                        <template
+                          v-for="(part, i) in buildBreadcrumbParts(hit)"
+                          :key="i"
+                        >
+                          <span
+                            v-if="i > 0"
+                            class="hit-breadcrumb-sep"
+                            aria-hidden="true"
+                          >&gt;</span>
+                          <span class="hit-breadcrumb-tag">{{ part }}</span>
+                        </template>
                       </router-link>
                       <ul v-if="hit.highlight?.content">
                         <li
@@ -271,6 +288,7 @@
     :is-table-loading="isTableLoading"
     documents-count-text=""
     class="pagination-bottom"
+    :class="tableVariant"
   />
 </template>
 
@@ -321,6 +339,11 @@ name: 'CollectionTOC',
     const pageSize = ref(props.pageSize)
     const resultsCounts = computed(() => props.counts)
     const isElasticSearch = computed(() => props.isElasticSearch || false)
+
+    // Array variant: responsive rules differ between search results and collection pages
+    const tableVariant = computed(() =>
+      isElasticSearch.value ? 'search-results' : 'collection-results'
+    )
     const bucketsCount = computed(() => props.totalBuckets)
 
     // TABLE
@@ -533,17 +556,18 @@ name: 'CollectionTOC',
       return item.title || formatCiteType(item.citeType)
     }
 
-    const buildBreadcrumb = (hit) => {
+    // Breadcrumb segments for a passage: rendered as tags in the link
+    const buildBreadcrumbParts = (hit) => {
       const parts = [
         ...(hit.ancestors || []).map(getLabel),
         getLabel(hit)
       ].filter(Boolean)
 
       if (!parts || parts.length === 0) {
-        return 'Document entier'
+        return ['Document entier']
       }
       //console.log('ResourcesList buildbreadcrumb hit.ancestors parts : ', hit.ancestors, parts, hit)
-      return parts.filter(Boolean).join(' > ')
+      return parts.filter(Boolean)
     }
 
 
@@ -636,10 +660,11 @@ name: 'CollectionTOC',
       toggleSort,
       setStateCollection,
       buildDocumentRoute,
-      buildBreadcrumb,
+      buildBreadcrumbParts,
       getTableHref,
       getSearchTableHref,
       goToPageTable,
+      tableVariant,
       gridTemplateColumns
     }
   }
@@ -797,7 +822,7 @@ name: 'CollectionTOC',
 }
 
 .list-mode .cell:nth-child(2n) a {
-  color: #989898;
+  color: #5a5a5a;
 }
 
 .list-mode .cell:nth-child(2n + 1) a {
@@ -805,7 +830,7 @@ name: 'CollectionTOC',
 }
 
 .list-mode .cell .hits-list {
-  padding-left: 1rem;
+  padding: 1rem;
   list-style-type: none;
   margin: 0;
   background-color: #f1f1f1;
@@ -814,41 +839,75 @@ name: 'CollectionTOC',
 .list-mode .cell .hits-list > li {
   margin-bottom: 1rem;
 }
-.list-mode .cell .hits-list > li:first-child {
-  padding-top: 1rem;
-}
 .list-mode .cell .hits-list > li:last-child {
-  margin-bottom: 0; /* pas de margin sur le dernier */
+  margin-bottom: 0; /* no margin on last child */
 }
 
-.list-mode .cell .hits-list > li > a {
-  font-weight: 600;
-  color: #004085;
-  text-decoration: underline;
+.list-mode .cell .hits-list > li > a.hit-breadcrumb {
+  /* a single tag for the entire breadcrumb: the segments are text
+   inside it, they wrap and can break across lines */
+  display: inline-block;
+  padding: .2rem .5rem;
+  border: 1px solid #4a4a4a;
+  border-radius: 12px;
+  background: #ffffff;
+  text-decoration: none;
   cursor: pointer;
+}
+
+/* segments: plain text inside the wrapper tag */
+.list-mode .cell .hits-list .hit-breadcrumb-tag {
+  color: #4a4a4a;
+  font-family: var(--font-primary), sans-serif;
+  /* hierarchy: document line (16px) > passage breadcrumb (15px) */
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
   word-break: break-word;
 }
 
-.list-mode .cell .hits-list > li > a:hover {
-  color: #002752;
-  text-decoration: none;
+.list-mode .cell .hits-list .hit-breadcrumb-sep {
+  margin: 0 .3rem;
+  color: var(--fill-color);
+  font-size: 15px;
+}
+
+.list-mode .cell .hits-list > li > a.hit-breadcrumb:hover {
+  background: var(--fill-color);
+  border-color: var(--fill-color);
+}
+
+.list-mode .cell .hits-list > li > a.hit-breadcrumb:hover .hit-breadcrumb-tag,
+.list-mode .cell .hits-list > li > a.hit-breadcrumb:hover .hit-breadcrumb-sep {
+  color: #ffffff;
 }
 
 .list-mode .cell .hits-list > li > ul {
-  margin-top: 0.25rem;
+  margin-top: 1rem;
   padding-left: 1rem;
-  list-style-type: disc;
+  list-style-type: none;
 }
 
 .list-mode .cell .hits-list > li > ul > li {
-  margin-bottom: 0.3rem;
-  color: #333;
+  /* inline: the fragments follow each other in the flow, separated by ●●● */
+  display: inline;
+  color: #5a5a5a;
+  font-size: 15px;
   line-height: 1.4;
 }
 
+/* Separator between fragments (the API no longer returns "...": see
+   commented-out add_ellipsis in dots_es/api/search.py) */
+.list-mode .cell .hits-list > li > ul > li:not(:last-child)::after {
+  content: " ●●● ";
+  white-space: pre-wrap;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: var(--fill-color);
+}
+
 .list-mode .cell .hits-list > li > ul > li > span {
-  display: block;
-  width: 100%;
+  display: inline;
   word-break: break-word;
   &:deep(mark) {
     border-left: none;
@@ -895,7 +954,9 @@ name: 'CollectionTOC',
 }
 
 .list-mode .row.is-selected .cell.chevron-down a::before {
-  background: url(../assets/images/croix.svg) center / contain no-repeat;
+  background: #5a5a5a;
+  -webkit-mask: url(../assets/images/croix.svg) center / contain no-repeat;
+  mask: url(../assets/images/croix.svg) center / contain no-repeat;
 }
 
 /* FILTER */
@@ -1049,17 +1110,22 @@ input[type=number] {
     padding-right: 20px;
   }
 
-  .list-mode .pagination {
+  /* Pagination bottom margin: collection pages only; on search results it
+     added 20px above the header */
+  .pagination.collection-results {
     margin-bottom: 20px;
-    padding-top: 12px;
-    padding-bottom: 12px;
+  }
+
+  /* Border under the header: from 1024px on collection pages; for
+     search results, at 768px (see below) */
+  .collection-results .list-header {
+    border-bottom: 2px solid var(--fill-color);
   }
 
   /* Table header */
 
   .list-header {
     margin-bottom: 0;
-    border-bottom: 2px solid var(--fill-color);
 
     & > .header {
       border-bottom: none;
@@ -1077,7 +1143,19 @@ input[type=number] {
     }
   }
 
-  .list-mode .header-cell {
+  /* Table header: no bottom padding below 1024px; left/right padding matches
+     the pagination and rows, to align the first th with the result count.
+     NB: .list-header padding (li, above) does not apply, overridden by
+     .list-mode li { padding: 1px 0 !important }. */
+  .list-mode .header {
+    padding-bottom: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  /* Label truncated to 60px next to the fields: not for the search results
+  header (.search-header), which remains in columns (see 768px) */
+  .list-mode .li.container:not(.search-header) > .header-cell {
     flex-direction: row;
     align-items: center;
     gap: 10px;
@@ -1102,12 +1180,34 @@ input[type=number] {
     width: 100%;
   }
 
-  .list-mode .li.container {
+  /* Stacked rows (cards); the search results header keeps its grid */
+  .list-mode .li.container:not(.search-header) {
     display: block !important;
 
     &.header {
       padding: 5px 12px 10px;
     }
+  }
+
+/* Full-text results chevron: in card mode */
+  .list-mode .li.container.row {
+    position: relative;
+  }
+
+  .list-mode .cell.chevron-up,
+  .list-mode .cell.chevron-down {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 20px;
+    width: auto;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Prevent collision with chevron */
+  .list-mode .li.container.row > .cell:not(.chevron-up):not(.chevron-down) {
+    padding-right: 45px;
   }
 
   /* Table rows */
@@ -1128,6 +1228,49 @@ input[type=number] {
 }
 
 
+@media screen and (max-width: 768px) {
+
+  .search-results .list-header {
+    border-bottom: 2px solid var(--fill-color);
+  }
+
+  .list-mode .li.container.search-header {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+
+    & > .chevron-header-cell {
+      display: none;
+    }
+  }
+
+  /* Sort icon above its label, left-aligned; no border or padding below the
+     cell; sort icons sized like the pagination navigation buttons
+     (--button-size, reduced at the same breakpoint) */
+  .list-mode .header-cell.search {
+    min-width: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+
+    & > .header-cell-fields {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    & span {
+      overflow-wrap: anywhere;
+    }
+
+    & .icons {
+      width: var(--button-size);
+      height: var(--button-size);
+      min-width: var(--button-size);
+      min-height: var(--button-size);
+    }
+  }
+}
+
 @media screen and (max-width: 640px) {
 
   .list-mode.tree,
@@ -1146,6 +1289,31 @@ input[type=number] {
     padding-left: var(--mobile-margin);
     padding-right: var(--mobile-margin);
   }
+
+  /* Same padding as rows at this screen size */
+  .list-mode .cell.chevron-up,
+  .list-mode .cell.chevron-down {
+    right: var(--mobile-margin);
+  }
+
+  /* Table header: same left-right padding as pagination and text */
+  .list-mode .header {
+    padding-left: var(--mobile-margin);
+    padding-right: var(--mobile-margin);
+  }
+
+  /* Search results table header: centered columns (as number of results) */
+  .list-mode .li.container.search-header {
+    column-gap: var(--mobile-margin);
+  }
+
+  .list-mode .header-cell.search {
+    & > .header-cell-fields {
+      align-items: center;
+      text-align: center;
+    }
+  }
 }
+
 
 </style>

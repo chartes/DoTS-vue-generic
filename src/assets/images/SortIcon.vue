@@ -57,7 +57,7 @@ const props = defineProps({
   state: { type: String, default: 'none' }, // 'asc' | 'desc' | 'none'
   type: { type: String, default: 'string' },
   bgColor: { type: String, default: 'var(--fill-color)' },
-  fgColor: { type: String, default: 'var(--text-color)' },
+  fgColor: { type: String, default: 'var(--fill-color)' },
   size: { type: Number, default: 32 },
   radius: { type: Number, default: 4 }
 })

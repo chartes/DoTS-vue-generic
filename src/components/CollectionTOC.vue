@@ -1096,20 +1096,13 @@ export default {
 
         &.is-current {
           font-weight: bolder !important;
-          color: var(--text-color) !important;
+          color: var(--fill-color) !important;
         }
       }
     }
 
     &.more {
       padding-left: 0 !important;
-
-      & > .li.container > a, span {
-        &.is-current {
-          font-weight: bold !important;
-          color: var(--text-color) !important;
-        }
-      }
 
       & > .li.container > button,
       & > .li.container > .icon-wrapper {
@@ -1180,10 +1173,6 @@ button.toc-toggle {
     width: 25px;
     height: 22px;
   }
-}
-
-.is-current {
-  color: var(--text-color) !important;
 }
 
 .resources-grid {
@@ -1509,7 +1498,7 @@ button.toc-toggle {
 
 .resource-icon,
 .collection-icon {
-  color: var(--text-color);
+  color: var(--fill-color);
   width: 30px;
   height: 30px;
 }
@@ -1593,24 +1582,6 @@ button.toc-toggle {
 .mixed-mode .card-link.disabled {
   cursor: default;
   opacity: 0.7;
-}
-
-.mixed-mode .toc-header {
-  padding-left: 9px;
-  font-family: var(--font-primary), sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.mixed-mode .collection-toc-area-header {
-    display: block;
-    padding: 0 30px;
-    margin-bottom: 10px;
-    font-family: var(--font-primary), sans-serif;
-    font-weight: 700;
-    font-size: 28px;
-    color: var(--text-color)
 }
 
 .mixed-mode .expanded.menu {

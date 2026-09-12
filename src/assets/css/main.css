@@ -985,14 +985,7 @@ a.noteref:focus {
   - default DoTS-vue app
   - its collections & children (unless otherwise specified)
  =============================================================*/
-/* Using themes TODO working in dev but not in build :
-[data-theme="orange"] {
-	--text-color: orange;
-}
-[data-theme="red"] {
-    --text-color: #8f0e21;
-    --fill-color: #8f0e21;
-}*/
+
 /* Using css variables */
 :root {
     /* Font */
@@ -1025,7 +1018,6 @@ a.noteref:focus {
     /* Color Theme */
     --default-text-color: #333333;
     --document-text-color: #303030;
-    --text-color: #8f0e21;
     --fill-color: #5f004d;
     --default-bg-color: #F1F1F1;
     --default-bg-hover-color: #E3E3E3;

@@ -1,20 +1,7 @@
 <template>
   <div v-if="availableTabs.length" class="temporal-slider">
-    <!--<div class="temporal-tabs">
-      <button
-        v-for="facet in availableTabs"
-        :key="facet.key"
-        :class="{ active: facet.key === currentFacet.key }"
-        @click="selectFacet(facet)"
-      >
-        {{ facet.label }}
-      </button>
-    </div>-->
     <div v-if="currentFacet" class="slider-content">
       <div class="slider-label">
-        <!--<label>
-          {{ currentFacet.label }}
-        </label>-->
       </div>
       <div class="temporal-inputs">
         <span>Entre</span>
@@ -662,10 +649,8 @@ watch(
   font-weight: inherit;
 }
 .slider-content {
-  /*background: white;*/
-  /*border: 1px solid #ddd;*/
   background: none  ;
-  padding: 16px;
+  padding: 0 16px;
   padding-bottom: 30px;
 }
 
@@ -687,8 +672,10 @@ watch(
 /* values */
 .slider-label span,
 .temporal-inputs span {
+  font-family: var(--font-primary), sans-serif;
   font-size:12px;
   color:#979797;
+  white-space:nowrap;
 }
 
 /* inputs years */
@@ -699,9 +686,11 @@ watch(
   text-shadow: none;
 
   -moz-appearance: textfield;
-  background-color:#fff;
+  background-color:#F5F5F5;
 
   max-width:50px;
+  min-width:40px;
+  flex:0 1 50px;
   padding:2px 0;
   margin:0 15px;
 
@@ -729,8 +718,57 @@ watch(
 .temporal-inputs {
   display:flex;
   align-items:center;
+  flex-wrap:nowrap;
   gap:.5rem;
   margin-bottom:1rem;
+}
+
+@media screen and (max-width: 1024px) {
+
+  .temporal-inputs {
+    gap:10px;
+  }
+
+  .temporal-inputs input[type="number"].year {
+    margin:0;
+  }
+}
+
+@media screen and (max-width: 768px) {
+
+  .temporal-inputs {
+    gap:8px;
+  }
+
+  .temporal-inputs span {
+    font-size:11px;
+  }
+}
+
+@media screen and (max-width: 640px) {
+
+  .temporal-inputs {
+    gap:6px;
+  }
+}
+
+@media screen and (max-width: 900px) and (min-width: 769px) {
+
+  .temporal-inputs {
+    display:grid;
+    grid-template-columns:auto auto;
+    gap:6px 8px;
+    align-items:center;
+    justify-content:center;
+    justify-items:start;
+  }
+
+  .temporal-inputs input[type="number"].year {
+    margin:0;
+    max-width:70px;
+    flex:none;
+    width:100%;
+  }
 }
 
 /* Vue slider */
@@ -747,12 +785,8 @@ watch(
 }
 
 :deep(.vue-slider-rail) {
-  background-color:#ffffff !important;
+  background-color: #DCDCDC !important;
 }
-
-/*:deep(.vue-slider-process) {
-  background-color:#b9192f !important;
-}*/
 
 :deep(.vue-slider-dot-handle) {
   border-color:#b9192f !important;
@@ -781,16 +815,6 @@ watch(
 :deep(.has-many-marks .vue-slider-marks .vue-slider-mark:nth-child(3) .vue-slider-mark-label) {
  margin-left: 10px;
 }
-/*:deep(.vue-slider-process:first-child) {
-  background: repeating-linear-gradient(
-    to right,
-    #b9192f 0,
-    #b9192f 6px,
-    transparent 6px,
-    transparent 10px
-  ) !important;
-  height: 2px !important;
-}*/
 
 :deep(.vue-slider-mark-step-active) {
   box-shadow: 0 0 0 2px #e8e8e8 !important;

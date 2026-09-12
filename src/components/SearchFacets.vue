@@ -1,5 +1,8 @@
 <template>
-  <div class="search-facets">
+  <div
+    ref="rootEl"
+    class="search-facets"
+  >
     <div
       class="filters-header-title"
       @click="toggleAllFacets"
@@ -128,12 +131,24 @@
         </template>
       </div>
     </div>
+    <!-- Space added below the content while a suggestion menu is open:
+     the overlay (.facet-dropdown) is absolutely positioned, so it does not
+     push anything down and would otherwise remain flush with the bottom edge
+     of the mobile sidebar. Height calculated in updateDropdownSpacer(), 0
+     otherwise: no permanent blank space. -->
+
+    <div
+      v-if="dropdownSpacer !== null"
+      class="facets-bottom-spacer"
+      :style="{ height: dropdownSpacer + 'px' }"
+      aria-hidden="true"
+    />
   </div>
 </template>
 
 <script setup>
 
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, nextTick, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import TemporalFacetSlider from './TemporalFacetSlider.vue'
 
 const props = defineProps({
@@ -258,6 +273,69 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutsideFacetDropdowns)
+})
+
+const rootEl = ref(null)
+const dropdownSpacer = ref(null)
+const DROPDOWN_BOTTOM_MARGIN = 24
+let dropdownResizeObserver = null
+
+function updateDropdownSpacer() {
+    const root = rootEl.value
+    const dropdown = root?.querySelector('.facet-dropdown')
+    const boxes = root ? root.querySelectorAll('.facet-box') : []
+    const lastBox = boxes[boxes.length - 1]
+
+    if (!root || !dropdown || !lastBox) {
+        dropdownSpacer.value = null
+        return
+    }
+
+    const rootStyle = getComputedStyle(root)
+
+    const contentBottom = lastBox.getBoundingClientRect().bottom +
+        parseFloat(rootStyle.paddingBottom || 0)
+    const needed = dropdown.getBoundingClientRect().bottom +
+        DROPDOWN_BOTTOM_MARGIN - contentBottom
+
+    if (needed <= 0) {
+        dropdownSpacer.value = null
+        return
+    }
+
+    const rowGap = parseFloat(rootStyle.rowGap) || 0
+
+    dropdownSpacer.value = Math.max(0, Math.round(needed - rowGap))
+}
+
+function observeDropdown() {
+    if (!dropdownResizeObserver) return
+    dropdownResizeObserver.disconnect()
+    const dropdown = rootEl.value?.querySelector('.facet-dropdown')
+    if (dropdown) dropdownResizeObserver.observe(dropdown)
+}
+
+watch(
+  [facetDropdownOpen, facetFilters],
+  async () => {
+      await nextTick()
+      observeDropdown()
+      updateDropdownSpacer()
+  },
+  { deep: true }
+)
+
+onMounted(() => {
+    if (typeof ResizeObserver !== 'undefined') {
+        dropdownResizeObserver = new ResizeObserver(updateDropdownSpacer)
+    }
+    window.addEventListener('resize', updateDropdownSpacer)
+})
+
+onBeforeUnmount(() => {
+    dropdownResizeObserver?.disconnect()
+    dropdownResizeObserver = null
+    window.removeEventListener('resize', updateDropdownSpacer)
 })
 
 // Sélection d'un candidat depuis le menu déroulant : on l'ajoute aux
@@ -609,7 +687,8 @@ watch(
 
 .facet-body{
   position: relative;
-  padding: 16px;
+  /* same padding as .facet-active-tags */
+  padding: .6rem .75rem;
 }
 
 .facet-search{
@@ -648,6 +727,7 @@ watch(
   right: 0;
   z-index: 20;
   margin-top: 2px;
+  margin-bottom: 24px;
   background: #fff;
   border: 1px solid #979797;
   border-radius: 6px;
@@ -694,6 +774,10 @@ watch(
 
 .arrow.opened {
   transform: rotate(180deg);
+}
+
+.facets-bottom-spacer {
+  flex: none;
 }
 
 </style>
