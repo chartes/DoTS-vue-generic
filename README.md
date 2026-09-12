@@ -1,4 +1,4 @@
-# dots-vue-generic
+# dots-vue
 
 Frontend application to browse a DoTS endpoint ([DoTS](https://github.com/dots-suite/dots)).
 
@@ -9,13 +9,13 @@ Frontend application to browse a DoTS endpoint ([DoTS](https://github.com/dots-s
 
 [![Node](https://img.shields.io/badge/node-22_to_24-blue?style=for-the-badge&logo=Node.js)](https://nodejs.org)
 
-[![package - vue](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/vue/dev?logo=vue.js&logoColor=white)](https://www.npmjs.com/package/vue)
-[![package - vite](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/dev/vite/dev?logo=vite&logoColor=white)](https://www.npmjs.com/package/vite)
-[![package - eslint](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/dev/eslint/dev?logo=eslint&logoColor=white)](https://www.npmjs.com/package/eslint)
+[![package - vue](https://img.shields.io/github/package-json/dependency-version/dots-suite/dots-vue/vue/dev?logo=vue.js&logoColor=white)](https://www.npmjs.com/package/vue)
+[![package - vite](https://img.shields.io/github/package-json/dependency-version/dots-suite/dots-vue/dev/vite/dev?logo=vite&logoColor=white)](https://www.npmjs.com/package/vite)
+[![package - eslint](https://img.shields.io/github/package-json/dependency-version/dots-suite/dots-vue/dev/eslint/dev?logo=eslint&logoColor=white)](https://www.npmjs.com/package/eslint)
 
 
-[![package - Bulma](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/bulma/dev?logo=bulma&logoColor=white)](https://www.npmjs.com/package/bulma)
-[![package - Mirador](https://img.shields.io/github/package-json/dependency-version/dots-suite/DoTS-vue-generic/mirador/dev)](https://www.npmjs.com/package/mirador)
+[![package - Bulma](https://img.shields.io/github/package-json/dependency-version/dots-suite/dots-vue/bulma/dev?logo=bulma&logoColor=white)](https://www.npmjs.com/package/bulma)
+[![package - Mirador](https://img.shields.io/github/package-json/dependency-version/dots-suite/dots-vue/mirador/dev)](https://www.npmjs.com/package/mirador)
 
 
 
